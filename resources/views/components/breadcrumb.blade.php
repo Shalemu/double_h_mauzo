@@ -13,21 +13,34 @@ $shops = $shops ?? collect();
     </a>
 
     <!-- My Business -->
-    <div class="dropdown cat__menu-item">
-        <a href="javascript:void(0)" class="dropdown-toggle cat__menu-link"
-           data-toggle="dropdown">
-            <span class="cat__menu-icon"><i class="icmn-briefcase"></i></span>
-            <span class="cat__menu-text">My Business</span>
-        </a>
-        <div class="dropdown-menu">
-           <a class="dropdown-item" href="{{ route('dashboard.shop') }}">
+<div class="dropdown cat__menu-item">
+    <a href="javascript:void(0)" class="dropdown-toggle cat__menu-link"
+       data-toggle="dropdown">
+        <span class="cat__menu-icon"><i class="icmn-briefcase"></i></span>
+        <span class="cat__menu-text">My Business</span>
+    </a>
+
+    <div class="dropdown-menu">
+        <a class="dropdown-item" href="{{ route('dashboard.shop') }}">
             <i class="icmn-store"></i> My Shop
         </a>
-            <a class="dropdown-item" href="{{ url('sale-point') }}">
-                <i class="icmn-location"></i> Sale Point
-            </a>
-        </div>
+
+        <a class="dropdown-item" href="{{ url('sale-point') }}">
+            <i class="icmn-location"></i> Sale Point
+        </a>
+
+        <!-- NEW: Product Categories -->
+       <a class="dropdown-item" href="javascript:void(0)" data-toggle="modal" data-target="#categoryModal">
+    <i class="icmn-list"></i> Product Categories
+</a>
+
+        <!-- NEW: Units -->
+      <a class="dropdown-item" href="javascript:void(0)" data-toggle="modal" data-target="#unitModal">
+    <i class="icmn-meter"></i> Units
+</a>
     </div>
+</div>
+
 
     <!-- Invoice & Order -->
     <div class="dropdown cat__menu-item">
@@ -100,6 +113,120 @@ $shops = $shops ?? collect();
 
 </nav>
 </header><br><br><br>
+
+
+<!-- UNIT MODAL -->
+<div class="modal fade" id="unitModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+
+            <div class="modal-header">
+                <h5 class="modal-title">Add Unit</h5>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+
+       <form action="{{ route('units.store') }}" method="POST">
+    @csrf
+
+    <div class="modal-body">
+            @if(session('success'))
+        <div class="alert alert-success">
+            {{ session('success') }}
+        </div>
+    @endif
+        <div class="form-group">
+            <label>Unit Name</label>
+            <input type="text" name="name" class="form-control" required>
+        </div>
+
+        <div class="form-group">
+            <label>Short Name</label>
+            <input type="text" name="short_name" class="form-control" required>
+        </div>
+    </div>
+
+    <div class="modal-footer">
+        <button type="submit" class="btn btn-primary">
+            Save Unit
+        </button>
+    </div>
+</form>
+
+
+        </div>
+    </div>
+</div>
+
+
+<!-- CATEGORY MODAL -->
+<div class="modal fade" id="categoryModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+
+            <div class="modal-header">
+                <h5 class="modal-title">Add Product Category</h5>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+
+            <!-- Form -->
+           <form action="{{ route('categories.store') }}" method="POST">
+
+                @csrf
+
+                <div class="modal-body">
+                    <!-- Success message -->
+                    @if(session('success'))
+                        <div class="alert alert-success">
+                            {{ session('success') }}
+                        </div>
+                    @endif
+
+                    <div class="form-group">
+                        <label>Category Name</label>
+                        <input type="text" name="name" class="form-control" placeholder="e.g Beverages" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea name="description" class="form-control" rows="3"></textarea>
+                    </div>
+
+                    <!-- Optional: Parent Category -->
+                    @if(isset($parentCategories) && count($parentCategories))
+                        <div class="form-group">
+                            <label>Parent Category (optional)</label>
+                            <select name="parent_id" class="form-control">
+                                <option value="">None</option>
+                                @foreach($parentCategories as $parent)
+                                    <option value="{{ $parent->id }}">{{ $parent->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    @endif
+                </div>
+
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">
+                        Save Category
+                    </button>
+                </div>
+            </form>
+
+        </div>
+    </div>
+</div>
+
+<!-- Optional: Auto-close modal after success -->
+@if(session('success'))
+<script>
+    $(document).ready(function() {
+        $('#categoryModal').modal('hide'); // hide modal automatically
+        alert("{{ session('success') }}"); // optional toast
+    });
+</script>
+@endif
+
+
 
 
 <style>

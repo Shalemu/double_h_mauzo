@@ -1,171 +1,191 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+
+// Auth
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
+
+// Core
+use App\Http\Controllers\HomeController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\UserController;
-use App\Http\Controllers\HomeController;
-use App\Http\Controllers\TransactionController;
+
+// Business
 use App\Http\Controllers\ShopsController;
+use App\Http\Controllers\ProductController;
+use App\Http\Controllers\ProductCategoryController;
+use App\Http\Controllers\UnitController;
+
+
+
+// Management
 use App\Http\Controllers\StaffController;
 use App\Http\Controllers\RoleController;
 
+// Transactions
+use App\Http\Controllers\TransactionController;
+
 /*
 |--------------------------------------------------------------------------
-| Web Routes
+| Public Routes
 |--------------------------------------------------------------------------
-|
-| Clean, structured routes for login, registration, dashboard, and users.
-|
 */
 
-// ------------------------
-// Guest Routes (not logged in)
-// ------------------------
+// Redirect root to login
+Route::get('/', fn () => redirect()->route('login'));
 
-// Default route: redirect guests to login
-Route::get('/', function () {
-    return redirect()->route('login');
-});
-
-// Login page
+// Authentication
 Route::get('/login', [LoginController::class, 'showLoginForm'])
     ->middleware('guest')
     ->name('login');
 
-// Handle login submission
 Route::post('/login', [LoginController::class, 'login'])
     ->name('login.submit');
 
-// Register page
 Route::get('/register', [RegisterController::class, 'showRegistrationForm'])
     ->middleware('guest')
     ->name('register');
 
-// Handle registration submission
 Route::post('/register', [RegisterController::class, 'register']);
 
-// Password reset (lost password)
-Route::get('/password/lost', 'ForgotPasswordController@forgotPassword')->name('password.lost');
+// Export products to Excel
+Route::get('products/export-excel', [ProductController::class, 'exportExcel'])
+    ->name('products.export.excel');
 
-// ------------------------
-// Authenticated Routes (must be logged in)
-// ------------------------
-Route::middleware(['auth'])->group(function () {
+// Export products to PDF
+Route::get('products/export-pdf', [ProductController::class, 'exportPDF'])
+    ->name('products.export.pdf');
 
-    // Dashboard (admin only)
+
+/*
+|--------------------------------------------------------------------------
+| Authenticated Routes
+|--------------------------------------------------------------------------
+*/
+Route::middleware('auth')->group(function () {
+
+    /*
+    | Dashboard
+    */
     Route::get('/dashboard', [DashboardController::class, 'index'])
         ->name('dashboard');
 
-    // Change password
-    Route::get('/changepassword', [UserController::class, 'changepassword'])->name('changepassword');
-    Route::post('/updatepassword', [UserController::class, 'updatePassword'])->name('updatepassword');
-
-    // Profile
-    Route::get('/profile', [UserController::class, 'profile'])->name('profile');
-    Route::get('/user/profile', [UserController::class, 'profile']);
-
-    // Update user
-    Route::post('/update/{user_id}', [UserController::class, 'updateprofile'])->name('updateprofile');
-    Route::post('/changePassword/{user_id}', [UserController::class, 'updatePassword'])->name('changePassword');
-
-    // Pages resource
-    Route::resource('pages', 'PagesController');
-
-    // Logout
-    Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
-    Route::get('/main/logout', [UserController::class, 'userlogout'])->name('user.logout');
-});
-// ------------------------
-// Optional home route (if needed)
-// ------------------------
-Route::get('/home', [HomeController::class, 'index'])
-    ->middleware('auth')
-    ->name('dashboard.index');
-
-    //navigation
-    // routes/web.php
-Route::get('/dashboard/shop', function () {
-    return view('dashboard.shops.shop');
-// points to resources/views/dashboard/shps/shop.blade.php
-})->name('dashboard.shop');
-
-//staff
-Route::get('/dashboard/staff', function () {
-    return view('dashboard.staff.staff');
-})->name('dashboard.staff');
+    Route::get('/home', [HomeController::class, 'index'])
+        ->name('dashboard.index');
 
 
-//shop
-Route::middleware(['auth'])->group(function () {
+    /*
+    | User / Profile
+    */
+    Route::get('/profile', [UserController::class, 'profile'])
+        ->name('profile');
 
-  // Add new shop
+    Route::post('/update/{user_id}', [UserController::class, 'updateprofile'])
+        ->name('updateprofile');
+
+    Route::get('/changepassword', [UserController::class, 'changepassword'])
+        ->name('changepassword');
+
+    Route::post('/changePassword/{user_id}', [UserController::class, 'updatePassword'])
+        ->name('changePassword');
+
+    /*
+    | Logout
+    */
+    Route::post('/logout', [LoginController::class, 'logout'])
+        ->name('logout');
+
+    Route::get('/main/logout', [UserController::class, 'userlogout'])
+        ->name('user.logout');
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Shops
+    |--------------------------------------------------------------------------
+    */
+    Route::get('/dashboard/shop', [DashboardController::class, 'shopDashboard'])
+        ->name('dashboard.shop');
+
+    // Shop CRUD
     Route::post('/shops', [ShopsController::class, 'store'])->name('shops.store');
-});
+    Route::get('/shops/{id}', [ShopsController::class, 'show'])->name('shops.show');
 
-Route::middleware(['auth'])->get('/dashboard/shop', [ShopsController::class, 'index'])->name('dashboard.shop');
+    // Shop index (all shops)
+    Route::get('/dashboard/shop', [ShopsController::class, 'index'])->name('dashboard.shop');
 
-// Route::middleware(['auth'])->get('/shops/{shop}', [ShopsController::class, 'show'])->name('shops.show');
-Route::get('/dashboard/shop/{id}', [DashboardController::class, 'showShop'])->name('dashboard.shop.show');
-Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-
-// Generic Shop dashboard (My Business link)
-Route::get('/dashboard/shop', [DashboardController::class, 'shopDashboard'])->name('dashboard.shop');
+    // Specific shop dashboard
+    Route::get('/dashboard/shop/{id}', [DashboardController::class, 'showShop'])
+        ->name('dashboard.shop.show');
 
 
-// Show a specific shop by id (when clicking $shop->name)
+    /*
+    |--------------------------------------------------------------------------
+    | Products & Inventory
+    |--------------------------------------------------------------------------
+    */
 
-Route::get('/shops/{id}', [ShopsController::class, 'show'])->name('shops.show');
+  // Download Excel template
+Route::get('products/download-template', [ProductController::class, 'downloadTemplate'])
+    ->name('products.download.template');
 
-// products
+// Import products from Excel
+Route::post('products/import-excel', [ProductController::class, 'importExcel'])
+    ->name('products.import.excel');
+    // Route::resource('products', ProductController::class);
 
-Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('products/download-template', [ProductController::class, 'downloadTemplate'])->name('products.download.template');
 
+// Import Excel
+    Route::post('products/import-excel', [ProductController::class, 'importExcel'])->name('products.import.excel');
+     Route::resource('products', ProductController::class)->only(['index','create','store','edit','update','destroy']);
 
-
-
-
-
-
-
-
-
-
-
-//transactions
-Route::middleware(['auth'])->group(function () {
-    Route::get('/transactions', [TransactionController::class, 'index'])->name('transactions.index');
-    Route::get('/transactions/create', [TransactionController::class, 'create'])->name('transactions.create');
-    Route::post('/transactions', [TransactionController::class, 'store'])->name('transactions.store');
-});
-
-//staff
+    Route::resource('categories', ProductCategoryController::class);
+    Route::resource('units', UnitController::class);
 
 
-Route::middleware(['auth'])->group(function () {
+
+    /*
+    |--------------------------------------------------------------------------
+    | Transactions
+    |--------------------------------------------------------------------------
+    */
+    Route::get('/transactions', [TransactionController::class, 'index'])
+        ->name('transactions.index');
+
+    Route::get('/transactions/create', [TransactionController::class, 'create'])
+        ->name('transactions.create');
+
+    Route::post('/transactions', [TransactionController::class, 'store'])
+        ->name('transactions.store');
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Staff
+    |--------------------------------------------------------------------------
+    */
     Route::get('/dashboard/staff', [StaffController::class, 'index'])
         ->name('dashboard.staff');
 
     Route::post('/dashboard/staff', [StaffController::class, 'store'])
         ->name('staff.store');
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Roles & Permissions
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('dashboard')->name('dashboard.')->group(function () {
+        Route::get('roles', [RoleController::class, 'index'])->name('role');
+        Route::post('roles', [RoleController::class, 'store'])->name('roles.store');
+        Route::put('roles/{role}', [RoleController::class, 'update'])->name('roles.update');
+        Route::delete('roles/{role}', [RoleController::class, 'destroy'])->name('roles.destroy');
+    });
+
+    // export products
+   
+
 });
-
-
-
-Route::middleware(['auth'])->prefix('dashboard')->name('dashboard.')->group(function () {
-
-    // Role routes
-    Route::get('roles', [RoleController::class, 'index'])->name('role');  // list roles
-    Route::post('roles', [RoleController::class, 'store'])->name('roles.store'); // store
-    Route::put('roles/{role}', [RoleController::class, 'update'])->name('roles.update'); // update
-    Route::delete('roles/{role}', [RoleController::class, 'destroy'])->name('roles.destroy'); // delete
-
-});
-
-
-
-
-
-
-

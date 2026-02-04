@@ -1,4 +1,9 @@
 <?php $__env->startSection('title', 'Manage Product'); ?>
+<?php
+    $products   = $products   ?? collect();
+    $categories = $categories ?? collect();
+    $units      = $units      ?? collect();
+?>
 
 <div class="cat__content">
 
@@ -6,10 +11,36 @@
         <a href="<?php echo e(url()->previous()); ?>" class="btn btn-secondary btn-sm">
             <i class="fa fa-arrow-left"></i> Back
         </a>
-        <a href="<?php echo e(url('products.upload')); ?>" class="btn btn-warning btn-sm">
-            <i class="fa fa-upload"></i> Upload Excel
-        </a>
+        <button type="button" class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#uploadExcelModal">
+          <i class="fa fa-upload"></i> Upload Excel
+        </button>
     </div>
+
+    <!-- Upload Excel Modal -->
+<div class="modal fade" id="uploadExcelModal" tabindex="-1" aria-labelledby="uploadExcelModalLabel" aria-hidden="true" style="margin-top: 150px;">
+  <div class="modal-dialog">
+    <form action="<?php echo e(route('products.import.excel')); ?>" method="POST" enctype="multipart/form-data">
+        <?php echo csrf_field(); ?>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="uploadExcelModalLabel">Upload Products Excel</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>You can <a href="<?php echo e(route('products.download.template')); ?>">download the sample Excel format</a> to fill in product data.</p>
+                <div class="mb-3">
+                    <label for="excel_file" class="form-label">Choose Excel file</label>
+                    <input type="file" name="excel_file" id="excel_file" class="form-control" required>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="submit" class="btn btn-success">Upload</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </form>
+  </div>
+</div>
 
         
             
@@ -31,30 +62,16 @@
 
         <!-- Card Body -->
         <div class="card-body">
-            <?php
-                // Sample products for testing
-                $products = [
-                    [
-                        'id'=>1, 'img'=>'https://via.placeholder.com/50', 'name'=>'Product A', 'qty'=>12, 'unit'=>'pcs', 
-                        'purchase'=>1000, 'sale'=>1500, 'expire'=>'2026-02-28'
-                    ],
-                    [
-                        'id'=>2, 'img'=>'https://via.placeholder.com/50', 'name'=>'Product B', 'qty'=>8, 'unit'=>'pcs', 
-                        'purchase'=>800, 'sale'=>1200, 'expire'=>'2026-03-15'
-                    ],
-                    [
-                        'id'=>3, 'img'=>'https://via.placeholder.com/50', 'name'=>'Product C', 'qty'=>0, 'unit'=>'pcs', 
-                        'purchase'=>500, 'sale'=>900, 'expire'=>'2026-01-20'
-                    ],
-                ];
-            ?>
+           
      <div class="d-flex gap-2 mb-2">
-                <button class="btn btn-success btn-sm">
-                    <i class="fa fa-file-excel-o"></i> Export Excel
-                </button>
-                <button class="btn btn-danger btn-sm">
-                    <i class="fa fa-file-pdf-o"></i> Export PDF
-                </button>
+               <a href="<?php echo e(route('products.export.excel')); ?>" class="btn btn-success btn-sm">
+    <i class="fa fa-file-excel-o"></i> Export Excel
+      </a>
+
+      <a href="<?php echo e(route('products.export.pdf')); ?>" class="btn btn-danger btn-sm">
+          <i class="fa fa-file-pdf-o"></i> Export PDF
+      </a>
+
             </div>
             <!-- Table -->
             <table class="table table-hover table-bordered text-center" id="productTable" style="width: 100%;">
@@ -70,34 +87,58 @@
                         <th>Action</th>
                     </tr>
                 </thead>
-                <tbody>
-                    <?php $__currentLoopData = $products; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $product): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                    <tr>
-                        <td><img src="<?php echo e($product['img']); ?>" alt="Product Image" width="50"></td>
-                        <td><?php echo e($product['name']); ?></td>
-                        <td><?php echo e($product['qty']); ?></td>
-                        <td><?php echo e($product['unit']); ?></td>
-                        <td><?php echo e(number_format($product['purchase'])); ?></td>
-                        <td><?php echo e(number_format($product['sale'])); ?></td>
-                        <td><?php echo e($product['expire']); ?></td>
-                        <td>
-                            <div class="btn-group">
-                                <button class="btn btn-info btn-sm dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                                    <i class="fa fa-ellipsis-v"></i>
-                                </button>
-                                <ul class="dropdown-menu">
-                                    <li><a class="dropdown-item" href="#"><i class="fa fa-tags"></i> Category</a></li>
-                                    <li><a class="dropdown-item" href="#"><i class="fa fa-picture-o"></i> Image</a></li>
-                                    <li><a class="dropdown-item" href="#"><i class="fa fa-usd"></i> Price</a></li>
-                                    <li><a class="dropdown-item" href="#"><i class="fa fa-adn"></i> Attributes</a></li>
-                                </ul>
-                                <a href="#" class="btn btn-primary btn-sm"><i class="fa fa-edit"></i></a>
-                                <a href="#" class="btn btn-danger btn-sm" onclick="return confirm('Do you want to delete this?')"><i class="fa fa-trash"></i></a>
-                            </div>
-                        </td>
-                    </tr>
-                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
-                </tbody>
+              <tbody>
+    <?php $__currentLoopData = $products; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $product): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+    <tr>
+        <td>
+            <?php if($product->image): ?>
+                <img src="<?php echo e(asset('storage/' . $product->image)); ?>" alt="Product Image" width="50">
+            <?php else: ?>
+                <img src="https://via.placeholder.com/50" alt="No Image" width="50">
+            <?php endif; ?>
+        </td>
+        <td><?php echo e($product->name); ?></td>
+        <td><?php echo e($product->quantity ?? 0); ?></td>
+        <td><?php echo e($product->unit ? $product->unit->name : '-'); ?></td>
+        <td><?php echo e($product->purchase_price ? number_format($product->purchase_price) : '-'); ?></td>
+        <td><?php echo e($product->selling_price ? number_format($product->selling_price) : '-'); ?></td>
+        <td><?php echo e($product->expire_date ? \Carbon\Carbon::parse($product->expire_date)->format('Y-m-d') : '-'); ?></td>
+        <td>
+            <div class="btn-group">
+               <button class="btn btn-primary btn-sm edit-product-btn" 
+        data-id="<?php echo e($product->id); ?>"
+        data-name="<?php echo e($product->name); ?>"
+        data-brand="<?php echo e($product->brand); ?>"
+        data-category="<?php echo e($product->category_id); ?>"
+        data-unit="<?php echo e($product->unit_id); ?>"
+        data-quantity="<?php echo e($product->quantity); ?>"
+        data-purchase="<?php echo e($product->purchase_price); ?>"
+        data-selling="<?php echo e($product->selling_price); ?>"
+        data-expire="<?php echo e($product->expire_date); ?>"
+        data-image="<?php echo e($product->image ? asset('storage/'.$product->image) : ''); ?>">
+    <i class="fa fa-edit"></i>
+</button>
+
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="#"><i class="fa fa-tags"></i> Category</a></li>
+                    <li><a class="dropdown-item" href="#"><i class="fa fa-picture-o"></i> Image</a></li>
+                    <li><a class="dropdown-item" href="#"><i class="fa fa-usd"></i> Price</a></li>
+                    <li><a class="dropdown-item" href="#"><i class="fa fa-adn"></i> Attributes</a></li>
+                </ul>
+               
+                <form action="<?php echo e(route('products.destroy', $product->id)); ?>" method="POST" style="display:inline-block;">
+                    <?php echo csrf_field(); ?>
+                    <?php echo method_field('DELETE'); ?>
+                    <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Do you want to delete this?')">
+                        <i class="fa fa-trash"></i>
+                    </button>
+                </form>
+            </div>
+        </td>
+    </tr>
+    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+</tbody>
+
             </table>
 
         </div> <!-- /card-body -->
@@ -113,7 +154,9 @@
 <div class="modal fade" id="addProductModal" tabindex="-1" aria-labelledby="addProductModalLabel" aria-hidden="true" style="margin-top: 100px;">
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
-      <form id="addProductForm" action="<?php echo e(url('products.store')); ?>" method="POST" enctype="multipart/form-data">
+      <form id="addProductForm" action="<?php echo e(route('products.store')); ?>" method="POST" enctype="multipart/form-data">
+    <?php echo csrf_field(); ?>
+
         <?php echo csrf_field(); ?>
         <div class="modal-header">
           <h5 class="modal-title" id="addProductModalLabel">Add New Product</h5>
@@ -129,16 +172,19 @@
             </div>
 
             <!-- Item Category -->
-            <div class="col-md-6">
-              <label for="category" class="form-label">Item Category</label>
-              <select class="form-select" id="category" name="category">
-                <option value="">Select Category</option>
-                <option value="Electronics">Electronics</option>
-                <option value="Groceries">Groceries</option>
-                <option value="Clothing">Clothing</option>
-                <option value="Stationery">Stationery</option>
-              </select>
-            </div>
+       <div class="col-md-6">
+            <label class="form-label">Item Category</label>
+            <select class="form-select" name="category_id">
+              <option value="">Select Category</option>
+              <?php $__currentLoopData = $categories; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $category): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                  <option value="<?php echo e($category->id); ?>">
+                      <?php echo e($category->name); ?>
+
+                  </option>
+              <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+            </select>
+          </div>
+
 
             <!-- Size -->
             <div class="col-md-6">
@@ -165,16 +211,18 @@
             </div>
 
             <!-- Unit -->
-            <div class="col-md-3">
-              <label for="unit" class="form-label">Unit <span class="text-danger">*</span></label>
-              <select class="form-select" id="unit" name="unit" required>
-                <option value="">Select Unit</option>
-                <option value="pcs">pcs</option>
-                <option value="kg">kg</option>
-                <option value="ltr">ltr</option>
-                <option value="box">box</option>
-              </select>
-            </div>
+        <div class="col-md-3">
+          <label class="form-label">Unit <span class="text-danger">*</span></label>
+          <select class="form-select" name="unit_id" required>
+            <option value="">Select Unit</option>
+            <?php $__currentLoopData = $units; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $unit): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                <option value="<?php echo e($unit->id); ?>">
+                    <?php echo e($unit->name); ?> (<?php echo e($unit->short_name); ?>)
+                </option>
+            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+          </select>
+        </div>
+
 
             <!-- Retail Purchasing Price -->
             <div class="col-md-6">
@@ -233,17 +281,10 @@
 <!-- Scripts to enhance modal -->
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    var addProductModal = document.getElementById('addProductModal');
     var form = document.getElementById('addProductForm');
     var imageInput = document.getElementById('image');
     var imagePreview = document.getElementById('imagePreview');
-
-    // Reset form when modal opens
-    addProductModal.addEventListener('show.bs.modal', function () {
-        form.reset();
-        imagePreview.style.display = 'none';
-        imagePreview.src = '#';
-    });
+    var addProductModal = document.getElementById('addProductModal');
 
     // Preview image before upload
     imageInput.addEventListener('change', function () {
@@ -258,10 +299,252 @@ document.addEventListener('DOMContentLoaded', function () {
             imagePreview.style.display = 'none';
         }
     });
+
+    // AJAX submit
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        var formData = new FormData(form);
+
+        fetch(form.action, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>'
+            },
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if(data.success){
+                // Show success message
+                alert(data.success);
+
+                // Reset form
+                form.reset();
+                imagePreview.style.display = 'none';
+
+                // Hide modal
+                var modal = bootstrap.Modal.getInstance(addProductModal);
+                modal.hide();
+
+                // Optional: reload your product table here via AJAX
+            } else {
+                // Show validation errors
+                let errors = data.errors;
+                let message = '';
+                for(let field in errors){
+                    message += errors[field] + "\n";
+                }
+                alert(message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Something went wrong!');
+        });
+    });
 });
 </script>
 
 </div>
+
+<!-- Edit Product Modal -->
+<div class="modal fade" id="editProductModal" tabindex="-1" aria-labelledby="editProductModalLabel" aria-hidden="true" style="margin-top: 150px;">
+  <div class="modal-dialog modal-lg">
+    <form id="editProductForm" method="POST" enctype="multipart/form-data">
+      <?php echo csrf_field(); ?>
+      <?php echo method_field('PUT'); ?>
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="editProductModalLabel">Edit Product</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row g-3">
+            <!-- Name -->
+            <div class="col-md-6">
+              <label for="edit_name" class="form-label">Name <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" id="edit_name" name="name" required>
+            </div>
+
+            <!-- Brand -->
+            <div class="col-md-6">
+              <label for="edit_brand" class="form-label">Brand</label>
+              <input type="text" class="form-control" id="edit_brand" name="brand">
+            </div>
+
+            <!-- Category -->
+            <div class="col-md-6">
+              <label class="form-label">Category</label>
+              <select class="form-select" id="edit_category_id" name="category_id">
+                <option value="">Select Category</option>
+                <?php $__currentLoopData = $categories; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $category): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                  <option value="<?php echo e($category->id); ?>"><?php echo e($category->name); ?></option>
+                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+              </select>
+            </div>
+
+            <!-- Unit -->
+            <div class="col-md-6">
+              <label class="form-label">Unit <span class="text-danger">*</span></label>
+              <select class="form-select" id="edit_unit_id" name="unit_id" required>
+                <option value="">Select Unit</option>
+                <?php $__currentLoopData = $units; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $unit): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                  <option value="<?php echo e($unit->id); ?>"><?php echo e($unit->name); ?> (<?php echo e($unit->short_name); ?>)</option>
+                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+              </select>
+            </div>
+
+            <!-- Quantity -->
+            <div class="col-md-6">
+              <label for="edit_quantity" class="form-label">Quantity</label>
+              <input type="number" class="form-control" id="edit_quantity" name="quantity" min="0">
+            </div>
+
+            <!-- Purchase Price -->
+            <div class="col-md-6">
+              <label for="edit_purchase_price" class="form-label">Purchase Price</label>
+              <input type="number" class="form-control" id="edit_purchase_price" name="purchase_price" min="0">
+            </div>
+
+            <!-- Selling Price -->
+            <div class="col-md-6">
+              <label for="edit_selling_price" class="form-label">Selling Price</label>
+              <input type="number" class="form-control" id="edit_selling_price" name="selling_price" min="0">
+            </div>
+
+            <!-- Expire Date -->
+            <div class="col-md-6">
+              <label for="edit_expire_date" class="form-label">Expire Date</label>
+              <input type="date" class="form-control" id="edit_expire_date" name="expire_date">
+            </div>
+
+            <!-- Image Upload -->
+            <div class="col-md-12">
+              <label for="edit_image" class="form-label">Product Image</label>
+              <input type="file" class="form-control" id="edit_image" name="image" accept="image/*">
+              <img id="edit_image_preview" src="#" alt="Preview Image" style="display:none; max-height:100px; margin-top:10px;">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-success">Update Product</button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const editButtons = document.querySelectorAll('.edit-product-btn');
+    const editForm = document.getElementById('editProductForm');
+
+    editButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const id = this.dataset.id;
+            const name = this.dataset.name;
+            const brand = this.dataset.brand;
+            const category = this.dataset.category;
+            const unit = this.dataset.unit;
+            const quantity = this.dataset.quantity;
+            const purchase = this.dataset.purchase;
+            const selling = this.dataset.selling;
+            const expire = this.dataset.expire;
+            const image = this.dataset.image;
+
+            // Fill form fields
+            editForm.dataset.id = id; // save ID for AJAX
+            document.getElementById('edit_name').value = name;
+            document.getElementById('edit_brand').value = brand;
+            document.getElementById('edit_category_id').value = category;
+            document.getElementById('edit_unit_id').value = unit;
+            document.getElementById('edit_quantity').value = quantity;
+            document.getElementById('edit_purchase_price').value = purchase;
+            document.getElementById('edit_selling_price').value = selling;
+            document.getElementById('edit_expire_date').value = expire;
+
+            const imgPreview = document.getElementById('edit_image_preview');
+            if(image){
+                imgPreview.src = image;
+                imgPreview.style.display = 'block';
+            } else {
+                imgPreview.style.display = 'none';
+            }
+
+            // Show modal
+            const modal = new bootstrap.Modal(document.getElementById('editProductModal'));
+            modal.show();
+        });
+    });
+
+    // Preview uploaded image
+    const imageInput = document.getElementById('edit_image');
+    const imagePreview = document.getElementById('edit_image_preview');
+
+    imageInput.addEventListener('change', function() {
+        if(this.files && this.files[0]){
+            const reader = new FileReader();
+            reader.onload = function(e){
+                imagePreview.src = e.target.result;
+                imagePreview.style.display = 'block';
+            }
+            reader.readAsDataURL(this.files[0]);
+        }
+    });
+
+    // AJAX submit
+    editForm.addEventListener('submit', function(e){
+        e.preventDefault();
+
+        const id = this.dataset.id;
+        const formData = new FormData(this);
+
+        fetch(`/products/${id}`, {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value
+            },
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if(data.success){
+                // Close modal
+                const modalEl = document.getElementById('editProductModal');
+                const modal = bootstrap.Modal.getInstance(modalEl);
+                modal.hide();
+
+                // Optionally: update table row without reloading
+                const row = document.querySelector(`#productTable tr[data-id='${id}']`);
+                if(row){
+                    row.querySelector('td:nth-child(2)').innerText = data.product.name;
+                    row.querySelector('td:nth-child(3)').innerText = data.product.quantity ?? 0;
+                    row.querySelector('td:nth-child(4)').innerText = data.product.unit_name ?? '-';
+                    row.querySelector('td:nth-child(5)').innerText = data.product.purchase_price ?? '-';
+                    row.querySelector('td:nth-child(6)').innerText = data.product.selling_price ?? '-';
+                    row.querySelector('td:nth-child(7)').innerText = data.product.expire_date ?? '-';
+                    if(data.product.image){
+                        row.querySelector('td:nth-child(1) img').src = data.product.image;
+                    }
+                }
+
+                // Show success message
+                alert(data.success);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Failed to update product.');
+        });
+    });
+});
+</script>
+
+
+</div>
+
 
 <!-- Scripts -->
 <script>

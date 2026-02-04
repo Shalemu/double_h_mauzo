@@ -138,7 +138,7 @@
 
 
 {{-- ADD ROLE MODAL --}}
-<div class="modal fade" id="addRoleModal" tabindex="-1" style="">
+<div class="modal fade" id="addRoleModal" tabindex="-1">
     <div class="modal-dialog modal-md" style="margin-top: 200px;">
         <div class="modal-content">
             <form method="POST" action="{{ route('dashboard.roles.store') }}">

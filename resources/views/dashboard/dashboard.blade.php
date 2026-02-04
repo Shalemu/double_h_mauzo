@@ -53,6 +53,17 @@
             @include('dashboard.shops.show')
         </div>
 
+    @php
+        use App\Models\Products;
+        use App\Models\ProductCategory;
+        use App\Models\Unit;
+
+        $products   = $products   ?? Products::with(['unit','category'])->get();
+        $categories = $categories ?? ProductCategory::whereNull('parent_id')->get();
+        $units      = $units      ?? Unit::all();
+    @endphp
+
+
         <div id="product-section" class="dashboard-section">
             @include('dashboard.products.index')
         </div>
