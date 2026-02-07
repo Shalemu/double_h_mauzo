@@ -45,41 +45,60 @@ public function create()
     /**
      * Store product
      */
-    public function store(Request $request)
+public function store(Request $request)
 {
     $request->validate([
         'name' => 'required|string|max:255',
-        'brand' => 'nullable|string|max:255',
-        'category_id' => 'nullable|integer',
-        'subcategory_id' => 'nullable|integer',
         'unit_id' => 'required|integer',
-        'quantity' => 'nullable|integer|min:0',
-        'min_quantity' => 'nullable|integer|min:0',
-        'purchase_price' => 'nullable|numeric|min:0',
         'selling_price' => 'nullable|numeric|min:0',
-        'invoice_number' => 'nullable|string',
         'barcode' => 'nullable|string',
         'expire_date' => 'nullable|date',
-        'size' => 'nullable|string',
-        'color' => 'nullable|string',
         'image' => 'nullable|image|max:2048',
     ]);
 
-    $data = $request->all();
-    $data['admin_id'] = Auth::id();
+    $data = $request->only([
+        'name',
+        'item_code',
+        'barcode',
+        'brand',
+        'category_id',
+        'subcategory_id',
+        'unit_id',
+        'quantity',
+        'min_quantity',
+        'purchase_price',
+        'selling_price',
+        'invoice_number',
+        'expire_date',
+        'size',
+        'color',
+    ]);
+
+    $admin = Auth::user();
+
+    if (!$admin->shop) {
+    return response()->json([
+        'error' => 'This user has no shop assigned'
+    ], 422);
+}
+
+$data['shop_id'] = $admin->shop->id;
+
+    //  IMPORTANT PART
+    $data['admin_id'] = $admin->id;
+    $data['shop_id']  = $admin->shop->id; 
     $data['sync_status'] = 0;
 
-    // Handle image upload
     if ($request->hasFile('image')) {
-        $file = $request->file('image');
-        $path = $file->store('products', 'public');
-        $data['image'] = $path;
+        $data['image'] = $request->file('image')
+            ->store('products', 'public');
     }
 
     Products::create($data);
 
     return response()->json(['success' => 'Product created successfully']);
 }
+
 
 public function show($id)
 {

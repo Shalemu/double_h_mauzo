@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Auth;
 use Session;
-use App\User;
+use App\Models\Users;
 use Validator;
 use Image;
 use Illuminate\Support\Facades\Input;
@@ -30,13 +30,13 @@ class UserController extends Controller
 	
 	public function profile()
     {
-        $users = User::all();
+        $users = Users::all();
         return view('user.profile',  compact('users'));
     }
 	
 	public function changepassword()
     {
-        $users = User::all();
+        $users = Users::all();
         return view('user.changepassword', ['users' => $users]);
     }
 
@@ -48,7 +48,15 @@ class UserController extends Controller
 
     public function updateprofile(Request $request, $user_id)
     {
-        $Usr = User::find($user_id);
+        $Usr = Users::find($user_id);
+         $request->validate([
+            'name' => 'required|string|max:255',
+            'username' => 'required|string|max:255|unique:users,username,' . $user_id,
+            'email' => 'required|string|email|max:255|unique:users,email,' . $user_id,
+            'contact_no' => 'nullable|string|max:20',
+            'profile_summary' => 'nullable|string|max:500',
+            'profile_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+        ]);
         $Usr->name = $request->input('name');
         $Usr->username = $request->input('username');
         $Usr->email = $request->input('email');
@@ -93,6 +101,7 @@ class UserController extends Controller
                         return redirect('changepassword')->with('error', 'New password and Confirm password did not match !');
                     }
                 }else
+                
                 {
                     return redirect('changepassword')->with('error','Current password is incorrect !');
                 }

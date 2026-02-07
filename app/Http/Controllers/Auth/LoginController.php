@@ -3,79 +3,106 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Foundation\Auth\AuthenticatesUsers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Models\Staff;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
+
 
 class LoginController extends Controller
 {
-    use AuthenticatesUsers;
-
-    /**
-     * Redirect path after successful login
-     */
-    protected $redirectTo = '/dashboard';
-
-    /**
-     * Only guests can access login, except logout
-     */
     public function __construct()
     {
+        // Only guests can access login, except logout
         $this->middleware('guest')->except('logout');
     }
 
     /**
-     * Allow login via email or username
+     * Show the login form
      */
-    protected function credentials(Request $request)
+    public function showLoginForm()
     {
-        $login = $request->input('email'); // from login form
-        $field = filter_var($login, FILTER_VALIDATE_EMAIL) ? 'email' : 'username';
-
-        return [
-            $field => $login,
-            'password' => $request->password,
-        ];
+        return view('auth.login'); // your blade login view
     }
 
     /**
-     * Custom login logic to allow only admin users
+     * Handle login request
      */
     public function login(Request $request)
-    {
-        // Validate form input
-        $request->validate([
-            'email'    => 'required|string',
-            'password' => 'required|string',
-        ]);
+{
+    $request->validate([
+        'email'    => 'required|string', // email OR phone
+        'password' => 'required|string|min:4',
+    ]);
 
-        // Attempt authentication
-        if (!Auth::attempt($this->credentials($request))) {
-            return back()->withErrors([
-                'email' => 'Invalid login credentials.',
-            ])->withInput($request->only('email'));
+    $login = $request->email;
+    $password = $request->password;
+
+    Log::info("Login attempt", ['login' => $login, 'password_length' => strlen($password)]);
+
+    // ----------------------------
+    // 1️⃣ Attempt Admin / Sub-admin login (users table)
+    // ----------------------------
+    $field = filter_var($login, FILTER_VALIDATE_EMAIL) ? 'email' : 'username';
+    if (Auth::guard('web')->attempt([$field => $login, 'password' => $password])) {
+        $user = Auth::guard('web')->user();
+        Log::info("Admin login success", ['user_id' => $user->id, 'role_id' => $user->role_id]);
+
+        if (in_array($user->role_id, [1, 2])) {
+            return redirect()->route('dashboard.admin');
         }
 
-        $user = Auth::user();
-
-        // BLOCK login if user is NOT admin
-        if ($user->role_id !== 2) { // 2 = admin role ID
-            Auth::logout();
-            return back()->withErrors([
-                'email' => 'Access denied. Only admin users can login.',
-            ])->withInput($request->only('email'));
-        }
-
-        // Admin login successful
-        return redirect()->intended($this->redirectTo);
+        Auth::guard('web')->logout();
+        Log::warning("Admin login failed due to role mismatch", ['role_id' => $user->role_id]);
+    } else {
+        Log::info("Admin login attempt failed for $login");
     }
 
+    // ----------------------------
+    // 2️⃣ Attempt Staff login (staff table)
+    // ----------------------------
+// Staff login
+// Staff login
+$staff = Staff::where('phone', $login)->first();
+
+if ($staff && Hash::check($password, $staff->password)) {
+    Auth::guard('staff')->login($staff);
+    $request->session()->regenerate();
+    return redirect()->route('staff.dashboard');
+}
+
+Log::info("Staff login attempt failed for $login");
+
+
+
+
+    // ----------------------------
+    // 3️⃣ Login failed
+    // ----------------------------
+    return back()->withErrors([
+        'email' => 'Invalid login credentials. Check logs for details.',
+    ])->withInput($request->only('email'));
+}
+
     /**
-     * Logout user
+     * Logout both guards
      */
     public function logout(Request $request)
     {
-        Auth::logout();
+        // Logout Admin if logged in
+        if (Auth::guard('web')->check()) {
+            Auth::guard('web')->logout();
+        }
+
+        // Logout Staff if logged in
+        if (Auth::guard('staff')->check()) {
+            Auth::guard('staff')->logout();
+        }
+
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
         return redirect()->route('login');
     }
 }

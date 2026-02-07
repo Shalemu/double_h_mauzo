@@ -2,12 +2,12 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
 
-class Staff extends Model
+class Staff extends Authenticatable
 {
-    use HasFactory;
+    use Notifiable;
 
     protected $table = 'staff';
 
@@ -24,7 +24,8 @@ class Staff extends Model
 
     protected $hidden = ['password'];
 
-       public function role()
+    // Relationships
+    public function role()
     {
         return $this->belongsTo(Role::class);
     }
@@ -34,8 +35,15 @@ class Staff extends Model
         return $this->belongsTo(Shops::class);
     }
 
+    // Accessor
     public function getFullNameAttribute()
     {
         return $this->first_name . ' ' . $this->last_name;
+    }
+
+    // Use phone as the auth identifier
+    public function getAuthIdentifierName()
+    {
+        return 'phone';
     }
 }

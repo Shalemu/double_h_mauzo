@@ -4,27 +4,38 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Shops;
+use App\Models\Products;
+use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
 {
-    // Main summary dashboard
+    // Admin dashboard
     public function index()
     {
-        // This is dashboard.index
-        return view('dashboard.index'); 
+        return view('dashboard.admin.index'); 
     }
 
-    // Show all shops (My Business)
+    // Staff dashboard (POS)
+    public function staff()
+    {
+        $staff = Auth::guard('staff')->user();
+
+        $products = Products::where('shop_id', $staff->shop_id)->get();
+
+        return view('dashboard.staff.index', compact('products'));
+    }
+
+    // Shops list
     public function shopDashboard()
     {
-        $shops = Shops::with('staff')->get(); // fetch all shops
+        $shops = Shops::with('staff')->get();
         return view('dashboard.shops.shop', compact('shops'));
     }
 
-    // Show specific shop dashboard
+    // Single shop dashboard
     public function showShop(Request $request, $id)
     {
-        $shop = Shops::with('staff')->findOrFail($id); 
-        return view('dashboard.dashboard', compact('shop')); // dashboard.dashboard includes show.blade.php
+        $shop = Shops::with('staff')->findOrFail($id);
+        return view('dashboard.dashboard', compact('shop'));
     }
 }

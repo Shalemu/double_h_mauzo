@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use App\Models\Role; // ✅ add this
+use App\Models\Role; 
 
 class Users extends Authenticatable
 {
@@ -55,5 +55,10 @@ class Users extends Authenticatable
     public function role()
     {
         return $this->belongsTo(Role::class, 'role_id');
+    }
+
+      public function shop()
+    {
+        return $this->hasOne(\App\Models\Shops::class, 'admin_id');
     }
 }

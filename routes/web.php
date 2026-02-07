@@ -37,8 +37,11 @@ Route::get('/', fn () => redirect()->route('login'));
 
 // Authentication
 Route::get('/login', [LoginController::class, 'showLoginForm'])
-    ->middleware('guest')
+    ->middleware('guest:web,staff')
     ->name('login');
+
+Route::post('/logout', [LoginController::class, 'logout'])
+    ->name('logout');
 
 Route::post('/login', [LoginController::class, 'login'])
     ->name('login.submit');
@@ -63,13 +66,24 @@ Route::get('products/export-pdf', [ProductController::class, 'exportPDF'])
 | Authenticated Routes
 |--------------------------------------------------------------------------
 */
+Route::middleware(['web'])->group(function () {
+
+   Route::middleware('staff')->group(function () {
+    Route::get('/dashboard/dashboard_staff', [DashboardController::class, 'staff'])
+        ->name('staff.dashboard');
+});
+
+
+});
+
 Route::middleware('auth')->group(function () {
 
     /*
     | Dashboard
     */
-    Route::get('/dashboard', [DashboardController::class, 'index'])
-        ->name('dashboard');
+      Route::get('/dashboard/admin', [DashboardController::class, 'index'])
+        ->middleware('admin')
+        ->name('dashboard.admin');
 
     Route::get('/home', [HomeController::class, 'index'])
         ->name('dashboard.index');

@@ -1,118 +1,127 @@
 <?php
-$shops = $shops ?? collect();
-
+    $shops = $shops ?? collect();
 ?>
 
 <header class="app-header">
- <nav class="cat__top-bar__menu d-flex align-items-center">
+    <nav class="cat__top-bar__menu d-flex align-items-center w-100">
 
-    <!-- Dashboard -->
-    <a href="<?php echo e(url('dashboard')); ?>" class="cat__menu-item">
-        <span class="cat__menu-icon"><i class="icmn-home"></i></span>
-        <span class="cat__menu-text">Dashboard</span>
-    </a>
-
-    <!-- My Business -->
-<div class="dropdown cat__menu-item">
-    <a href="javascript:void(0)" class="dropdown-toggle cat__menu-link"
-       data-toggle="dropdown">
-        <span class="cat__menu-icon"><i class="icmn-briefcase"></i></span>
-        <span class="cat__menu-text">My Business</span>
-    </a>
-
-    <div class="dropdown-menu">
-        <a class="dropdown-item" href="<?php echo e(route('dashboard.shop')); ?>">
-            <i class="icmn-store"></i> My Shop
+        <!-- DASHBOARD -->
+        <a href="<?php echo e(url('dashboard')); ?>" class="cat__menu-item">
+            <span class="cat__menu-icon"><i class="icmn-home"></i></span>
+            <span class="cat__menu-text">Dashboard</span>
         </a>
 
-        <a class="dropdown-item" href="<?php echo e(url('sale-point')); ?>">
-            <i class="icmn-location"></i> Sale Point
-        </a>
+        <!-- MY BUSINESS -->
+        <div class="dropdown cat__menu-item">
+            <a href="javascript:void(0)" class="dropdown-toggle cat__menu-link" data-toggle="dropdown">
+                <span class="cat__menu-icon"><i class="icmn-briefcase"></i></span>
+                <span class="cat__menu-text">My Business</span>
+            </a>
 
-        <!-- NEW: Product Categories -->
-       <a class="dropdown-item" href="javascript:void(0)" data-toggle="modal" data-target="#categoryModal">
-    <i class="icmn-list"></i> Product Categories
-</a>
+            <div class="dropdown-menu">
+                <a class="dropdown-item" href="<?php echo e(route('dashboard.shop')); ?>">
+                    <i class="icmn-store"></i> My Shop
+                </a>
+                <a class="dropdown-item" href="<?php echo e(url('sale-point')); ?>">
+                    <i class="icmn-location"></i> Sale Point
+                </a>
+                <a class="dropdown-item" href="javascript:void(0)" data-toggle="modal" data-target="#categoryModal">
+                    <i class="icmn-list"></i> Product Categories
+                </a>
+                <a class="dropdown-item" href="javascript:void(0)" data-toggle="modal" data-target="#unitModal">
+                    <i class="icmn-meter"></i> Units
+                </a>
+            </div>
+        </div>
 
-        <!-- NEW: Units -->
-      <a class="dropdown-item" href="javascript:void(0)" data-toggle="modal" data-target="#unitModal">
-    <i class="icmn-meter"></i> Units
-</a>
-    </div>
+        <!-- INVOICE & ORDER -->
+        <div class="dropdown cat__menu-item">
+            <a href="javascript:void(0)" class="dropdown-toggle cat__menu-link" data-toggle="dropdown">
+                <span class="cat__menu-icon"><i class="icmn-file-text"></i></span>
+                <span class="cat__menu-text">Invoice & Order</span>
+            </a>
+            <div class="dropdown-menu">
+                <a class="dropdown-item" href="<?php echo e(url('quotation')); ?>">
+                    <i class="icmn-file-plus"></i> Quotation
+                </a>
+                <a class="dropdown-item" href="<?php echo e(url('purchase-order')); ?>">
+                    <i class="icmn-cart"></i> Purchase Order
+                </a>
+                <a class="dropdown-item" href="<?php echo e(url('suppliers')); ?>">
+                    <i class="icmn-truck"></i> My Supplier
+                </a>
+                <a class="dropdown-item" href="<?php echo e(url('customers')); ?>">
+                    <i class="icmn-users"></i> Customer
+                </a>
+            </div>
+        </div>
+
+        <!-- USER MANAGEMENT -->
+        <div class="dropdown cat__menu-item">
+            <a href="javascript:void(0)" class="dropdown-toggle cat__menu-link" data-toggle="dropdown">
+                <span class="cat__menu-icon"><i class="icmn-users"></i></span>
+                <span class="cat__menu-text">User Management</span>
+            </a>
+            <div class="dropdown-menu">
+                <a class="dropdown-item" href="<?php echo e(route('dashboard.staff')); ?>">
+                    <i class="icmn-user"></i> My Staff
+                </a>
+                <a class="dropdown-item" href="<?php echo e(route('dashboard.role')); ?>">
+                    <i class="icmn-lock"></i> Role & Permission
+                </a>
+            </div>
+        </div>
+
+        <!-- REPORTS -->
+        <div class="dropdown cat__menu-item">
+            <a href="javascript:void(0)" class="dropdown-toggle cat__menu-link" data-toggle="dropdown">
+                <span class="cat__menu-icon"><i class="icmn-stats-bars"></i></span>
+                <span class="cat__menu-text">Reports</span>
+            </a>
+            <div class="dropdown-menu">
+                <a class="dropdown-item" href="<?php echo e(url('report/sales')); ?>">
+                    <i class="icmn-stats-growth"></i> Sale Report
+                </a>
+                <a class="dropdown-item" href="<?php echo e(url('report/purchase')); ?>">
+                    <i class="icmn-cart"></i> Purchase Report
+                </a>
+                <a class="dropdown-item" href="<?php echo e(url('report/invoice')); ?>">
+                    <i class="icmn-file-text"></i> Invoice Report
+                </a>
+                <a class="dropdown-item" href="<?php echo e(url('report/profit')); ?>">
+                    <i class="icmn-coins"></i> Profit Report
+                </a>
+                <a class="dropdown-item" href="<?php echo e(url('report/stock')); ?>">
+                    <i class="icmn-box"></i> Stock Report
+                </a>
+                <a class="dropdown-item" href="<?php echo e(url('stock-list')); ?>">
+                    <i class="icmn-list"></i> Stock List
+                </a>
+            </div>
+        </div>
+
+        <!-- USER PROFILE & LOGOUT (RIGHT SIDE) -->
+        
+
+       <div class="cat__logout ml-auto">
+    <form method="POST" action="<?php echo e(route('logout')); ?>">
+        <?php echo csrf_field(); ?>
+        <button type="submit"
+                class="cat__logout-btn"
+                title="Logout"
+                onclick="return confirm('Are you sure you want to logout?');">
+            <i class="icmn-exit"></i>
+        </button>
+    </form>
 </div>
 
-
-    <!-- Invoice & Order -->
-    <div class="dropdown cat__menu-item">
-        <a href="javascript:void(0)" class="dropdown-toggle cat__menu-link"
-           data-toggle="dropdown">
-            <span class="cat__menu-icon"><i class="icmn-file-text"></i></span>
-            <span class="cat__menu-text">Invoice & Order</span>
-        </a>
-        <div class="dropdown-menu">
-            <a class="dropdown-item" href="<?php echo e(url('quotation')); ?>">
-                <i class="icmn-file-plus"></i> Quotation
-            </a>
-            <a class="dropdown-item" href="<?php echo e(url('purchase-order')); ?>">
-                <i class="icmn-cart"></i> Purchase Order
-            </a>
-            <a class="dropdown-item" href="<?php echo e(url('suppliers')); ?>">
-                <i class="icmn-truck"></i> My Supplier
-            </a>
-            <a class="dropdown-item" href="<?php echo e(url('customers')); ?>">
-                <i class="icmn-users"></i> Customer
-            </a>
         </div>
-    </div>
 
-    <!-- User Management -->
-    <div class="dropdown cat__menu-item">
-        <a href="javascript:void(0)" class="dropdown-toggle cat__menu-link"
-           data-toggle="dropdown">
-            <span class="cat__menu-icon"><i class="icmn-users"></i></span>
-            <span class="cat__menu-text">User Management</span>
-        </a>
-        <div class="dropdown-menu">
-            <a class="dropdown-item" href="<?php echo e(route('dashboard.staff')); ?>">
-                <i class="icmn-user"></i> My Staff
-            </a>
-            <a class="dropdown-item" href="<?php echo e(route('dashboard.role')); ?>">
-                <i class="icmn-lock"></i> Role & Permission
-            </a>
-        </div>
-    </div>
+    </nav>
+</header>
 
-    <!-- Reports -->
-    <div class="dropdown cat__menu-item">
-        <a href="javascript:void(0)" class="dropdown-toggle cat__menu-link"
-           data-toggle="dropdown">
-            <span class="cat__menu-icon"><i class="icmn-stats-bars"></i></span>
-            <span class="cat__menu-text">Reports</span>
-        </a>
-        <div class="dropdown-menu">
-            <a class="dropdown-item" href="<?php echo e(url('report/sales')); ?>">
-                <i class="icmn-stats-growth"></i> Sale Report
-            </a>
-            <a class="dropdown-item" href="<?php echo e(url('report/purchase')); ?>">
-                <i class="icmn-cart"></i> Purchase Report
-            </a>
-            <a class="dropdown-item" href="<?php echo e(url('report/invoice')); ?>">
-                <i class="icmn-file-text"></i> Invoice Report
-            </a>
-            <a class="dropdown-item" href="<?php echo e(url('report/profit')); ?>">
-                <i class="icmn-coins"></i> Profit Report
-            </a>
-            <a class="dropdown-item" href="<?php echo e(url('report/stock')); ?>">
-                <i class="icmn-box"></i> Stock Report
-            </a>
-            <a class="dropdown-item" href="<?php echo e(url('stock-list')); ?>">
-                <i class="icmn-list"></i> Stock List
-            </a>
-        </div>
-    </div>
+<br><br><br>
 
-</nav>
-</header><br><br><br>
 
 
 <!-- UNIT MODAL -->
@@ -234,36 +243,32 @@ $shops = $shops ?? collect();
 <style>
 
     /* ===== APP HEADER ===== */
-
 .app-header {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
-    height: 64px;              /* important */
+    height: 100px;
     background: #ffffff;
     box-shadow: 0 6px 24px rgba(0, 0, 0, 0.08);
     z-index: 1100;
     margin-top: 60px;
 }
 
-
-/* ===== TOP MENU WRAPPER ===== */
 .cat__top-bar__menu {
     gap: 6px;
     padding-left: 30px;
 }
 
-/* ===== MENU ITEM ===== */
 .cat__menu-item {
     position: relative;
     display: flex;
     align-items: center;
+    margin-top: 20px;
 }
 
-/* Menu link */
-.cat__menu-link,
-.cat__menu-item > a {
+.cat__menu-item > a,
+.cat__menu-link {
     display: flex;
     align-items: center;
     gap: 10px;
@@ -271,21 +276,16 @@ $shops = $shops ?? collect();
     border-radius: 10px;
     font-weight: 600;
     color: #2d2d2d;
-    transition: all 0.25s ease;
-    cursor: pointer;
     text-decoration: none;
-     transition: background 0.3s ease, color 0.3s ease, transform 0.2s ease;
+    transition: all 0.25s ease;
 }
 
-/* Hover */
-.cat__menu-link:hover,
-.cat__menu-item > a:hover {
-    background: rgba(30, 136, 229, 0.08);
+.cat__menu-item > a:hover,
+.cat__menu-link:hover {
+    background: rgba(30,136,229,0.08);
     color: #1e88e5;
-        transform: translateY(-1px);
 }
 
-/* ===== ICON CIRCLE ===== */
 .cat__menu-icon {
     width: 34px;
     height: 34px;
@@ -294,29 +294,111 @@ $shops = $shops ?? collect();
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.25s ease;
-    font-size: 15px;
 }
 
-.cat__menu-link:hover .cat__menu-icon,
-.cat__menu-item > a:hover .cat__menu-icon {
+.cat__menu-item > a:hover .cat__menu-icon,
+.cat__menu-link:hover .cat__menu-icon {
     background: #1e88e5;
     color: #fff;
 }
 
-/* ===== DIVIDER ===== */
-.cat__menu-item::after {
-    content: '';
-    position: absolute;
-    right: -14px;
-    height: 22px;
-    width: 1px;
-    background: rgba(0,0,0,0.08);
+/* USER MENU */
+.cat__user-menu {
+    margin-left: auto;
+    padding-right: 25px;
 }
 
-.cat__menu-item:last-child::after {
+.cat__user-toggle {
+    padding: 6px 14px;
+    border-radius: 12px;
+    text-decoration: none;
+    color: #2d2d2d;
+}
+
+.cat__user-toggle:hover {
+    background: rgba(30,136,229,0.08);
+}
+
+.cat__user-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: #1e88e5;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.cat__user-menu .dropdown-toggle::after {
     display: none;
 }
+
+.dropdown-menu {
+    border-radius: 14px;
+    padding: 10px;
+    border: none;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.15);
+}
+
+/* Logout container aligned right */
+.cat__logout {
+    margin-left: auto;
+    padding-right: 15px;
+}
+
+/* Logout button styling */
+.cat__logout-btn {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: #f2f4f8;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #e53935;
+    font-size: 18px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+}
+
+.cat__logout-btn:hover {
+    background: #e53935;
+    color: #fff;
+    transform: scale(1.05);
+}
+
+.cat__logout-btn:focus {
+    outline: none;
+}
+
+/* Responsive: adjust on smaller screens */
+@media (max-width: 768px) {
+    .cat__logout {
+        padding-right: 10px;
+    }
+
+    .cat__logout-btn {
+        width: 36px;
+        height: 36px;
+        font-size: 16px;
+    }
+}
+
+@media (max-width: 480px) {
+    .cat__logout {
+        padding-right: 5px;
+    }
+
+    .cat__logout-btn {
+        width: 32px;
+        height: 32px;
+        font-size: 14px;
+    }
+}
+
+
 
 /* ===== DROPDOWN PANEL ===== */
 .dropdown-menu {
@@ -330,6 +412,7 @@ $shops = $shops ?? collect();
     border-radius: 14px;
     box-shadow: 0 20px 50px rgba(0,0,0,0.15);
     transform-origin: top;
+    margin-top: 600px;
 }
 
 /* Dropdown items */
@@ -341,6 +424,7 @@ $shops = $shops ?? collect();
     border-radius: 10px;
     font-weight: 500;
     transition: all 0.2s ease;
+    margin-top: 20px;
 }
 
 /* Dropdown icons */
