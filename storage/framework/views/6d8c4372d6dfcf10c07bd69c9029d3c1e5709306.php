@@ -40,16 +40,19 @@
        data-bs-toggle="dropdown"
        aria-expanded="false">
 
-        <div class="text-end me-2">
-            <div class="fw-bold">
-                <?php echo e(Auth::user()->name ?? 'User'); ?>
+<div class="text-end me-2">
+    <div class="fw-bold">
+        <?php echo e(Auth::user()->name 
+            ?? (Auth::guard('staff')->check() ? Auth::guard('staff')->user()->first_name . ' ' . Auth::guard('staff')->user()->last_name : 'User')); ?>
 
-            </div>
-            <div class="text-muted small">
-                <?php echo e(Auth::user()->role->name ?? 'User'); ?>
+    </div>
+    <div class="text-muted small">
+        <?php echo e(Auth::user()->role->name 
+            ?? (Auth::guard('staff')->check() ? Auth::guard('staff')->user()->role->name : 'User')); ?>
 
-            </div>
-        </div>
+    </div>
+</div>
+
 
         <i class="bi bi-person-circle"></i>
     </a>

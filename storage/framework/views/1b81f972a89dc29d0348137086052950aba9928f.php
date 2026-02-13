@@ -63,7 +63,7 @@
                 <span class="cat__menu-text">User Management</span>
             </a>
             <div class="dropdown-menu">
-                <a class="dropdown-item" href="<?php echo e(route('dashboard.staff')); ?>">
+                <a class="dropdown-item" href="<?php echo e(route('staff.index')); ?>">
                     <i class="icmn-user"></i> My Staff
                 </a>
                 <a class="dropdown-item" href="<?php echo e(route('dashboard.role')); ?>">
@@ -71,6 +71,7 @@
                 </a>
             </div>
         </div>
+
 
         <!-- REPORTS -->
         <div class="dropdown cat__menu-item">

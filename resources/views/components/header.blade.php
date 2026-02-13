@@ -67,6 +67,8 @@
     <script src="{!! asset('/dist/vendors/dropify//dist/js/dropify.min.js') !!}"></script>
     <script src="{!! asset('/dist/vendors/cleanhtmlaudioplayer/src/jquery.cleanaudioplayer.js') !!}"></script>
     <script src="{!! asset('/dist/vendors/cleanhtmlvideoplayer/src/jquery.cleanvideoplayer.js') !!}"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
 
     <!-- CLEAN UI ADMIN TEMPLATE MODULES-->
     <!-- v2.0.0 -->

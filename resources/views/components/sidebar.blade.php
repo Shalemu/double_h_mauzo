@@ -17,18 +17,19 @@
         </li>
 
         <li class="nav-item {{ request()->is('expenses*') ? 'active' : '' }}">
-            <a href="{{ url('expenses') }}">
+            <a href="#" data-content="expense-section">
                 <i class="bi bi-cash"></i>
                 <span>Expenses</span>
             </a>
         </li>
 
         <li class="nav-item {{ request()->is('fixed-expenses*') ? 'active' : '' }}">
-            <a href="{{ url('fixed-expenses') }}">
+            <a href="#" data-content="fixed-expense-section">
                 <i class="bi bi-wallet2"></i>
                 <span>Fixed Expenses</span>
             </a>
         </li>
+
 
         <li class="nav-item {{ request()->is('purchases*') ? 'active' : '' }}">
             <a href="{{ url('purchases') }}">
@@ -37,12 +38,13 @@
             </a>
         </li>
 
-        <li class="nav-item {{ request()->is('sales*') ? 'active' : '' }}">
-            <a href="{{ url('sales') }}">
-                <i class="bi bi-cart-check"></i>
-                <span>Sales</span>
-            </a>
-        </li>
+       <li class="nav-item {{ request()->is('sales*') ? 'active' : '' }}">
+        <a href="#" data-content="sale-section">
+            <i class="bi bi-cart-check"></i>
+            <span>Sales</span>
+        </a>
+      </li>
+
 
         <li class="nav-item {{ request()->is('sales-return*') ? 'active' : '' }}">
             <a href="{{ url('sales-return') }}">

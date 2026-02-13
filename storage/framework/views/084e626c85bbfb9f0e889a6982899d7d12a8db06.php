@@ -30,16 +30,24 @@
                             <table class="table table-sm mb-0">
                                 <tr>
                                     <td>Sales</td>
-                                    <td class="text-end">0</td>
+                                    <td class="text-end"><?php echo e(number_format($todaySales, 2)); ?></td>
                                 </tr>
                                 <tr>
                                     <td>Expenses</td>
-                                    <td class="text-end">0</td>
+                                    <td class="text-end"><?php echo e(number_format($todayExpenses, 2)); ?></td>
                                 </tr>
-                                <tr class="fw-bold text-success">
-                                    <td>Profit</td>
-                                    <td class="text-end">0</td>
-                                </tr>
+                    <tr class="fw-bold">
+                    <td class="<?php echo e((float)$totalProfit < 0 ? 'text-danger' : 'text-success'); ?>">
+                        <?php echo e((float)$totalProfit < 0 ? 'Loss' : 'Profit'); ?>
+
+                    </td>
+                    <td class="text-end <?php echo e((float)$totalProfit < 0 ? 'text-danger' : 'text-success'); ?>">
+                        <?php echo e(number_format($totalProfit, 2)); ?>
+
+                    </td>
+                </tr>
+
+
                             </table>
                         </div>
                     </div>
@@ -53,16 +61,23 @@
                             <table class="table table-sm mb-0">
                                 <tr>
                                     <td>Sales</td>
-                                    <td class="text-end">49,661,400</td>
+                                    <td class="text-end"><?php echo e(number_format($monthSales, 2)); ?></td>
                                 </tr>
                                 <tr>
                                     <td>Expenses</td>
-                                    <td class="text-end">258</td>
+                                    <td class="text-end"><?php echo e(number_format($monthExpenses, 2)); ?></td>
                                 </tr>
-                                <tr class="fw-bold text-success">
-                                    <td>Profit</td>
-                                    <td class="text-end">16,574,000</td>
-                                </tr>
+                          <tr class="fw-bold">
+                        <td class="<?php echo e((float)$totalProfit < 0 ? 'text-danger' : 'text-success'); ?>">
+                            <?php echo e((float)$totalProfit < 0 ? 'Loss' : 'Profit'); ?>
+
+                        </td>
+                        <td class="text-end <?php echo e((float)$totalProfit < 0 ? 'text-danger' : 'text-success'); ?>">
+                            <?php echo e(number_format($totalProfit, 2)); ?>
+
+                        </td>
+                    </tr>
+
                             </table>
                         </div>
                     </div>
@@ -73,19 +88,27 @@
                     <div class="card border-warning h-100">
                         <div class="card-header bg-warning text-white">Current Stock</div>
                         <div class="card-body p-2">
-                            <table class="table table-sm mb-0">
+                             <table class="table table-sm mb-0">
                                 <tr>
                                     <td>Capital</td>
-                                    <td class="text-end">217,515,600</td>
+                                    <td class="text-end"><?php echo e(number_format($currentCapital, 2)); ?></td>
                                 </tr>
                                 <tr>
                                     <td>Sales</td>
-                                    <td class="text-end">250,907,800</td>
+                                    <td class="text-end"><?php echo e(number_format($totalSales, 2)); ?></td>
                                 </tr>
-                                <tr class="fw-bold text-success">
-                                    <td>Profit</td>
-                                    <td class="text-end">33,392,200</td>
-                                </tr>
+                          <tr class="fw-bold">
+                    <td class="<?php echo e((float)$totalProfit < 0 ? 'text-danger' : 'text-success'); ?>">
+                        <?php echo e((float)$totalProfit < 0 ? 'Loss' : 'Profit'); ?>
+
+                    </td>
+                    <td class="text-end <?php echo e((float)$totalProfit < 0 ? 'text-danger' : 'text-success'); ?>">
+                        <?php echo e(number_format($totalProfit, 2)); ?>
+
+                    </td>
+                </tr>
+
+
                             </table>
                         </div>
                     </div>
@@ -128,33 +151,33 @@
     <div class="col-12">
         <div id="status-tables">
             <!-- Running Out -->
-            <div class="status-table" data-status="running">
-                <table class="table table-bordered table-sm">
-                    <thead class="table-primary h-100">
-                        <tr>
-                            <th>Item</th>
-                            <th>Stock</th>
-                            <th>Last Purchasing Price</th>
-                            <th>Last Selling Price</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>Item A</td>
-                            <td>5</td>
-                            <td>2026-02-03</td>
-                            <td>2026-02-03</td>
-                        </tr>
-                        <tr>
-                            <td>Item B</td>
-                            <td>2</td>
-                            <td>2026-02-03</td>
-                            <td>2026-02-03</td>
-                           
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+       <div class="status-table" data-status="running">
+    <table class="table table-bordered table-sm">
+        <thead class="table-primary h-100">
+            <tr>
+                <th>Item</th>
+                <th>Stock</th>
+                <th>Last Purchasing Price</th>
+                <th>Last Selling Price</th>
+            </tr>
+        </thead>
+        <tbody>
+           <?php $__empty_1 = true; $__currentLoopData = $runningOutProducts; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $product): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
+                <tr>
+                    <td><?php echo e($product->name); ?></td>
+                    <td><?php echo e($product->quantity); ?></td>
+                    <td><?php echo e($product->purchase_price); ?></td>
+                    <td><?php echo e($product->selling_price); ?></td>
+                </tr>
+            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
+                <tr>
+                    <td colspan="4" class="text-center">No running out products found</td>
+                </tr>
+            <?php endif; ?>
+        </tbody>
+    </table>
+</div>
+
 
             <!-- Expiring -->
             <div class="status-table d-none" data-status="expiring">
@@ -166,13 +189,19 @@
                             <th>Stock</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <tr>
-                            <td>Item C</td>
-                            <td>2026-02-10</td>
-                            <td>12</td>
-                        </tr>
-                    </tbody>
+             <tbody>
+            <?php $__empty_1 = true; $__currentLoopData = $expiringProducts; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $product): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
+                <tr>
+                    <td><?php echo e($product->name); ?></td>
+                    <td><?php echo e(\Carbon\Carbon::parse($product->expire_date)->format('Y-m-d')); ?></td>
+                    <td><?php echo e($product->quantity); ?></td>
+                </tr>
+            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
+                <tr>
+                    <td colspan="3" class="text-center">No products expiring in the next 7 days</td>
+                </tr>
+            <?php endif; ?>
+        </tbody>
                 </table>
             </div>
 
@@ -185,12 +214,23 @@
                             <th>Stock</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <tr>
-                            <td>Item D</td>
-                            <td>0</td>
-                        </tr>
-                    </tbody>
+            <tbody>
+<?php $__empty_1 = true; $__currentLoopData = $products->where('quantity', 0); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $product): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
+
+    <tr>
+        <td><?php echo e($product->name); ?></td>
+        <td><?php echo e($product->quantity); ?></td>
+    </tr>
+<?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
+    <tr>
+        <td colspan="2" class="text-center">
+            No finished products found
+        </td>
+    </tr>
+<?php endif; ?>
+</tbody>
+
+
                 </table>
             </div>
 
@@ -204,13 +244,19 @@
                             <th>Stock</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <tr>
-                            <td>Item E</td>
-                            <td>2026-01-20</td>
-                            <td>0</td>
-                        </tr>
-                    </tbody>
+                <tbody>
+            <?php $__empty_1 = true; $__currentLoopData = $expiredProducts; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $product): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
+                <tr>
+                    <td><?php echo e($product->name); ?></td>
+                    <td><?php echo e(\Carbon\Carbon::parse($product->expire_date)->format('Y-m-d')); ?></td>
+                    <td><?php echo e($product->quantity); ?></td>
+                </tr>
+            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
+                <tr>
+                    <td colspan="3" class="text-center">No expired products found</td>
+                </tr>
+            <?php endif; ?>
+        </tbody>
                 </table>
             </div>
 
@@ -225,12 +271,18 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr>
-                            <td>Item F</td>
-                            <td>2026-01-25</td>
-                            <td>5</td>
-                        </tr>
-                    </tbody>
+            <?php $__empty_1 = true; $__currentLoopData = $disposedProducts; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $product): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
+                <tr>
+                    <td><?php echo e($product->name); ?></td>
+                    <td><?php echo e(\Carbon\Carbon::parse($product->disposed_at)->format('Y-m-d') ?? 'N/A'); ?></td>
+                    <td><?php echo e($product->quantity); ?></td>
+                </tr>
+            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
+                <tr>
+                    <td colspan="3" class="text-center">No disposed products found</td>
+                </tr>
+            <?php endif; ?>
+        </tbody>
                 </table>
             </div>
         </div>
@@ -242,5 +294,27 @@
 
 </div>
 
+
+<script>
+document.querySelectorAll('.btn-group [data-status]').forEach(button => {
+    button.addEventListener('click', function () {
+        let status = this.dataset.status;
+
+        // Remove active class from all buttons
+        document.querySelectorAll('.btn-group [data-status]').forEach(btn => btn.classList.remove('active'));
+        this.classList.add('active');
+
+        // Hide all status tables
+        document.querySelectorAll('.status-table').forEach(table => table.classList.add('d-none'));
+
+        // Show only the selected table
+        let activeTable = document.querySelector(`.status-table[data-status="${status}"]`);
+        if (activeTable) {
+            activeTable.classList.remove('d-none');
+        }
+    });
+});
+
+</script>
 
 <?php /**PATH E:\PROJECT\double h\double h\resources\views/dashboard/shops/show.blade.php ENDPATH**/ ?>

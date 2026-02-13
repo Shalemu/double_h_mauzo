@@ -1,5 +1,6 @@
 <?php
 $shops = $shops ?? collect();
+$totalCapital = 0;
 ?>
 
 
@@ -105,42 +106,38 @@ $shops = $shops ?? collect();
         </tr>
     </thead>
     <tbody>
-    <?php $totalCapital = 0; ?>
+        <?php if($shops->count() > 0): ?>
+            <?php $__currentLoopData = $shops; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $shop): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                <tr>
+                    <td>
+                <a href="<?php echo e(route('dashboard.shop.show', ['shop' => $shop->id])); ?>">
+                    <?php echo e($shop->name); ?>
 
-    <?php if(isset($shops) && $shops->count() > 0): ?>
-        <?php $__currentLoopData = $shops; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $shop): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                </a>
+
+                    </td>
+                    <td><?php echo e($shop->total_employees); ?></td>
+                    <td><?php echo e(number_format($shop->total_wages)); ?></td>
+                    <td><?php echo e(number_format($shop->calculated_capital, 2)); ?></td>
+                    <td><?php echo e($shop->location); ?></td>
+                </tr>
+
+                <?php
+                    $totalCapital += $shop->calculated_capital;
+                ?>
+            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+        <?php else: ?>
             <tr>
-                <td>
-                    <!-- Clickable link to shop dashboard -->
-     <a href="<?php echo e(route('dashboard.shop.show', ['id' => $shop->id])); ?>">
-            <?php echo e($shop->name); ?>
-
-        </a>
-
-
-
-                </td>
-                <td><?php echo e($shop->staff->count()); ?></td>
-                <td><?php echo e(number_format($shop->staff->sum('wages'))); ?></td>
-                <td><?php echo e(number_format($shop->capital)); ?></td>
-                <td><?php echo e($shop->location); ?></td>
+                <td colspan="5">No shops found.</td>
             </tr>
+        <?php endif; ?>
 
-            <?php $totalCapital += $shop->capital; ?>
-        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
-    <?php else: ?>
-        <tr>
-            <td colspan="5">No shops found.</td>
+        <tr class="table-success">
+            <td colspan="3"><strong>Total Capital</strong></td>
+            <td><strong><?php echo e(number_format($totalCapital, 2)); ?></strong></td>
+            <td></td>
         </tr>
-    <?php endif; ?>
-
-    <tr class="table-success">
-        <td colspan="3"><strong>Total Capital</strong></td>
-        <td><strong><?php echo e(number_format($totalCapital)); ?></strong></td>
-        <td></td>
-    </tr>
-</tbody>
-
+    </tbody>
 </table>
 
 

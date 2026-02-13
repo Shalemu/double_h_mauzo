@@ -12,6 +12,7 @@ use Maatwebsite\Excel\Facades\Excel;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Exports\ProductsTemplateExport;  
 use App\Imports\ProductsImport;   
+use Carbon\Carbon;
 
 
 
@@ -21,9 +22,12 @@ class ProductController extends Controller
 
 public function index()
 {
-    $products   = Products::all();
+    $admin = Auth::user();
+
+    $products = Products::where('shop_id', $admin->shop->id)->get();
+
     $categories = ProductCategory::whereNull('parent_id')->get();
-    $units      = Unit::all();
+    $units = Unit::all();
 
     return view('dashboard.products.index', compact(
         'products',
@@ -31,6 +35,8 @@ public function index()
         'units'
     ));
 }
+
+
     /**
      * Show create product form
      */
@@ -188,6 +194,118 @@ public function exportExcel()
         Excel::import(new ProductsImport, $request->file('excel_file'));
 
         return redirect()->back()->with('success', 'Products imported successfully!');
+    }
+
+
+    public function filterByStatus($status)
+{
+    $today = Carbon::today();
+
+    $query = Products::query();
+
+    switch ($status) {
+
+        // Running Out (quantity <= min_quantity but > 0)
+        case 'running':
+            $query->whereColumn('quantity', '<=', 'min_quantity')
+                  ->where('quantity', '>', 0);
+        break;
+
+        // Expiring (expire_date within next 7 days)
+        case 'expiring':
+            $query->whereNotNull('expire_date')
+                  ->whereBetween('expire_date', [$today, $today->copy()->addDays(7)]);
+        break;
+
+        // Finished (quantity = 0)
+        case 'finished':
+            $query->where('quantity', 0);
+        break;
+
+        // Expired (expire_date < today)
+        case 'expired':
+            $query->whereNotNull('expire_date')
+                  ->where('expire_date', '<', $today);
+        break;
+
+        // Disposed (you must have disposed column OR table)
+        case 'disposed':
+            $query->where('disposed', 1); // only if you have this column
+        break;
+    }
+
+    $products = $query->get();
+
+    return response()->json($products);
+}
+
+
+   public function runningOut()
+    {
+        $products = Products::withTrashed() // include soft-deleted products if needed
+            ->whereColumn('quantity', '<=', 'min_quantity')
+            ->where('quantity', '>', 0)
+            ->get();
+
+        return view('dashboard.products.running_out', compact('products'));
+    }
+
+    /**
+     * Expiring (expire_date within next 7 days)
+     */
+    public function expiring()
+    {
+        $today = Carbon::today();
+
+        $products = Products::withTrashed()
+            ->whereNotNull('expire_date')
+            ->whereBetween('expire_date', [$today, $today->copy()->addDays(7)])
+            ->get();
+
+        return view('dashboard.products.expiring', compact('products'));
+    }
+
+    /**
+     * Finished (quantity = 0)
+     */
+public function finished()
+{
+    $admin = Auth::user();
+
+    $products = Products::where('shop_id', $admin->shop->id)
+                        ->where('quantity', 0)
+                        ->get();
+
+    return view('dashboard.products.finished', compact('products'));
+}
+
+
+
+    /**
+     * Expired (expire_date < today)
+     */
+    public function expired()
+    {
+        $today = Carbon::today();
+
+        $products = Products::withTrashed()
+            ->whereNotNull('expire_date')
+            ->where('expire_date', '<', $today)
+            ->get();
+
+        return view('dashboard.products.expired', compact('products'));
+    }
+
+    /**
+     * Disposed (disposed = 1)
+     */
+    public function disposed()
+    {
+        $products = Products::withTrashed()
+            ->where('disposed', 1)
+            ->get();
+
+        return view('dashboard.products.disposed', compact('products'));
     }
 
 }

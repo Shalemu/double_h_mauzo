@@ -30,16 +30,22 @@
                             <table class="table table-sm mb-0">
                                 <tr>
                                     <td>Sales</td>
-                                    <td class="text-end">0</td>
+                                    <td class="text-end">{{ number_format($todaySales, 2) }}</td>
                                 </tr>
                                 <tr>
                                     <td>Expenses</td>
-                                    <td class="text-end">0</td>
+                                    <td class="text-end">{{ number_format($todayExpenses, 2) }}</td>
                                 </tr>
-                                <tr class="fw-bold text-success">
-                                    <td>Profit</td>
-                                    <td class="text-end">0</td>
-                                </tr>
+                    <tr class="fw-bold">
+                    <td class="{{ (float)$totalProfit < 0 ? 'text-danger' : 'text-success' }}">
+                        {{ (float)$totalProfit < 0 ? 'Loss' : 'Profit' }}
+                    </td>
+                    <td class="text-end {{ (float)$totalProfit < 0 ? 'text-danger' : 'text-success' }}">
+                        {{ number_format($totalProfit, 2) }}
+                    </td>
+                </tr>
+
+
                             </table>
                         </div>
                     </div>
@@ -53,16 +59,21 @@
                             <table class="table table-sm mb-0">
                                 <tr>
                                     <td>Sales</td>
-                                    <td class="text-end">49,661,400</td>
+                                    <td class="text-end">{{ number_format($monthSales, 2) }}</td>
                                 </tr>
                                 <tr>
                                     <td>Expenses</td>
-                                    <td class="text-end">258</td>
+                                    <td class="text-end">{{ number_format($monthExpenses, 2) }}</td>
                                 </tr>
-                                <tr class="fw-bold text-success">
-                                    <td>Profit</td>
-                                    <td class="text-end">16,574,000</td>
-                                </tr>
+                          <tr class="fw-bold">
+                        <td class="{{ (float)$totalProfit < 0 ? 'text-danger' : 'text-success' }}">
+                            {{ (float)$totalProfit < 0 ? 'Loss' : 'Profit' }}
+                        </td>
+                        <td class="text-end {{ (float)$totalProfit < 0 ? 'text-danger' : 'text-success' }}">
+                            {{ number_format($totalProfit, 2) }}
+                        </td>
+                    </tr>
+
                             </table>
                         </div>
                     </div>
@@ -73,19 +84,25 @@
                     <div class="card border-warning h-100">
                         <div class="card-header bg-warning text-white">Current Stock</div>
                         <div class="card-body p-2">
-                            <table class="table table-sm mb-0">
+                             <table class="table table-sm mb-0">
                                 <tr>
                                     <td>Capital</td>
-                                    <td class="text-end">217,515,600</td>
+                                    <td class="text-end">{{ number_format($currentCapital, 2) }}</td>
                                 </tr>
                                 <tr>
                                     <td>Sales</td>
-                                    <td class="text-end">250,907,800</td>
+                                    <td class="text-end">{{ number_format($totalSales, 2) }}</td>
                                 </tr>
-                                <tr class="fw-bold text-success">
-                                    <td>Profit</td>
-                                    <td class="text-end">33,392,200</td>
-                                </tr>
+                          <tr class="fw-bold">
+                    <td class="{{ (float)$totalProfit < 0 ? 'text-danger' : 'text-success' }}">
+                        {{ (float)$totalProfit < 0 ? 'Loss' : 'Profit' }}
+                    </td>
+                    <td class="text-end {{ (float)$totalProfit < 0 ? 'text-danger' : 'text-success' }}">
+                        {{ number_format($totalProfit, 2) }}
+                    </td>
+                </tr>
+
+
                             </table>
                         </div>
                     </div>
@@ -128,33 +145,33 @@
     <div class="col-12">
         <div id="status-tables">
             <!-- Running Out -->
-            <div class="status-table" data-status="running">
-                <table class="table table-bordered table-sm">
-                    <thead class="table-primary h-100">
-                        <tr>
-                            <th>Item</th>
-                            <th>Stock</th>
-                            <th>Last Purchasing Price</th>
-                            <th>Last Selling Price</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>Item A</td>
-                            <td>5</td>
-                            <td>2026-02-03</td>
-                            <td>2026-02-03</td>
-                        </tr>
-                        <tr>
-                            <td>Item B</td>
-                            <td>2</td>
-                            <td>2026-02-03</td>
-                            <td>2026-02-03</td>
-                           
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+       <div class="status-table" data-status="running">
+    <table class="table table-bordered table-sm">
+        <thead class="table-primary h-100">
+            <tr>
+                <th>Item</th>
+                <th>Stock</th>
+                <th>Last Purchasing Price</th>
+                <th>Last Selling Price</th>
+            </tr>
+        </thead>
+        <tbody>
+           @forelse ($runningOutProducts as $product)
+                <tr>
+                    <td>{{ $product->name }}</td>
+                    <td>{{ $product->quantity }}</td>
+                    <td>{{ $product->purchase_price }}</td>
+                    <td>{{ $product->selling_price }}</td>
+                </tr>
+            @empty
+                <tr>
+                    <td colspan="4" class="text-center">No running out products found</td>
+                </tr>
+            @endforelse
+        </tbody>
+    </table>
+</div>
+
 
             <!-- Expiring -->
             <div class="status-table d-none" data-status="expiring">
@@ -166,13 +183,19 @@
                             <th>Stock</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <tr>
-                            <td>Item C</td>
-                            <td>2026-02-10</td>
-                            <td>12</td>
-                        </tr>
-                    </tbody>
+             <tbody>
+            @forelse ($expiringProducts as $product)
+                <tr>
+                    <td>{{ $product->name }}</td>
+                    <td>{{ \Carbon\Carbon::parse($product->expire_date)->format('Y-m-d') }}</td>
+                    <td>{{ $product->quantity }}</td>
+                </tr>
+            @empty
+                <tr>
+                    <td colspan="3" class="text-center">No products expiring in the next 7 days</td>
+                </tr>
+            @endforelse
+        </tbody>
                 </table>
             </div>
 
@@ -185,12 +208,23 @@
                             <th>Stock</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <tr>
-                            <td>Item D</td>
-                            <td>0</td>
-                        </tr>
-                    </tbody>
+            <tbody>
+@forelse ($products->where('quantity', 0) as $product)
+
+    <tr>
+        <td>{{ $product->name }}</td>
+        <td>{{ $product->quantity }}</td>
+    </tr>
+@empty
+    <tr>
+        <td colspan="2" class="text-center">
+            No finished products found
+        </td>
+    </tr>
+@endforelse
+</tbody>
+
+
                 </table>
             </div>
 
@@ -204,13 +238,19 @@
                             <th>Stock</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <tr>
-                            <td>Item E</td>
-                            <td>2026-01-20</td>
-                            <td>0</td>
-                        </tr>
-                    </tbody>
+                <tbody>
+            @forelse ($expiredProducts as $product)
+                <tr>
+                    <td>{{ $product->name }}</td>
+                    <td>{{ \Carbon\Carbon::parse($product->expire_date)->format('Y-m-d') }}</td>
+                    <td>{{ $product->quantity }}</td>
+                </tr>
+            @empty
+                <tr>
+                    <td colspan="3" class="text-center">No expired products found</td>
+                </tr>
+            @endforelse
+        </tbody>
                 </table>
             </div>
 
@@ -225,12 +265,18 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr>
-                            <td>Item F</td>
-                            <td>2026-01-25</td>
-                            <td>5</td>
-                        </tr>
-                    </tbody>
+            @forelse ($disposedProducts as $product)
+                <tr>
+                    <td>{{ $product->name }}</td>
+                    <td>{{ \Carbon\Carbon::parse($product->disposed_at)->format('Y-m-d') ?? 'N/A' }}</td>
+                    <td>{{ $product->quantity }}</td>
+                </tr>
+            @empty
+                <tr>
+                    <td colspan="3" class="text-center">No disposed products found</td>
+                </tr>
+            @endforelse
+        </tbody>
                 </table>
             </div>
         </div>
@@ -242,4 +288,26 @@
 
 </div>
 
+
+<script>
+document.querySelectorAll('.btn-group [data-status]').forEach(button => {
+    button.addEventListener('click', function () {
+        let status = this.dataset.status;
+
+        // Remove active class from all buttons
+        document.querySelectorAll('.btn-group [data-status]').forEach(btn => btn.classList.remove('active'));
+        this.classList.add('active');
+
+        // Hide all status tables
+        document.querySelectorAll('.status-table').forEach(table => table.classList.add('d-none'));
+
+        // Show only the selected table
+        let activeTable = document.querySelector(`.status-table[data-status="${status}"]`);
+        if (activeTable) {
+            activeTable.classList.remove('d-none');
+        }
+    });
+});
+
+</script>
 

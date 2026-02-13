@@ -61,4 +61,10 @@ class Users extends Authenticatable
     {
         return $this->hasOne(\App\Models\Shops::class, 'admin_id');
     }
+
+    public function expenses()
+{
+    return $this->morphMany(Expenses::class, 'created_by');
+}
+
 }

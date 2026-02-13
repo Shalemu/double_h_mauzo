@@ -1,5 +1,6 @@
 @php
 $shops = $shops ?? collect();
+$totalCapital = 0;
 @endphp
 
 
@@ -104,41 +105,37 @@ $shops = $shops ?? collect();
         </tr>
     </thead>
     <tbody>
-    @php $totalCapital = 0; @endphp
+        @if($shops->count() > 0)
+            @foreach($shops as $shop)
+                <tr>
+                    <td>
+                <a href="{{ route('dashboard.shop.show', ['shop' => $shop->id]) }}">
+                    {{ $shop->name }}
+                </a>
 
-    @if(isset($shops) && $shops->count() > 0)
-        @foreach($shops as $shop)
+                    </td>
+                    <td>{{ $shop->total_employees }}</td>
+                    <td>{{ number_format($shop->total_wages) }}</td>
+                    <td>{{ number_format($shop->calculated_capital, 2) }}</td>
+                    <td>{{ $shop->location }}</td>
+                </tr>
+
+                @php
+                    $totalCapital += $shop->calculated_capital;
+                @endphp
+            @endforeach
+        @else
             <tr>
-                <td>
-                    <!-- Clickable link to shop dashboard -->
-     <a href="{{ route('dashboard.shop.show', ['id' => $shop->id]) }}">
-            {{ $shop->name }}
-        </a>
-
-
-
-                </td>
-                <td>{{ $shop->staff->count() }}</td>
-                <td>{{ number_format($shop->staff->sum('wages')) }}</td>
-                <td>{{ number_format($shop->capital) }}</td>
-                <td>{{ $shop->location }}</td>
+                <td colspan="5">No shops found.</td>
             </tr>
+        @endif
 
-            @php $totalCapital += $shop->capital; @endphp
-        @endforeach
-    @else
-        <tr>
-            <td colspan="5">No shops found.</td>
+        <tr class="table-success">
+            <td colspan="3"><strong>Total Capital</strong></td>
+            <td><strong>{{ number_format($totalCapital, 2) }}</strong></td>
+            <td></td>
         </tr>
-    @endif
-
-    <tr class="table-success">
-        <td colspan="3"><strong>Total Capital</strong></td>
-        <td><strong>{{ number_format($totalCapital) }}</strong></td>
-        <td></td>
-    </tr>
-</tbody>
-
+    </tbody>
 </table>
 
 

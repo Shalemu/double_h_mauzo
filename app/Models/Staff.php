@@ -46,4 +46,10 @@ class Staff extends Authenticatable
     {
         return 'phone';
     }
+
+    public function expenses()
+{
+    return $this->morphMany(Expenses::class, 'created_by');
+}
+
 }

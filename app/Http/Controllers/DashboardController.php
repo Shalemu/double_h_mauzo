@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Shops;
 use App\Models\Products;
 use Illuminate\Support\Facades\Auth;
+use App\Models\Customer;
 
 class DashboardController extends Controller
 {
@@ -20,22 +21,9 @@ class DashboardController extends Controller
     {
         $staff = Auth::guard('staff')->user();
 
+        $customers = Customer::all();  
         $products = Products::where('shop_id', $staff->shop_id)->get();
 
-        return view('dashboard.staff.index', compact('products'));
-    }
-
-    // Shops list
-    public function shopDashboard()
-    {
-        $shops = Shops::with('staff')->get();
-        return view('dashboard.shops.shop', compact('shops'));
-    }
-
-    // Single shop dashboard
-    public function showShop(Request $request, $id)
-    {
-        $shop = Shops::with('staff')->findOrFail($id);
-        return view('dashboard.dashboard', compact('shop'));
+        return view('dashboard.staff.index', compact('products', 'customers'));
     }
 }

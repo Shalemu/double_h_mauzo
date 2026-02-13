@@ -24,7 +24,7 @@ public function index()
                  ->orderBy('name')
                  ->get();
 
-    return view('dashboard.staff.staff', compact('staff', 'shops', 'roles'));
+    return view('dashboard.admin.staff', compact('staff', 'shops', 'roles'));
 }
 
 
@@ -62,4 +62,57 @@ public function index()
             ->back()
             ->with('success', 'Staff registered successfully.');
     }
+
+  // Show edit form
+public function edit($id)
+{
+    $staff = Staff::findOrFail($id);
+    $shops = Shops::orderBy('name')->get();
+    $roles = Role::whereNotIn('name', ['admin', 'super admin'])->orderBy('name')->get();
+
+    return view('dashboard.admin.staff_edit', compact('staff', 'shops', 'roles'));
+}
+
+// Update staff
+public function update(Request $request, $id)
+{
+    $staff = Staff::findOrFail($id);
+
+    $validated = $request->validate([
+        'first_name' => 'required|string|max:255',
+        'last_name'  => 'required|string|max:255',
+        'phone'      => "required|string|max:20|unique:staff,phone,$id",
+        'email'      => 'nullable|email|max:255',
+        'shop_id'    => 'required|exists:shops,id',
+        'role_id'    => 'required|exists:roles,id',
+        'wages'      => 'nullable|numeric|min:0',
+        'password'   => 'nullable|confirmed|min:4',
+    ]);
+
+    $staff->first_name = $validated['first_name'];
+    $staff->last_name = $validated['last_name'];
+    $staff->phone = $validated['phone'];
+    $staff->email = $validated['email'];
+    $staff->shop_id = $validated['shop_id'];
+    $staff->role_id = $validated['role_id'];
+    $staff->wages = $validated['wages'] ?? 0;
+
+    if (!empty($validated['password'])) {
+        $staff->password = Hash::make($validated['password']);
+    }
+
+    $staff->save();
+
+  
+return redirect()->route('staff.index')->with('success', 'Staff updated successfully.');
+
+    
+}
+
+public function destroy(Staff $staff)
+{
+    $staff->delete();
+    return redirect()->route('staff.index')->with('success', 'Staff deleted successfully.');
+}
+
 }

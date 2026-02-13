@@ -4,17 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo $__env->yieldContent('title', 'Dashboard'); ?></title>
+
     <?php
-    $shops = $shops ?? collect();
-?>
+        $shops = $shops ?? collect();
+    ?>
 
+    <?php $__env->startSection('title', 'Dashboard'); ?>
 
-
-<?php $__env->startSection('title', 'Dashboard'); ?>
-
-<?php echo $__env->make('main', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
-<?php echo $__env->make('components/breadcrumb', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
-<?php echo $__env->make('components/mainmenu', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
+    <?php echo $__env->make('main', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
+    <?php echo $__env->make('components/breadcrumb', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
+    <?php echo $__env->make('components/mainmenu', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
 
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -48,29 +47,61 @@
     <?php echo $__env->make('components.sidebar', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
 
     <div class="container-fluid main-content" id="main-content-area">
-        <!-- Sections -->
+        <!-- =================== SHOP SUMMARY =================== -->
         <div id="shop-summary" class="dashboard-section">
             <?php echo $__env->make('dashboard.shops.show', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
         </div>
 
-    <?php
-        use App\Models\Products;
-        use App\Models\ProductCategory;
-        use App\Models\Unit;
+        <?php
+            use App\Models\Products;
+            use App\Models\ProductCategory;
+            use App\Models\Unit;
 
-        $products   = $products   ?? Products::with(['unit','category'])->get();
-        $categories = $categories ?? ProductCategory::whereNull('parent_id')->get();
-        $units      = $units      ?? Unit::all();
-    ?>
+            $products   = $products   ?? Products::with(['unit','category'])->get();
+            $categories = $categories ?? ProductCategory::whereNull('parent_id')->get();
+            $units      = $units      ?? Unit::all();
+        ?>
 
-
+        <!-- =================== PRODUCTS =================== -->
         <div id="product-section" class="dashboard-section">
-            <?php echo $__env->make('dashboard.products.index', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
+            <?php echo $__env->make('dashboard.products.index', [
+                'products' => $products,
+                'categories' => $categories,
+                'units' => $units
+            ], \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
         </div>
 
-        <!-- Add more sections as needed -->
+        <!-- =================== SALES =================== -->
+        <div id="sale-section" class="dashboard-section">
+            <?php echo $__env->make('dashboard.sales.index', [
+                'sales' => $sales ?? collect(),
+                'totalSales' => $totalSales ?? 0,
+                'totalItems' => $totalItems ?? 0,
+                'totalDiscount' => $totalDiscount ?? 0,
+                'totalShipping' => $totalShipping ?? 0,
+                'date' => $date ?? \Carbon\Carbon::today(),
+            ], \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
+        </div>
+
+        <!-- =================== EXPENSES =================== -->
+        <div id="expense-section" class="dashboard-section">
+            <?php echo $__env->make('dashboard.expenses.index', [
+                'shop' => $shop,
+                'expensesByDate' => $expensesByDate ?? collect()
+            ], \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
+        </div>
+      
+            <!-- =================== Fixed EXPENSES =================== -->
+        <div id="fixed-expense-section" class="dashboard-section">
+            <?php echo $__env->make('dashboard.fixed_expenses.index', [
+                'shop' => $shop,
+                'fixedExpenses' => $fixedExpenses ?? collect()
+            ], \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
+        </div>
+
     </div>
 
+    <!-- =================== SCRIPTS =================== -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
@@ -80,7 +111,6 @@
 
             menuItems.forEach(item => {
                 item.addEventListener('click', function(e) {
-                    // Prevent default link navigation
                     e.preventDefault();
 
                     // Remove active from all menu items
@@ -90,7 +120,7 @@
                     // Hide all sections
                     sections.forEach(sec => sec.style.display = 'none');
 
-                    // Show the section based on data-content attribute
+                    // Show the selected section
                     const target = item.getAttribute('data-content');
                     if(target) {
                         const section = document.getElementById(target);
@@ -100,7 +130,6 @@
             });
         });
     </script>
-
 </body>
 </html>
 <?php /**PATH E:\PROJECT\double h\double h\resources\views/dashboard/dashboard.blade.php ENDPATH**/ ?>
