@@ -98,6 +98,13 @@
                 'fixedExpenses' => $fixedExpenses ?? collect()
             ], \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
         </div>
+        
+        <div id="purchases-section" class="dashboard-section">
+            <?php echo $__env->make('dashboard.purchases.index', [
+                'shop' => $shop,
+                'purchasesByDate' => $purchasesByDate ?? collect()
+            ], \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
+        </div>
 
     </div>
 

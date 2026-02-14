@@ -37,67 +37,72 @@
 </div>
 
     <!-- Use container-fluid to reduce side gap -->
-    <div class="container-fluid">
-         <div class="row g-4" style="padding-left: 30px; padding-right: 30px;">
+   <div class="container-fluid">
+    <div class="row g-4" style="padding-left: 30px; padding-right: 30px;">
 
-            <div class="col-lg-3 col-md-6">
-                <div class="cat__core__widget">
-                    <div class="cat__core__step cat__core__step--success">
-                        <span class="cat__core__step__digit">
-                            <i class="icmn-database"></i>
-                        </span>
-                        <div class="cat__core__step__desc">
-                            <span class="cat__core__step__title">Gross profit (All shops)</span>
-                            <p>Tz: 61756</p>
-                        </div>
+        <!-- Gross Profit -->
+        <div class="col-lg-3 col-md-6">
+            <div class="cat__core__widget">
+                <div class="cat__core__step cat__core__step--success">
+                    <span class="cat__core__step__digit">
+                        <i class="icmn-database"></i>
+                    </span>
+                    <div class="cat__core__step__desc">
+                        <span class="cat__core__step__title">Gross Profit (All Shops)</span>
+                        <p>Tz: <?php echo e(number_format($grossProfit, 2)); ?></p>
                     </div>
                 </div>
             </div>
-
-            <div class="col-lg-3 col-md-6">
-                <div class="cat__core__widget">
-                    <div class="cat__core__step cat__core__step--primary">
-                        <span class="cat__core__step__digit">
-                            <i class="icmn-users"></i>
-                        </span>
-                        <div class="cat__core__step__desc">
-                            <span class="cat__core__step__title">Total Expenses (All shops)</span>
-                            <p>Tz: 7658</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-lg-3 col-md-6">
-                <div class="cat__core__widget">
-                    <div class="cat__core__step cat__core__step--danger">
-                        <span class="cat__core__step__digit">
-                            <i class="icmn-bullhorn"></i>
-                        </span>
-                        <div class="cat__core__step__desc">
-                            <span class="cat__core__step__title">Net profit</span>
-                            <p>Tz: 5543</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-lg-3 col-md-6">
-                <div class="cat__core__widget">
-                    <div class="cat__core__step cat__core__step--default">
-                        <span class="cat__core__step__digit">
-                            <i class="icmn-price-tags"></i>
-                        </span>
-                        <div class="cat__core__step__desc">
-                            <span class="cat__core__step__title">Sales</span>
-                            <p>Tz: 646</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
         </div>
+
+        <!-- Total Expenses -->
+        <div class="col-lg-3 col-md-6">
+            <div class="cat__core__widget">
+                <div class="cat__core__step cat__core__step--primary">
+                    <span class="cat__core__step__digit">
+                        <i class="icmn-users"></i>
+                    </span>
+                    <div class="cat__core__step__desc">
+                        <span class="cat__core__step__title">Total Expenses (All Shops)</span>
+                        <p>Tz: <?php echo e(number_format($totalExpenses, 2)); ?></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Net Profit -->
+        <div class="col-lg-3 col-md-6">
+            <div class="cat__core__widget">
+                <div class="cat__core__step cat__core__step--danger">
+                    <span class="cat__core__step__digit">
+                        <i class="icmn-bullhorn"></i>
+                    </span>
+                    <div class="cat__core__step__desc">
+                        <span class="cat__core__step__title">Net Profit</span>
+                        <p>Tz: <?php echo e(number_format($netProfit, 2)); ?></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sales -->
+        <div class="col-lg-3 col-md-6">
+            <div class="cat__core__widget">
+                <div class="cat__core__step cat__core__step--default">
+                    <span class="cat__core__step__digit">
+                        <i class="icmn-price-tags"></i>
+                    </span>
+                    <div class="cat__core__step__desc">
+                        <span class="cat__core__step__title">Sales (All Shops)</span>
+                        <p>Tz: <?php echo e(number_format($totalSales, 2)); ?></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
+</div>
+
 </div>
 
 
@@ -147,82 +152,46 @@
             </div>
 
             <!-- Right: Shop Tables -->
-            <div class="col-xl-7"> <!-- Adjusted to balance left width -->
-                <div class="cat__core__widget p-3 h-100" style="background:#fff;">
-                    <!-- Shop Tabs -->
-                    <ul class="nav nav-tabs mb-3" id="shopTab" role="tablist">
-                        <li class="nav-item" role="presentation">
-                            <a class="nav-link active" id="shop1-tab" data-bs-toggle="tab" href="#shop1" role="tab">Nakumina Dispensary</a>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <a class="nav-link" id="shop2-tab" data-bs-toggle="tab" href="#shop2" role="tab">Mauzo360 Shop</a>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <a class="nav-link" id="shop3-tab" data-bs-toggle="tab" href="#shop3" role="tab">Samaki</a>
-                        </li>
-                    </ul>
+           <div class="col-xl-7">
+    <div class="cat__core__widget p-3 h-100" style="background:#fff;">
+        <!-- Shop Tabs -->
+        <ul class="nav nav-tabs mb-3" id="shopTab" role="tablist">
+            <?php $__currentLoopData = $shops; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $shop): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                <li class="nav-item" role="presentation">
+                    <a class="nav-link <?php echo e($index == 0 ? 'active' : ''); ?>" 
+                       id="shop<?php echo e($shop->id); ?>-tab" 
+                       data-bs-toggle="tab" 
+                       href="#shop<?php echo e($shop->id); ?>" 
+                       role="tab"><?php echo e($shop->name); ?></a>
+                </li>
+            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+        </ul>
 
-                    <!-- Tab Content -->
-                    <div class="tab-content">
-                        <!-- Shop 1 -->
-                        <div class="tab-pane fade show active" id="shop1" role="tabpanel">
-                            <table class="table table-bordered text-center">
-                                <thead class="table-warning">
-                                    <tr>
-                                        <th>Metric</th>
-                                        <th>TZS</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr><td>Purchases</td><td>0.0</td></tr>
-                                    <tr><td>Sales</td><td>0.0</td></tr>
-                                    <tr><td>Gross Profit</td><td>0.0</td></tr>
-                                    <tr><td>Total Expenses</td><td>0.0</td></tr>
-                                    <tr><td>Net Profit</td><td>0.0</td></tr>
-                                </tbody>
-                            </table>
-                        </div>
-
-                        <!-- Shop 2 -->
-                        <div class="tab-pane fade" id="shop2" role="tabpanel">
-                            <table class="table table-bordered text-center">
-                                <thead class="table-warning">
-                                    <tr>
-                                        <th>Metric</th>
-                                        <th>TZS</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr><td>Purchases</td><td>50000.0</td></tr>
-                                    <tr><td>Sales</td><td>70000.0</td></tr>
-                                    <tr><td>Gross Profit</td><td>20000.0</td></tr>
-                                    <tr><td>Total Expenses</td><td>5000.0</td></tr>
-                                    <tr><td>Net Profit</td><td>15000.0</td></tr>
-                                </tbody>
-                            </table>
-                        </div>
-
-                        <!-- Shop 3 -->
-                        <div class="tab-pane fade" id="shop3" role="tabpanel">
-                            <table class="table table-bordered text-center">
-                                <thead class="table-warning">
-                                    <tr>
-                                        <th>Metric</th>
-                                        <th>TZS</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr><td>Purchases</td><td>10000.0</td></tr>
-                                    <tr><td>Sales</td><td>15000.0</td></tr>
-                                    <tr><td>Gross Profit</td><td>5000.0</td></tr>
-                                    <tr><td>Total Expenses</td><td>2000.0</td></tr>
-                                    <tr><td>Net Profit</td><td>3000.0</td></tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
+        <!-- Tab Content -->
+        <div class="tab-content">
+            <?php $__currentLoopData = $shops; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $shop): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                <div class="tab-pane fade <?php echo e($index == 0 ? 'show active' : ''); ?>" 
+                     id="shop<?php echo e($shop->id); ?>" role="tabpanel">
+                    <table class="table table-bordered text-center">
+                        <thead class="table-warning">
+                            <tr>
+                                <th>Metric</th>
+                                <th>TZS</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>Purchases</td><td><?php echo e(number_format($shop->totalPurchases, 2)); ?></td></tr>
+                            <tr><td>Sales</td><td><?php echo e(number_format($shop->totalSales, 2)); ?></td></tr>
+                            <tr><td>Gross Profit</td><td><?php echo e(number_format($shop->grossProfit, 2)); ?></td></tr>
+                            <tr><td>Total Expenses</td><td><?php echo e(number_format($shop->totalExpenses, 2)); ?></td></tr>
+                            <tr><td>Net Profit</td><td><?php echo e(number_format($shop->netProfit, 2)); ?></td></tr>
+                        </tbody>
+                    </table>
                 </div>
-            </div>
+            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+        </div>
+    </div>
+</div>
 
         </div>
     </div>
@@ -231,85 +200,69 @@
 
 
 <div class="row">
-    <div class="container-fluid">
-        <div class="row g-4" style="padding-left:30px; padding-right:30px;">
     <div class="col-lg-6">
         <div class="cat__core__widget">
-            <p class="pt-3 px-3"><strong>REVENUE STATISTICS</strong></p>
+            <p class="pt-3 px-3"><strong>REVENUE STATISTICS (Last 7 Days)</strong></p>
             <div class="chart-line height-300 chartist"></div>
         </div>
     </div>
     <div class="col-lg-6">
         <div class="cat__core__widget">
-            <p class="pt-3 px-3"><strong>SITE VISITS GROWTH</strong></p>
+            <p class="pt-3 px-3"><strong>GROWTH (Current Year)</strong></p>
             <div class="chart-overlapping-bar height-300 chartist"></div>
         </div>
     </div>
 </div>
 
-<div class="row">
-      <div class="container-fluid">
+ <!-- Product Sales Table -->
+    <div class="container-fluid mt-4">
         <div class="row g-4" style="padding-left:30px; padding-right:30px;">
-    <div class="col-lg-12">
-        <div class="cat__core__widget">
-            <div class="table-responsive">
-                <table class="table table-hover nowrap" width="100%">
-                    <thead class="thead-light">
-                        <tr>
-                            <th>Product Name</th>
-                            <th>Quantity Sold</th>
-                            <th>Unit Price (TZS)</th>
-                            <th>Total Sales (TZS)</th>
-                            <th>Date Sold</th>
-                            <th>Profit (TZS)</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>Paracetamol 500mg</td>
-                            <td>50</td>
-                            <td>500</td>
-                            <td>25,000</td>
-                            <td>2026/01/25</td>
-                            <td>10,000</td>
-                        </tr>
-                        <tr>
-                            <td>Vitamin C 1000mg</td>
-                            <td>30</td>
-                            <td>1,200</td>
-                            <td>36,000</td>
-                            <td>2026/01/26</td>
-                            <td>15,000</td>
-                        </tr>
-                        <tr>
-                            <td>Ibuprofen 200mg</td>
-                            <td>20</td>
-                            <td>800</td>
-                            <td>16,000</td>
-                            <td>2026/01/27</td>
-                            <td>6,000</td>
-                        </tr>
-                        <!-- Add more rows as needed -->
-                    </tbody>
-                    <tfoot class="table-light">
-                        <tr>
-                            <th colspan="3">Total</th>
-                            <th>77,000</th>
-                            <th></th>
-                            <th>31,000</th>
-                        </tr>
-                    </tfoot>
-                </table>
+            <div class="col-lg-12">
+                <div class="cat__core__widget">
+                    <p class="pt-3 px-3"><strong>PRODUCT SALES SUMMARY (ALL SHOPS)</strong></p>
+                    <div class="table-responsive">
+                        <table class="table table-hover nowrap" width="100%">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>Product Name</th>
+                                    <th>Quantity Sold</th>
+                                    <th>Unit Price (TZS)</th>
+                                    <th>Total Sales (TZS)</th>
+                                    <th>Date Sold</th>
+                                    <th>Profit (TZS)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php $__currentLoopData = $shops; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $shop): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                    <?php $__currentLoopData = $shop->sales; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $sale): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                        <?php $__currentLoopData = $sale->items; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $item): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                            <tr>
+                                                <td><?php echo e($item->product->name); ?></td>
+                                                <td><?php echo e($item->quantity); ?></td>
+                                                <td><?php echo e(number_format($item->unit_price, 2)); ?></td>
+                                                <td><?php echo e(number_format($item->quantity * $item->unit_price, 2)); ?></td>
+                                                <td><?php echo e($sale->created_at->format('Y/m/d')); ?></td>
+                                                <td><?php echo e(number_format(($item->unit_price - $item->product->purchase_price) * $item->quantity, 2)); ?></td>
+                                            </tr>
+                                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                            </tbody>
+                            <tfoot class="table-light">
+                                <tr>
+                                    <th colspan="3">Total</th>
+                                    <th><?php echo e(number_format($totalSales, 2)); ?></th>
+                                    <th></th>
+                                    <th><?php echo e(number_format($grossProfit, 2)); ?></th>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-        </div>
-      </div>
-</div>
 
-    </div>
-</div>
-<!-- END: page scripts -->
 <!-- START: page scripts -->
 <script>
     $( function() {

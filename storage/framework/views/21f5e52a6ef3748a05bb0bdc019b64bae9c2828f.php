@@ -32,7 +32,7 @@
 
 
         <li class="nav-item <?php echo e(request()->is('purchases*') ? 'active' : ''); ?>">
-            <a href="<?php echo e(url('purchases')); ?>">
+            <a href="#"data-content="purchases-section">
                 <i class="bi bi-bag"></i>
                 <span>Purchases</span>
             </a>

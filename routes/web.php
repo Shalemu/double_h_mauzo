@@ -42,6 +42,12 @@ use App\Http\Controllers\ExpensesController;
 // TixedExpenses
 use App\Http\Controllers\FixedExpensesController;
 
+// Purchases
+use App\Http\Controllers\PurchasesController;
+
+// Supplier
+use App\Http\Controllers\SupplierController;
+
 /*
 |--------------------------------------------------------------------------
 | Public Routes
@@ -217,6 +223,12 @@ Route::get('/dashboard/shop/{shop}', [ShopsController::class, 'show'])
     Route::get('{shop}/detail', [ExpensesController::class, 'details'])->name('expenses.detail');
 });
 
+  /*
+        |----------------------------------------------------------------------
+        | Fixed expenses
+        |----------------------------------------------------------------------
+        */
+
 Route::prefix('fixed-expenses')->group(function () {
     Route::get('{shop}', [FixedExpensesController::class, 'index'])->name('fixed-expenses.index');
     Route::get('{shop}/create', [FixedExpensesController::class, 'create'])->name('fixed-expenses.create');
@@ -226,6 +238,19 @@ Route::prefix('fixed-expenses')->group(function () {
     Route::delete('{id}', [FixedExpensesController::class, 'destroy'])->name('fixed-expenses.destroy');
 });
 
+   /*
+        |----------------------------------------------------------------------
+        | Purchases
+        |----------------------------------------------------------------------
+        */
+
+        Route::prefix('purchases')->name('purchases.')->group(function () {
+            Route::get('/', [PurchasesController::class, 'index'])->name('index');       // /purchases
+            Route::get('/create', [PurchasesController::class, 'create'])->name('create'); // /purchases/create
+            Route::post('/', [PurchasesController::class, 'store'])->name('store');       // POST /purchases
+        });
+
+        Route::resource('suppliers', SupplierController::class);
 
         /*
         |----------------------------------------------------------------------

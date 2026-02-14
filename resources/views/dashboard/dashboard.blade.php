@@ -98,6 +98,13 @@
                 'fixedExpenses' => $fixedExpenses ?? collect()
             ])
         </div>
+        
+        <div id="purchases-section" class="dashboard-section">
+            @include('dashboard.purchases.index', [
+                'shop' => $shop,
+                'purchasesByDate' => $purchasesByDate ?? collect()
+            ])
+        </div>
 
     </div>
 

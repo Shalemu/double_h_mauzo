@@ -10,15 +10,15 @@ use Carbon\Carbon;
 class ShopsController extends Controller
 {
     /**
-     * Display all shops with summary data (capital, wages, employees, profit)
+     * Display all shops with summary data
      */
     public function index()
     {
-        $shops = Shops::with(['staff', 'products', 'sales.items.product', 'expenses'])
-                      ->orderBy('name')
-                      ->get();
+        $shops = Shops::with(['staff', 'products', 'sales.items.product', 'expenses', 'fixedExpenses'])
+            ->orderBy('name')
+            ->get();
 
-        // Add calculated fields for each shop
+        // Ensure computed attributes are loaded
         $shops->each(function ($shop) {
             $shop->calculated_capital = $shop->calculated_capital;
             $shop->total_wages = $shop->total_wages;
@@ -48,75 +48,145 @@ class ShopsController extends Controller
         ]);
 
         return redirect()->route('dashboard.shop')
-                         ->with('success', 'Shop added successfully!');
+            ->with('success', 'Shop added successfully!');
     }
 
     /**
-     * Show a single shop with products, sales, and expenses summary
+     * Show a single shop dashboard
      */
     public function show(Shops $shop)
     {
-        $shop->load(['staff', 'products', 'expenses', 'sales.items.product', 'fixedExpenses']);
+        $shop->load([
+            'staff',
+            'products',
+            'expenses',
+            'fixedExpenses',
+            'sales.items.product',
+            'purchases' 
+        ]);
 
         $products = $shop->products;
 
-        // PRODUCT filters
+        /*
+        |--------------------------------------------------------------------------
+        | PRODUCT FILTERS
+        |--------------------------------------------------------------------------
+        */
+
         $finishedProducts = $products->where('quantity', 0);
+
         $runningOutProducts = $products->where('quantity', '>', 0)
-                                       ->filter(fn($p) => $p->quantity <= $p->min_quantity);
+            ->filter(fn($p) => $p->quantity <= $p->min_quantity);
 
         $today = Carbon::today();
 
         $expiringProducts = $products->filter(fn($p) =>
-            $p->expire_date && Carbon::parse($p->expire_date)->between($today, $today->copy()->addDays(7))
+            $p->expire_date &&
+            Carbon::parse($p->expire_date)->between($today, $today->copy()->addDays(7))
         );
 
         $expiredProducts = $products->filter(fn($p) =>
-            $p->expire_date && Carbon::parse($p->expire_date)->lt($today)
+            $p->expire_date &&
+            Carbon::parse($p->expire_date)->lt($today)
         );
 
         $disposedProducts = $products->filter(fn($p) => $p->disposed == 1);
 
-        // DAILY wages
+        /*
+        |--------------------------------------------------------------------------
+        | WAGES
+        |--------------------------------------------------------------------------
+        */
         $daysInMonth = now()->daysInMonth;
         $dailyWages = $shop->total_wages / $daysInMonth;
 
-        // TODAY reports
+        /*
+        |--------------------------------------------------------------------------
+        | TODAY REPORT
+        |--------------------------------------------------------------------------
+        */
         $todaySales = $shop->salesToday()->sum('total');
-        $todayExpenses = $shop->expensesToday()->sum('amount');
-        $todayProfit = $todaySales - $todayExpenses - $dailyWages;
 
-        // MONTHLY reports
+        $todayOperatingExpenses = $shop->expensesToday()->sum('amount');
+        $todayFixedExpenses = $shop->fixedExpenses()
+            ->whereDate('created_at', today())
+            ->sum('amount');
+
+        $todayExpenses = $todayOperatingExpenses + $todayFixedExpenses;
+
+        $todayProfit = $todaySales - ($todayExpenses + $dailyWages);
+
+        /*
+        |--------------------------------------------------------------------------
+        | MONTH REPORT
+        |--------------------------------------------------------------------------
+        */
         $monthSales = $shop->salesThisMonth()->sum('total');
-        $monthExpenses = $shop->expensesThisMonth()->sum('amount');
-        $monthProfit = $monthSales - $monthExpenses - $shop->total_wages;
 
-        // OVERALL reports
+        $monthOperatingExpenses = $shop->expensesThisMonth()->sum('amount');
+        $monthFixedExpenses = $shop->fixedExpenses()
+            ->whereMonth('created_at', now()->month)
+            ->whereYear('created_at', now()->year)
+            ->sum('amount');
+
+        $monthExpenses = $monthOperatingExpenses + $monthFixedExpenses;
+
+        $monthProfit = $monthSales - ($monthExpenses + $shop->total_wages);
+
+        /*
+        |--------------------------------------------------------------------------
+        | OVERALL REPORT
+        |--------------------------------------------------------------------------
+        */
         $currentCapital = $shop->calculated_capital;
+
         $totalSales = $shop->sales()->sum('total');
-        $totalProfit = $shop->profit;
 
-        // GROUP sales BY DATE
+        $totalOperatingExpenses = $shop->expenses()->sum('amount');
+        $totalFixedExpenses = $shop->fixedExpenses()->sum('amount');
+
+        $totalExpenses = $totalOperatingExpenses + $totalFixedExpenses;
+
+        $totalProfit = $totalSales - ($totalExpenses + $shop->total_wages);
+
+        /*
+        |--------------------------------------------------------------------------
+        | GROUPED SALES BY DATE
+        |--------------------------------------------------------------------------
+        */
         $salesByDate = $shop->sales
-                            ->groupBy(fn($sale) => $sale->created_at->format('Y-m-d'))
-                            ->map(fn($sales, $date) => [
-                                'date' => $date,
-                                'total' => $sales->sum('total'),
-                                'sales' => $sales,
-                            ])
-                            ->sortKeys();
+            ->groupBy(fn($sale) => $sale->created_at->format('Y-m-d'))
+            ->map(fn($sales, $date) => [
+                'date' => $date,
+                'total' => $sales->sum('total'),
+                'sales' => $sales,
+            ])
+            ->sortKeys();
 
-        // GROUP expenses BY DATE
+        /*
+        |--------------------------------------------------------------------------
+        | GROUPED EXPENSES BY DATE
+        |--------------------------------------------------------------------------
+        */
         $expensesByDate = $shop->expenses
-                               ->groupBy(fn($expense) => $expense->created_at->format('Y-m-d'))
-                               ->map(fn($expenses, $date) => [
-                                   'date' => $date,
-                                   'total' => $expenses->sum('amount'),
-                                   'items' => $expenses,
-                               ])
-                               ->sortKeysDesc();
+            ->groupBy(fn($expense) => $expense->created_at->format('Y-m-d'))
+            ->map(fn($expenses, $date) => [
+                'date' => $date,
+                'total' => $expenses->sum('amount'),
+                'items' => $expenses,
+            ])
+            ->sortKeysDesc();
 
         $fixedExpenses = $shop->fixedExpenses()->get();
+
+        $purchasesByDate = $shop->purchases
+    ->groupBy(fn($purchase) => $purchase->purchased_at->format('Y-m-d'))
+    ->map(fn($purchases, $date) => [
+        'date' => $date,
+        'total' => $purchases->sum(fn($p) => $p->quantity * $p->purchase_price),
+        'items' => $purchases,
+    ])
+    ->sortKeysDesc();
 
         return view('dashboard.dashboard', compact(
             'shop',
@@ -137,7 +207,9 @@ class ShopsController extends Controller
             'totalProfit',
             'salesByDate',
             'expensesByDate',
-            'fixedExpenses'
+            'fixedExpenses',
+            'totalFixedExpenses',
+            'purchasesByDate'
         ));
     }
 }

@@ -42,17 +42,23 @@ class Shops extends Model
         return $this->hasManyThrough(
             Sale::class,
             Staff::class,
-            'shop_id',   // Foreign key on staff table
-            'staff_id',  // Foreign key on sales table
-            'id',        // Local key on shops
-            'id'         // Local key on staff
+            'shop_id',
+            'staff_id',
+            'id',
+            'id'
         );
     }
 
-    // Expenses
+    // Operating Expenses
     public function expenses()
     {
         return $this->hasMany(Expenses::class, 'shop_id');
+    }
+
+    // Fixed Expenses
+    public function fixedExpenses()
+    {
+        return $this->hasMany(FixedExpense::class, 'shop_id');
     }
 
     /*
@@ -61,12 +67,12 @@ class Shops extends Model
     |--------------------------------------------------------------------------
     */
 
-    // Current capital (stock value)
+    // Stock value (capital)
     public function getCalculatedCapitalAttribute()
     {
-        return $this->products->sum(function ($product) {
-            return ($product->purchase_price ?? 0) * ($product->quantity ?? 0);
-        });
+        return $this->products->sum(fn($product) =>
+            ($product->purchase_price ?? 0) * ($product->quantity ?? 0)
+        );
     }
 
     // Total wages
@@ -81,26 +87,55 @@ class Shops extends Model
         return $this->staff->count();
     }
 
-    // Total Profit
-    public function getProfitAttribute()
-    {
-        $totalSales = $this->sales->sum('total');
+    /*
+    |--------------------------------------------------------------------------
+    | PROFIT CALCULATIONS (POS ACCURATE)
+    |--------------------------------------------------------------------------
+    */
 
-        $totalCostOfSold = $this->sales->sum(function ($sale) {
+    // Total operating expenses
+    public function getTotalOperatingExpensesAttribute()
+    {
+        return $this->expenses->sum('amount');
+    }
+
+    // Total fixed expenses
+    public function getTotalFixedExpensesAttribute()
+    {
+        return $this->fixedExpenses->sum('amount');
+    }
+
+    // Total combined expenses
+    public function getTotalExpensesAttribute()
+    {
+        return $this->total_operating_expenses + $this->total_fixed_expenses;
+    }
+
+    // Total cost of goods sold (COGS)
+    public function getTotalCostOfGoodsSoldAttribute()
+    {
+        return $this->sales->sum(function ($sale) {
             return $sale->items->sum(function ($item) {
                 return ($item->purchase_price ?? 0) * ($item->quantity ?? 0);
             });
         });
+    }
 
-        $totalExpenses = $this->expenses->sum('amount');
-        $totalWages = $this->staff->sum('wages');
+    // Net Profit (REAL POS PROFIT)
+    public function getProfitAttribute()
+    {
+        $sales = $this->sales->sum('total');
 
-        return $totalSales - ($totalCostOfSold + $totalExpenses + $totalWages);
+        return $sales - (
+            $this->total_cost_of_goods_sold +
+            $this->total_expenses +
+            $this->total_wages
+        );
     }
 
     /*
     |--------------------------------------------------------------------------
-    | FILTERED QUERY REPORTS (NO SQL ERRORS)
+    | FILTERED REPORTS
     |--------------------------------------------------------------------------
     */
 
@@ -111,11 +146,25 @@ class Shops extends Model
             ->whereDate('sales.created_at', Carbon::today());
     }
 
-    // Expenses Today
+    // Operating Expenses Today
     public function expensesToday()
     {
         return $this->expenses()
             ->whereDate('expenses.created_at', Carbon::today());
+    }
+
+    // Fixed Expenses Today
+    public function fixedExpensesToday()
+    {
+        return $this->fixedExpenses()
+            ->whereDate('created_at', Carbon::today());
+    }
+
+    // Combined Expenses Today
+    public function totalExpensesToday()
+    {
+        return $this->expensesToday()->sum('amount')
+             + $this->fixedExpensesToday()->sum('amount');
     }
 
     // Sales This Month
@@ -126,7 +175,7 @@ class Shops extends Model
             ->whereYear('sales.created_at', Carbon::now()->year);
     }
 
-    // Expenses This Month
+    // Operating Expenses This Month
     public function expensesThisMonth()
     {
         return $this->expenses()
@@ -134,10 +183,23 @@ class Shops extends Model
             ->whereYear('expenses.created_at', Carbon::now()->year);
     }
 
-    // Fixed Expenses
-public function fixedExpenses()
-{
-    return $this->hasMany(FixedExpense::class, 'shop_id');
-}
+    // Fixed Expenses This Month
+    public function fixedExpensesThisMonth()
+    {
+        return $this->fixedExpenses()
+            ->whereMonth('created_at', Carbon::now()->month)
+            ->whereYear('created_at', Carbon::now()->year);
+    }
 
+    // Combined Expenses This Month
+    public function totalExpensesThisMonth()
+    {
+        return $this->expensesThisMonth()->sum('amount')
+             + $this->fixedExpensesThisMonth()->sum('amount');
+    }
+
+       public function purchases()
+    {
+        return $this->hasMany(Purchases::class, 'shop_id');
+    }
 }
