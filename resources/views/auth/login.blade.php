@@ -3,13 +3,13 @@
 @include('main')
 <body class="cat__pages__login">
 <!-- START: pages/login -->
-<div class="cat__pages__login cat__pages__login--fullscreen" style="background-image: url(dist/modules/pages/common/img/login/1.jpg)">
+<div class="cat__pages__login cat__pages__login--fullscreen" style="background-image: url(dist/modules/pages/common/img/login/1.jp)">
     <div class="cat__pages__login__block">
         <div class="row">
             <div class="col-xl-12">
                 <div class="cat__pages__login__block__promo text-white text-center">
                     <h2 class="mb-">
-                        <strong>WELCOME TO DOUBLE H COSMETICS - ADMIN PANEL</strong>
+                        <!-- <strong>WELCOME TO DOUBLE H COSMETICS - ADMIN PANEL</strong> -->
                     </h2>
                 </div>
                 <div class="cat__pages__login__block__inner">
@@ -121,7 +121,7 @@
             next = Math.floor(Math.random()*max) + min,
             final = next > max ? min : next;
         $('.random-bg-image').data('img', final);
-        $('.cat__pages__login').data('img', final).css('backgroundImage', 'url(dist/modules/pages/common/img/login/' + final + '.jpg)');
+        // $('.cat__pages__login').data('img', final).css('backgroundImage', 'url(dist/modules/pages/common/img/login/' + final + '.jpg)');
     
     });
 </script>

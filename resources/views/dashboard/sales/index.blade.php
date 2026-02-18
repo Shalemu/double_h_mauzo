@@ -48,7 +48,7 @@
                             <td>{{ $loop->iteration }}</td>
                             
                             <td>
-                            <a href="javascript:void(0)" class="view-date" data-url="{{ route('sales.detail', ['shop' => $shop->id, 'date' => $saleData['date']]) }}" style="text-decoration: none;">
+                            <a href="javascript:void(0)" class="view-date" data-url="{{ route('admin.sales.detail', ['shop' => $shop->id, 'date' => $saleData['date']]) }}" style="text-decoration: none;">
                                 {{ $saleData['date'] }}
                             </a>
                         </td>

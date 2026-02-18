@@ -10,15 +10,23 @@ use Illuminate\Support\Facades\Storage;
 
 class ExpensesController extends Controller
 {
-    /**
-     * Show all expenses for a shop, grouped by date.
-     */
+
     public function index($shopId)
     {
         $shop = Shops::findOrFail($shopId);
 
-        $expensesByDate = Expenses::where('shop_id', $shop->id)
-            ->orderBy('created_at', 'desc')
+        $query = Expenses::where('shop_id', $shop->id);
+
+        // Staff → only their expenses
+        if (Auth::guard('staff')->check()) {
+            $query->where('staff_id', Auth::guard('staff')->user()->id);
+        }
+        // User → only their expenses
+        elseif (Auth::guard('web')->check()) {
+            $query->where('user_id', Auth::guard('web')->user()->id);
+        }
+
+        $expensesByDate = $query->orderBy('created_at', 'desc')
             ->get()
             ->groupBy(fn($expense) => $expense->created_at->format('Y-m-d'))
             ->map(fn($expenses, $date) => [
@@ -27,28 +35,32 @@ class ExpensesController extends Controller
                 'items' => $expenses,
             ]);
 
-        return view('dashboard.expenses.index', compact('shop', 'expensesByDate'));
+        return view('dashboard.staff.expenses.index', compact('shop', 'expensesByDate'));
     }
 
     /**
      * Show expenses for a specific date.
      */
-    public function details(Request $request, $shopId)
-    {
-        $shop = Shops::findOrFail($shopId);
-        $date = $request->query('date');
+public function details(Request $request, $shopId)
+{
+    $shop = Shops::findOrFail($shopId);
+    $date = $request->query('date');
 
-        $expenses = Expenses::where('shop_id', $shop->id)
-            ->whereDate('created_at', $date)
-            ->orderBy('created_at', 'desc')
-            ->get();
+    $query = Expenses::where('shop_id', $shop->id)
+                     ->whereDate('created_at', $date);
 
-        return view('dashboard.expenses.detail', compact('expenses', 'date', 'shop'));
+    // Staff → only their own expenses
+    if (Auth::guard('staff')->check()) {
+        $query->where('staff_id', Auth::guard('staff')->user()->id);
     }
+ 
 
-    /**
-     * Show form to create a new expense.
-     */
+    $expenses = $query->orderBy('created_at', 'desc')->get();
+
+    return view('dashboard.staff.expenses.detail', compact('expenses', 'date', 'shop'));
+}
+
+ 
     public function create($shopId)
     {
         $shop = Shops::findOrFail($shopId);
@@ -74,25 +86,18 @@ class ExpensesController extends Controller
             ? $request->file('receipt')->store('receipts', 'public')
             : null;
 
-        // Determine actor (staff or user)
-        $userId = null;
-        $staffId = null;
+        // Correctly get numeric IDs for staff or user
+        $staffId = Auth::guard('staff')->check() ? Auth::guard('staff')->user()->id : null;
+        $userId  = Auth::guard('web')->check() ? Auth::guard('web')->user()->id : null;
 
-        if (Auth::guard('staff')->check()) {
-            $staffId = Auth::guard('staff')->id();
-        } elseif (Auth::guard('web')->check()) {
-            $userId = Auth::guard('web')->id();
-        }
-
-        // Create expense
         Expenses::create([
-            'shop_id'   => $shop->id,
-            'title'     => $request->title,
-            'amount'    => $request->amount,
-            'note'      => $request->note,
-            'receipt'   => $receiptPath,
-            'user_id'   => $userId,
-            'staff_id'  => $staffId,
+            'shop_id'  => $shop->id,
+            'title'    => $request->title,
+            'amount'   => $request->amount,
+            'note'     => $request->note,
+            'receipt'  => $receiptPath,
+            'staff_id' => $staffId,
+            'user_id'  => $userId,
         ]);
 
         return redirect()->route('dashboard.shop.show', $shop->id)

@@ -2,7 +2,7 @@
 @include('main')
 <body class="cat__pages__login">
 <!-- START: pages/login -->
-<div class="cat__pages__login cat__pages__login--fullscreen" style="background-image: url(dist/modules/pages/common/img/login/1.jpg)">
+<div class="cat__pages__login cat__pages__login--fullscreen" style="background-image: url(dist/modules/pages/common/img/login/1.jp)">
     <div class="cat__pages__login__block">
         <div class="row">
             <div class="col-xl-12">
@@ -107,13 +107,7 @@
             eyeCloseClass: 'icmn-eye-blocked'
         });
 
-        // Change BG
-        var min = 1, max = 5,
-            next = Math.floor(Math.random()*max) + min,
-            final = next > max ? min : next;
-        $('.random-bg-image').data('img', final);
-        $('.cat__pages__login').data('img', final).css('backgroundImage', 'url(dist/modules/pages/common/img/login/' + final + '.jpg)');
-    
+     
     });
 </script>
 <!-- END: page scripts -->

@@ -199,7 +199,7 @@
 
 
 
-<div class="row">
+<!-- <div class="row">
     <div class="col-lg-6">
         <div class="cat__core__widget">
             <p class="pt-3 px-3"><strong>REVENUE STATISTICS (Last 7 Days)</strong></p>
@@ -212,10 +212,10 @@
             <div class="chart-overlapping-bar height-300 chartist"></div>
         </div>
     </div>
-</div>
+</div> -->
 
  <!-- Product Sales Table -->
-    <div class="container-fluid mt-4">
+    <!-- <div class="container-fluid mt-4">
         <div class="row g-4" style="padding-left:30px; padding-right:30px;">
             <div class="col-lg-12">
                 <div class="cat__core__widget">
@@ -261,7 +261,7 @@
                 </div>
             </div>
         </div>
-    </div>
+    </div> -->
 
 <!-- START: page scripts -->
 <script>
@@ -343,4 +343,4 @@
     } );
 </script>
 <!-- END: page scripts -->
-@include('components/footer')
+<!-- @include('components/footer') -->

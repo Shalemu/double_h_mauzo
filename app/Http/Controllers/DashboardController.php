@@ -13,24 +13,15 @@ class DashboardController extends Controller
 {
     /**
      * Admin Dashboard
-     * Shows all shops and global totals (purchases, sales, gross & net profit)
      */
     public function index()
     {
-        // Fetch all shops
         $shops = Shops::with(['products', 'staff', 'expenses', 'fixedExpenses'])->get();
 
-        // Calculate per-shop metrics
         $shops->transform(function ($shop) {
-            // Total Purchases (stock value)
-            $shop->totalPurchases = $shop->products->sum(function ($p) {
-                return ($p->purchase_price ?? 0) * ($p->quantity ?? 0);
-            });
-
-            // Total Sales
+            $shop->totalPurchases = $shop->products->sum(fn($p) => ($p->purchase_price ?? 0) * ($p->quantity ?? 0));
             $shop->totalSales = $shop->sales->sum('total');
 
-            // Gross Profit using DB formula (COGS = purchase_price * sold quantity)
             $totalCOGS = DB::table('sale_items')
                 ->join('products', 'sale_items.product_id', '=', 'products.id')
                 ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
@@ -41,49 +32,34 @@ class DashboardController extends Controller
 
             $shop->grossProfit = $shop->totalSales - $totalCOGS;
 
-            // Total Expenses (operating + fixed)
-            $operatingExpenses = $shop->expenses->sum('amount');
-            $fixedExpenses = $shop->fixedExpenses->sum('amount');
-            $shop->totalExpenses = $operatingExpenses + $fixedExpenses;
-
-            // Total Wages
-            $totalWages = $shop->staff->sum('wages');
-
-            // Net Profit
-            $shop->netProfit = $shop->grossProfit - ($shop->totalExpenses + $totalWages);
+            $shop->totalExpenses = $shop->expenses->sum('amount') + $shop->fixedExpenses->sum('amount');
+            $shop->netProfit = $shop->grossProfit - ($shop->totalExpenses + $shop->staff->sum('wages'));
 
             return $shop;
         });
 
-        // Global totals across all shops
         $totalPurchases = $shops->sum('totalPurchases');
         $totalSales = $shops->sum('totalSales');
         $grossProfit = $shops->sum('grossProfit');
-        $totalExpenses = $shops->sum('totalExpenses') + $shops->sum(function ($shop) {
-            return $shop->staff->sum('wages');
-        });
+        $totalExpenses = $shops->sum('totalExpenses') + $shops->sum(fn($s) => $s->staff->sum('wages'));
         $netProfit = $shops->sum('netProfit');
 
         return view('dashboard.admin.index', compact(
-            'shops',
-            'totalPurchases',
-            'totalSales',
-            'grossProfit',
-            'totalExpenses',
-            'netProfit'
+            'shops', 'totalPurchases', 'totalSales', 'grossProfit', 'totalExpenses', 'netProfit'
         ));
     }
 
     /**
      * Staff Dashboard (POS)
-     * Shows products and customers for the staff's shop
      */
     public function staff()
     {
         $staff = Auth::guard('staff')->user();
 
-        $customers = Customer::all();
         $products = Products::where('shop_id', $staff->shop_id)->get();
+        $customers = Customer::where('shop_id', $staff->shop_id)->get();
+        $shopId = $shop ?? auth('staff')->user()->shop_id;
+
 
         return view('dashboard.staff.index', compact('products', 'customers'));
     }

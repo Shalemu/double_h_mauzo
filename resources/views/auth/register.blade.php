@@ -57,7 +57,7 @@ form {
 }
 
 h3 {
-    font-family: "ElMessiri-SemiBold";
+    font-family: "Montserrat-Medium";
     font-size: 26px;
     text-align: center;
     margin-bottom: 25px;
@@ -155,7 +155,7 @@ button:hover {
     <div class="inner">
 
         <div class="image-holder">
-            <img src="{{ asset('assets/img/registration-form-61.jpg') }}" alt="Register">
+            <img src="{{ asset('assets/img/registration.png') }}" alt="Register">
         </div>
 
      <form method="POST" action="{{ route('register') }}">

@@ -81,11 +81,12 @@ public function index()
 
 
 
-    public function detail(Shops $shop, $date)
+public function detail(Shops $shop, $date)
 {
-    $purchases = $shop->purchases
+    $purchases = $shop->purchases() // ← note the ()
         ->whereDate('purchased_at', $date)
-        ->load('product', 'supplier');
+        ->with(['product', 'supplier'])
+        ->get();
 
     return view('dashboard.purchases.detail', compact('purchases', 'date'));
 }

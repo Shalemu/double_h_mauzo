@@ -37,4 +37,10 @@ public function staff()
     {
         return $this->belongsTo(Customer::class);
     }
+
+    public function shop()
+    {
+        return $this->belongsTo(Shops::class);
+    }
+
 }

@@ -48,7 +48,7 @@
                             <td><?php echo e($loop->iteration); ?></td>
                             
                             <td>
-                            <a href="javascript:void(0)" class="view-date" data-url="<?php echo e(route('sales.detail', ['shop' => $shop->id, 'date' => $saleData['date']])); ?>" style="text-decoration: none;">
+                            <a href="javascript:void(0)" class="view-date" data-url="<?php echo e(route('admin.sales.detail', ['shop' => $shop->id, 'date' => $saleData['date']])); ?>" style="text-decoration: none;">
                                 <?php echo e($saleData['date']); ?>
 
                             </a>

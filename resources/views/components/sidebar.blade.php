@@ -9,8 +9,8 @@
     <!-- NAVIGATION -->
     <ul class="nav-menu">
 
-        <li class="nav-item {{ request()->routeIs('shops.show') ? 'active' : '' }}">
-            <a href="{{ route('shops.show', $shop->id ?? 1) }}" data-content="shop-summary">
+        <li class="nav-item {{ request()->routeIs('dashboard.shop.show') ? 'active' : '' }}">
+            <a href="{{ isset($shop) ? route('dashboard.shop.show', $shop->id) : '#' }}" data-content="shop-summary">
                 <i class="bi bi-speedometer2"></i>
                 <span>Summary Report</span>
             </a>
@@ -30,21 +30,19 @@
             </a>
         </li>
 
-
         <li class="nav-item {{ request()->is('purchases*') ? 'active' : '' }}">
-            <a href="#"data-content="purchases-section">
+            <a href="#" data-content="purchases-section">
                 <i class="bi bi-bag"></i>
                 <span>Purchases</span>
             </a>
         </li>
 
-       <li class="nav-item {{ request()->is('sales*') ? 'active' : '' }}">
-        <a href="#" data-content="sale-section">
-            <i class="bi bi-cart-check"></i>
-            <span>Sales</span>
-        </a>
-      </li>
-
+        <li class="nav-item {{ request()->is('sales*') ? 'active' : '' }}">
+            <a href="#" data-content="sale-section">
+                <i class="bi bi-cart-check"></i>
+                <span>Sales</span>
+            </a>
+        </li>
 
         <li class="nav-item {{ request()->is('sales-return*') ? 'active' : '' }}">
             <a href="{{ url('sales-return') }}">
@@ -60,7 +58,7 @@
             </a>
         </li>
 
-        <li class="nav-item {{ request()->is('items*') ? 'active' : '' }}" >
+        <li class="nav-item {{ request()->is('items*') ? 'active' : '' }}">
             <a href="{{ url('items') }}" data-content="product-section">
                 <i class="bi bi-box-seam"></i>
                 <span>Items</span>
@@ -78,15 +76,13 @@
 
 </aside>
 
-
-
 <style>
 .sidenav {
     width: 260px;
     height: calc(100vh - 80px);
     position: fixed;
     left: 0;
-    top: 180px; /* below header */
+    top: 180px;
     background: #ffffff;
     border-right: 1px solid #e5e7eb;
     font-family: 'Poppins', sans-serif;
@@ -153,5 +149,4 @@
 .nav-item a:hover {
     background: #f9fafb;
 }
-
 </style>

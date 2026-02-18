@@ -9,7 +9,7 @@
     <nav class="cat__header__menu">
         <ul class="list-unstyled d-flex m-0">
             <li>
-                <a href="{{ url('dashboard') }}">
+                <a href="{{ route('dashboard') }}">
                     <i class="bi bi-speedometer2"></i>
                     <span>Dashboard</span>
                 </a>
@@ -32,63 +32,61 @@
     </nav>
 
     <!-- Right: User Info -->
- <!-- Right: User Info -->
-<div class="cat__header__user dropdown">
+    <div class="cat__header__user dropdown">
+        <a href="#"
+           class="dropdown-toggle d-flex align-items-center text-white text-decoration-none"
+           id="userDropdown"
+           data-bs-toggle="dropdown"
+           aria-expanded="false">
 
-    <a href="#" class="dropdown-toggle d-flex align-items-center text-white text-decoration-none"
-       id="userDropdown"
-       data-bs-toggle="dropdown"
-       aria-expanded="false">
+            <div class="text-end me-2">
+                <div class="fw-bold">
+                    {{
+                        Auth::user()->name
+                        ?? (Auth::guard('staff')->check()
+                            ? Auth::guard('staff')->user()->first_name . ' ' . Auth::guard('staff')->user()->last_name
+                            : 'User')
+                    }}
+                </div>
+                <div class="text-muted small">
+                    {{
+                        Auth::user()->role->name
+                        ?? (Auth::guard('staff')->check()
+                            ? Auth::guard('staff')->user()->role->name
+                            : 'User')
+                    }}
+                </div>
+            </div>
 
-<div class="text-end me-2">
-    <div class="fw-bold">
-        {{ 
-            Auth::user()->name 
-            ?? (Auth::guard('staff')->check() ? Auth::guard('staff')->user()->first_name . ' ' . Auth::guard('staff')->user()->last_name : 'User') 
-        }}
+            <i class="bi bi-person-circle"></i>
+        </a>
+
+        <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="userDropdown">
+            <li>
+                <a class="dropdown-item" href="{{ url('profile') }}">
+                    <i class="bi bi-person me-2"></i> Profile
+                </a>
+            </li>
+
+            <li><hr class="dropdown-divider"></li>
+
+            <li>
+                <form method="POST" action="{{ route('logout') }}">
+                    @csrf
+                    <button class="dropdown-item text-danger" type="submit">
+                        <i class="bi bi-box-arrow-right me-2"></i> Logout
+                    </button>
+                </form>
+            </li>
+        </ul>
     </div>
-    <div class="text-muted small">
-        {{ 
-            Auth::user()->role->name 
-            ?? (Auth::guard('staff')->check() ? Auth::guard('staff')->user()->role->name : 'User') 
-        }}
-    </div>
-</div>
-
-
-        <i class="bi bi-person-circle"></i>
-    </a>
-
-    <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="userDropdown">
-        <li>
-            <a class="dropdown-item" href="{{ url('profile') }}">
-                <i class="bi bi-person me-2"></i> Profile
-            </a>
-        </li>
-
-        <li><hr class="dropdown-divider"></li>
-
-        <li>
-            <form method="POST" action="{{ route('logout') }}">
-                @csrf
-                <button class="dropdown-item text-danger" type="submit">
-                    <i class="bi bi-box-arrow-right me-2"></i> Logout
-                </button>
-            </form>
-        </li>
-    </ul>
-
-</div>
-
 
 </header>
 
+<!-- Bootstrap Icons -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
-
-    <style>
-       /* Sidebar container */
+<style>
 /* Header container */
 .cat__header {
     position: fixed;
@@ -140,7 +138,6 @@
     margin-left: 10px;
 }
 
-
 .cat__header__user .dropdown-toggle::after {
     display: none;
 }
@@ -148,8 +145,4 @@
 .dropdown-menu {
     min-width: 180px;
 }
-
-
-    </style>
-
-</body>
+</style>

@@ -5,207 +5,146 @@
 <header class="app-header">
     <nav class="cat__top-bar__menu d-flex align-items-center w-100">
 
-        <!-- DASHBOARD -->
-        <a href="<?php echo e(url('dashboard')); ?>" class="cat__menu-item">
-            <span class="cat__menu-icon"><i class="icmn-home"></i></span>
-            <span class="cat__menu-text">Dashboard</span>
-        </a>
-
         <!-- MY BUSINESS -->
         <div class="dropdown cat__menu-item">
-            <a href="javascript:void(0)" class="dropdown-toggle cat__menu-link" data-toggle="dropdown">
+            <a href="#" class="dropdown-toggle cat__menu-link" data-bs-toggle="dropdown" aria-expanded="false">
                 <span class="cat__menu-icon"><i class="icmn-briefcase"></i></span>
                 <span class="cat__menu-text">My Business</span>
             </a>
 
-            <div class="dropdown-menu">
-                <a class="dropdown-item" href="<?php echo e(route('dashboard.shop')); ?>">
-                    <i class="icmn-store"></i> My Shop
-                </a>
-                <a class="dropdown-item" href="<?php echo e(url('sale-point')); ?>">
-                    <i class="icmn-location"></i> Sale Point
-                </a>
-                <a class="dropdown-item" href="javascript:void(0)" data-toggle="modal" data-target="#categoryModal">
-                    <i class="icmn-list"></i> Product Categories
-                </a>
-                <a class="dropdown-item" href="javascript:void(0)" data-toggle="modal" data-target="#unitModal">
-                    <i class="icmn-meter"></i> Units
-                </a>
-            </div>
+            <ul class="dropdown-menu">
+                <li>
+          <a class="dropdown-item" href="<?php echo e(isset($shop) ? route('dashboard.shop.show', $shop->id) : route('dashboard.shop')); ?>">
+    <i class="icmn-store"></i> My Shop
+</a>
+
+           </li>
+                <li><a class="dropdown-item" href="<?php echo e(url('sale-point')); ?>"><i class="icmn-location"></i> Sale Point</a></li>
+                <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#categoryModal"><i class="icmn-list"></i> Product Categories</a></li>
+                <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#unitModal"><i class="icmn-meter"></i> Units</a></li>
+            </ul>
         </div>
 
         <!-- INVOICE & ORDER -->
         <div class="dropdown cat__menu-item">
-            <a href="javascript:void(0)" class="dropdown-toggle cat__menu-link" data-toggle="dropdown">
+            <a href="#" class="dropdown-toggle cat__menu-link" data-bs-toggle="dropdown" aria-expanded="false">
                 <span class="cat__menu-icon"><i class="icmn-file-text"></i></span>
                 <span class="cat__menu-text">Invoice & Order</span>
             </a>
-            <div class="dropdown-menu">
-                <a class="dropdown-item" href="<?php echo e(url('quotation')); ?>">
-                    <i class="icmn-file-plus"></i> Quotation
-                </a>
-                <a class="dropdown-item" href="<?php echo e(url('purchase-order')); ?>">
-                    <i class="icmn-cart"></i> Purchase Order
-                </a>
-                <a class="dropdown-item" href="<?php echo e(url('suppliers')); ?>">
-                    <i class="icmn-truck"></i> My Supplier
-                </a>
-                <a class="dropdown-item" href="<?php echo e(url('customers')); ?>">
-                    <i class="icmn-users"></i> Customer
-                </a>
-            </div>
+
+            <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="<?php echo e(url('quotation')); ?>"><i class="icmn-file-plus"></i> Quotation</a></li>
+                <li><a class="dropdown-item" href="<?php echo e(url('purchase-order')); ?>"><i class="icmn-cart"></i> Purchase Order</a></li>
+                <li><a class="dropdown-item" href="<?php echo e(url('suppliers')); ?>"><i class="icmn-truck"></i> My Supplier</a></li>
+                <li><a class="dropdown-item" href="<?php echo e(url('customers')); ?>"><i class="icmn-users"></i> Customer</a></li>
+            </ul>
         </div>
 
         <!-- USER MANAGEMENT -->
         <div class="dropdown cat__menu-item">
-            <a href="javascript:void(0)" class="dropdown-toggle cat__menu-link" data-toggle="dropdown">
+            <a href="#" class="dropdown-toggle cat__menu-link" data-bs-toggle="dropdown" aria-expanded="false">
                 <span class="cat__menu-icon"><i class="icmn-users"></i></span>
                 <span class="cat__menu-text">User Management</span>
             </a>
-            <div class="dropdown-menu">
-                <a class="dropdown-item" href="<?php echo e(route('staff.index')); ?>">
-                    <i class="icmn-user"></i> My Staff
-                </a>
-                <a class="dropdown-item" href="<?php echo e(route('dashboard.role')); ?>">
-                    <i class="icmn-lock"></i> Role & Permission
-                </a>
-            </div>
-        </div>
 
+            <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="<?php echo e(route('staff.manage.index')); ?>"><i class="icmn-user"></i> My Staff</a></li>
+                <li><a class="dropdown-item" href="<?php echo e(route('dashboard.role')); ?>"><i class="icmn-lock"></i> Role & Permission</a></li>
+            </ul>
+        </div>
 
         <!-- REPORTS -->
         <div class="dropdown cat__menu-item">
-            <a href="javascript:void(0)" class="dropdown-toggle cat__menu-link" data-toggle="dropdown">
+            <a href="#" class="dropdown-toggle cat__menu-link" data-bs-toggle="dropdown" aria-expanded="false">
                 <span class="cat__menu-icon"><i class="icmn-stats-bars"></i></span>
                 <span class="cat__menu-text">Reports</span>
             </a>
-            <div class="dropdown-menu">
-                <a class="dropdown-item" href="<?php echo e(url('report/sales')); ?>">
-                    <i class="icmn-stats-growth"></i> Sale Report
-                </a>
-                <a class="dropdown-item" href="<?php echo e(url('report/purchase')); ?>">
-                    <i class="icmn-cart"></i> Purchase Report
-                </a>
-                <a class="dropdown-item" href="<?php echo e(url('report/invoice')); ?>">
-                    <i class="icmn-file-text"></i> Invoice Report
-                </a>
-                <a class="dropdown-item" href="<?php echo e(url('report/profit')); ?>">
-                    <i class="icmn-coins"></i> Profit Report
-                </a>
-                <a class="dropdown-item" href="<?php echo e(url('report/stock')); ?>">
-                    <i class="icmn-box"></i> Stock Report
-                </a>
-                <a class="dropdown-item" href="<?php echo e(url('stock-list')); ?>">
-                    <i class="icmn-list"></i> Stock List
-                </a>
-            </div>
+
+            <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="<?php echo e(url('report/sales')); ?>"><i class="icmn-stats-growth"></i> Sale Report</a></li>
+                <li><a class="dropdown-item" href="<?php echo e(url('report/purchase')); ?>"><i class="icmn-cart"></i> Purchase Report</a></li>
+                <li><a class="dropdown-item" href="<?php echo e(url('report/invoice')); ?>"><i class="icmn-file-text"></i> Invoice Report</a></li>
+                <li><a class="dropdown-item" href="<?php echo e(url('report/profit')); ?>"><i class="icmn-coins"></i> Profit Report</a></li>
+                <li><a class="dropdown-item" href="<?php echo e(url('report/stock')); ?>"><i class="icmn-box"></i> Stock Report</a></li>
+                <li><a class="dropdown-item" href="<?php echo e(url('stock-list')); ?>"><i class="icmn-list"></i> Stock List</a></li>
+            </ul>
         </div>
 
-        <!-- USER PROFILE & LOGOUT (RIGHT SIDE) -->
-        
-
-       <div class="cat__logout ml-auto">
-    <form method="POST" action="<?php echo e(route('logout')); ?>">
-        <?php echo csrf_field(); ?>
-        <button type="submit"
-                class="cat__logout-btn"
-                title="Logout"
-                onclick="return confirm('Are you sure you want to logout?');">
-            <i class="icmn-exit"></i>
-        </button>
-    </form>
-</div>
-
+        <!-- USER PROFILE & LOGOUT -->
+        <div class="cat__logout ms-auto">
+            <form method="POST" action="<?php echo e(route('logout')); ?>">
+                <?php echo csrf_field(); ?>
+                <button type="submit" class="cat__logout-btn" title="Logout" onclick="return confirm('Are you sure you want to logout?');">
+                    <i class="icmn-exit"></i>
+                </button>
+            </form>
         </div>
-
     </nav>
 </header>
 
 <br><br><br>
 
-
-
 <!-- UNIT MODAL -->
 <div class="modal fade" id="unitModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg rounded-4">
-
             <div class="modal-header">
                 <h5 class="modal-title">Add Unit</h5>
-                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
 
-       <form action="<?php echo e(route('units.store')); ?>" method="POST">
-    <?php echo csrf_field(); ?>
+            <form action="<?php echo e(route('units.store')); ?>" method="POST">
+                <?php echo csrf_field(); ?>
+                <div class="modal-body">
+                    <?php if(session('success')): ?>
+                        <div class="alert alert-success"><?php echo e(session('success')); ?></div>
+                    <?php endif; ?>
 
-    <div class="modal-body">
-            <?php if(session('success')): ?>
-        <div class="alert alert-success">
-            <?php echo e(session('success')); ?>
-
-        </div>
-    <?php endif; ?>
-        <div class="form-group">
-            <label>Unit Name</label>
-            <input type="text" name="name" class="form-control" required>
-        </div>
-
-        <div class="form-group">
-            <label>Short Name</label>
-            <input type="text" name="short_name" class="form-control" required>
-        </div>
-    </div>
-
-    <div class="modal-footer">
-        <button type="submit" class="btn btn-primary">
-            Save Unit
-        </button>
-    </div>
-</form>
-
-
+                    <div class="mb-3">
+                        <label>Unit Name</label>
+                        <input type="text" name="name" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label>Short Name</label>
+                        <input type="text" name="short_name" class="form-control" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">Save Unit</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
-
 
 <!-- CATEGORY MODAL -->
 <div class="modal fade" id="categoryModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg rounded-4">
-
             <div class="modal-header">
                 <h5 class="modal-title">Add Product Category</h5>
-                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
 
-            <!-- Form -->
-           <form action="<?php echo e(route('categories.store')); ?>" method="POST">
-
+            <form action="<?php echo e(route('categories.store')); ?>" method="POST">
                 <?php echo csrf_field(); ?>
-
                 <div class="modal-body">
-                    <!-- Success message -->
                     <?php if(session('success')): ?>
-                        <div class="alert alert-success">
-                            <?php echo e(session('success')); ?>
-
-                        </div>
+                        <div class="alert alert-success"><?php echo e(session('success')); ?></div>
                     <?php endif; ?>
 
-                    <div class="form-group">
+                    <div class="mb-3">
                         <label>Category Name</label>
                         <input type="text" name="name" class="form-control" placeholder="e.g Beverages" required>
                     </div>
 
-                    <div class="form-group">
+                    <div class="mb-3">
                         <label>Description</label>
                         <textarea name="description" class="form-control" rows="3"></textarea>
                     </div>
 
-                    <!-- Optional: Parent Category -->
                     <?php if(isset($parentCategories) && count($parentCategories)): ?>
-                        <div class="form-group">
+                        <div class="mb-3">
                             <label>Parent Category (optional)</label>
                             <select name="parent_id" class="form-control">
                                 <option value="">None</option>
@@ -218,12 +157,9 @@
                 </div>
 
                 <div class="modal-footer">
-                    <button type="submit" class="btn btn-primary">
-                        Save Category
-                    </button>
+                    <button type="submit" class="btn btn-primary">Save Category</button>
                 </div>
             </form>
-
         </div>
     </div>
 </div>
@@ -231,12 +167,14 @@
 <!-- Optional: Auto-close modal after success -->
 <?php if(session('success')): ?>
 <script>
-    $(document).ready(function() {
-        $('#categoryModal').modal('hide'); // hide modal automatically
-        alert("<?php echo e(session('success')); ?>"); // optional toast
+    document.addEventListener('DOMContentLoaded', function () {
+        var categoryModal = new bootstrap.Modal(document.getElementById('categoryModal'));
+        categoryModal.hide();
+        alert("<?php echo e(session('success')); ?>");
     });
 </script>
 <?php endif; ?>
+
 
 
 
@@ -410,10 +348,10 @@
     box-shadow: 0 14px 40px rgba(0,0,0,0.12);
     animation: dropdownSmooth 0.25s ease;
     background: #ffffff;
-    border-radius: 14px;
+    border-radius: 1px;
     box-shadow: 0 20px 50px rgba(0,0,0,0.15);
     transform-origin: top;
-    margin-top: 600px;
+    margin-top: 30px;
 }
 
 /* Dropdown items */

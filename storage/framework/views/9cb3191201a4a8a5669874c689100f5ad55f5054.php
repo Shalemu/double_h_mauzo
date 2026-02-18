@@ -1,11 +1,12 @@
 <?php $__env->startSection('title', 'Dashboard'); ?>
 <?php echo $__env->make('main', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
-<?php echo $__env->make('components/breadcrumb', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
+<?php echo $__env->make('components/staff_header', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
 <?php echo $__env->make('components/mainmenu', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
 
 <?php
     $products = $products ?? collect();
     $customers = $customers ?? collect();
+    $shopId = auth('staff')->user()->shop_id;
 ?>
 
 
@@ -13,7 +14,7 @@
 
 
 <div class="cat__content">
-<br><br>
+
 
 <!-- TOP ACTION BUTTONS -->
 <div class="row mb-4">
@@ -27,17 +28,21 @@
         <i class="bi bi-bag-plus text-success"></i> Purchases
     </button>
 
-    <button class="btn btn-outline-warning">
+
+
+     <a href="<?php echo e(route('staff.expenses.index', auth('staff')->user()->shop_id)); ?>" class="btn btn-outline-warning">
         <i class="bi bi-cash-stack text-warning"></i> Expenses
-    </button>
+    </a>
 
-    <button class="btn btn-outline-primary">
+
+      <a href="<?php echo e(route('staff.sales.index', auth('staff')->user()->shop_id)); ?>" class="btn btn-outline-primary">
         <i class="bi bi-shop text-primary"></i> Sales
-    </button>
+    </a>
 
-    <button class="btn btn-outline-info">
+    <a href="<?php echo e(route('staff.products.index')); ?>" class="btn btn-outline-info">
         <i class="bi bi-box-seam text-info"></i> Items
-    </button>
+    </a>
+
 
     <button class="btn btn-outline-secondary">
         <i class="bi bi-people text-secondary"></i> Customers
@@ -64,7 +69,7 @@
                 <div class="col-lg-7">
                     <div class="border rounded p-2 bg-light h-100">
                         <input type="text" id="product-search" class="form-control form-control-sm mb-3" placeholder="Search by name, ID or barcode...">
-                        <h6 class="mb-3">Items</h6>
+                        <h6 class="mb-3">Sales</h6>
 
                         <?php if($products->count()): ?>
                             <?php $__currentLoopData = $products; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $product): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
@@ -146,18 +151,20 @@
                                 <label class="font-weight-semibold">Customer</label>
                                 <div class="d-flex align-items-center">
                                     <select class="form-control form-control-sm me-2" id="customer-id" style="max-width: 85%;">
-                                        <option value="">-- Select Customer --</option>
-                                        <?php $__empty_1 = true; $__currentLoopData = $customers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $customer): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
-                                            <option value="<?php echo e($customer->id); ?>"><?php echo e($customer->name); ?></option>
-                                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
-                                            <option value="">No customers yet</option>
-                                        <?php endif; ?>
-                                    </select>
+                                <option value="">-- Select Customer --</option>
+                                <?php $__empty_1 = true; $__currentLoopData = $customers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $customer): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
+                                    <option value="<?php echo e($customer->id); ?>"><?php echo e($customer->name); ?></option>
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
+                                    <option value="">No customers yet</option>
+                                <?php endif; ?>
+                            </select>
+
                                     <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addCustomerModal">
                                         <i class="fa fa-plus"></i>
                                     </button>
                                 </div>
                             </div>
+
 
                             <div class="form-group mb-3">
                                 <label class="font-weight-semibold">Payment Method</label>
@@ -301,7 +308,7 @@
             <?php if(session('success')): ?>
                 <div class="alert alert-success m-3"><?php echo e(session('success')); ?></div>
             <?php endif; ?>
-            <form action="<?php echo e(route('customers.store')); ?>" method="POST">
+            <form action="<?php echo e(route('staff.customers.store')); ?>" method="POST">
                 <?php echo csrf_field(); ?>
                 <div class="modal-body">
                     <div class="mb-3">
@@ -323,6 +330,32 @@
 </div>
 
 <div id="js-data" data-show-customer-modal="<?php echo e($errors->any() || session('success') ? '1' : '0'); ?>"></div>
+
+<!-- SUCCESS MODAL -->
+<div class="modal fade" id="successModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content text-center p-4">
+
+      <div class="modal-body">
+        <!-- Green Check Icon -->
+        <div class="mb-3">
+          <div class="success-check">
+            <i class="fa fa-check"></i>
+          </div>
+        </div>
+
+        <h4 class="mb-2 text-success">Payment Successful</h4>
+        <p class="text-muted mb-4" id="success-message">
+          Sale completed successfully!
+        </p>
+
+        <button class="btn btn-success px-4" data-bs-dismiss="modal">OK</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
 
 
 <script>
@@ -498,7 +531,7 @@ const payload = {
 
 
         try {
-            const response = await fetch("<?php echo e(route('sales.checkout')); ?>", {
+            const response = await fetch("<?php echo e(route('staff.sales.checkout', ['shop' => $shopId])); ?>", {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -514,9 +547,22 @@ const payload = {
                 return alert(data.message || 'Checkout failed due to server error');
             }
 
-            alert(data.message || 'Sale completed successfully!');
-            cart = {}; // reset cart
-            window.location.reload();
+                // Show success modal
+                document.getElementById('success-message').textContent =
+                    data.message || 'Sale completed successfully!';
+
+                const successModal = new bootstrap.Modal(document.getElementById('successModal'));
+                successModal.show();
+
+                // Reset cart
+                cart = {};
+                updateCartDisplay();
+
+                // Optional: reload after modal closes
+                document.getElementById('successModal').addEventListener('hidden.bs.modal', () => {
+                    window.location.reload();
+                });
+
 
         } catch (err) {
             alert('Checkout failed: ' + err.message);
@@ -618,8 +664,30 @@ customerSelect.addEventListener("change", () => {
 
 });
 
-//payment method
-
-
 </script>
+
+<style>
+.success-check {
+    width: 80px;
+    height: 80px;
+    background: #28a745;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+    animation: popIn 0.4s ease;
+}
+
+.success-check i {
+    color: #fff;
+    font-size: 40px;
+}
+
+@keyframes  popIn {
+    0% { transform: scale(0.5); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
+</style>
+
 <?php /**PATH E:\PROJECT\double h\double h\resources\views/dashboard/staff/index.blade.php ENDPATH**/ ?>

@@ -1,11 +1,12 @@
 @section('title', 'Dashboard')
 @include('main')
-@include('components/breadcrumb')
+@include('components/staff_header')
 @include('components/mainmenu')
 
 @php
     $products = $products ?? collect();
     $customers = $customers ?? collect();
+    $shopId = auth('staff')->user()->shop_id;
 @endphp
 
 
@@ -13,7 +14,7 @@
 
 
 <div class="cat__content">
-<br><br>
+
 
 <!-- TOP ACTION BUTTONS -->
 <div class="row mb-4">
@@ -27,17 +28,21 @@
         <i class="bi bi-bag-plus text-success"></i> Purchases
     </button>
 
-    <button class="btn btn-outline-warning">
+
+
+     <a href="{{ route('staff.expenses.index', auth('staff')->user()->shop_id) }}" class="btn btn-outline-warning">
         <i class="bi bi-cash-stack text-warning"></i> Expenses
-    </button>
+    </a>
 
-    <button class="btn btn-outline-primary">
+
+      <a href="{{ route('staff.sales.index', auth('staff')->user()->shop_id) }}" class="btn btn-outline-primary">
         <i class="bi bi-shop text-primary"></i> Sales
-    </button>
+    </a>
 
-    <button class="btn btn-outline-info">
+    <a href="{{ route('staff.products.index') }}" class="btn btn-outline-info">
         <i class="bi bi-box-seam text-info"></i> Items
-    </button>
+    </a>
+
 
     <button class="btn btn-outline-secondary">
         <i class="bi bi-people text-secondary"></i> Customers
@@ -64,7 +69,7 @@
                 <div class="col-lg-7">
                     <div class="border rounded p-2 bg-light h-100">
                         <input type="text" id="product-search" class="form-control form-control-sm mb-3" placeholder="Search by name, ID or barcode...">
-                        <h6 class="mb-3">Items</h6>
+                        <h6 class="mb-3">Sales</h6>
 
                         @if($products->count())
                             @foreach($products as $product)
@@ -146,18 +151,20 @@
                                 <label class="font-weight-semibold">Customer</label>
                                 <div class="d-flex align-items-center">
                                     <select class="form-control form-control-sm me-2" id="customer-id" style="max-width: 85%;">
-                                        <option value="">-- Select Customer --</option>
-                                        @forelse($customers as $customer)
-                                            <option value="{{ $customer->id }}">{{ $customer->name }}</option>
-                                        @empty
-                                            <option value="">No customers yet</option>
-                                        @endforelse
-                                    </select>
+                                <option value="">-- Select Customer --</option>
+                                @forelse($customers as $customer)
+                                    <option value="{{ $customer->id }}">{{ $customer->name }}</option>
+                                @empty
+                                    <option value="">No customers yet</option>
+                                @endforelse
+                            </select>
+
                                     <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addCustomerModal">
                                         <i class="fa fa-plus"></i>
                                     </button>
                                 </div>
                             </div>
+
 
                             <div class="form-group mb-3">
                                 <label class="font-weight-semibold">Payment Method</label>
@@ -301,7 +308,7 @@
             @if(session('success'))
                 <div class="alert alert-success m-3">{{ session('success') }}</div>
             @endif
-            <form action="{{ route('customers.store') }}" method="POST">
+            <form action="{{ route('staff.customers.store') }}" method="POST">
                 @csrf
                 <div class="modal-body">
                     <div class="mb-3">
@@ -323,6 +330,32 @@
 </div>
 
 <div id="js-data" data-show-customer-modal="{{ $errors->any() || session('success') ? '1' : '0' }}"></div>
+
+<!-- SUCCESS MODAL -->
+<div class="modal fade" id="successModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content text-center p-4">
+
+      <div class="modal-body">
+        <!-- Green Check Icon -->
+        <div class="mb-3">
+          <div class="success-check">
+            <i class="fa fa-check"></i>
+          </div>
+        </div>
+
+        <h4 class="mb-2 text-success">Payment Successful</h4>
+        <p class="text-muted mb-4" id="success-message">
+          Sale completed successfully!
+        </p>
+
+        <button class="btn btn-success px-4" data-bs-dismiss="modal">OK</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
 
 
 <script>
@@ -498,7 +531,7 @@ const payload = {
 
 
         try {
-            const response = await fetch("{{ route('sales.checkout') }}", {
+            const response = await fetch("{{ route('staff.sales.checkout', ['shop' => $shopId]) }}", {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -514,9 +547,22 @@ const payload = {
                 return alert(data.message || 'Checkout failed due to server error');
             }
 
-            alert(data.message || 'Sale completed successfully!');
-            cart = {}; // reset cart
-            window.location.reload();
+                // Show success modal
+                document.getElementById('success-message').textContent =
+                    data.message || 'Sale completed successfully!';
+
+                const successModal = new bootstrap.Modal(document.getElementById('successModal'));
+                successModal.show();
+
+                // Reset cart
+                cart = {};
+                updateCartDisplay();
+
+                // Optional: reload after modal closes
+                document.getElementById('successModal').addEventListener('hidden.bs.modal', () => {
+                    window.location.reload();
+                });
+
 
         } catch (err) {
             alert('Checkout failed: ' + err.message);
@@ -618,7 +664,29 @@ customerSelect.addEventListener("change", () => {
 
 });
 
-//payment method
-
-
 </script>
+
+<style>
+.success-check {
+    width: 80px;
+    height: 80px;
+    background: #28a745;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+    animation: popIn 0.4s ease;
+}
+
+.success-check i {
+    color: #fff;
+    font-size: 40px;
+}
+
+@keyframes popIn {
+    0% { transform: scale(0.5); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
+</style>
+

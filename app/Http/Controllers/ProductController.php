@@ -22,10 +22,24 @@ class ProductController extends Controller
 
 public function index()
 {
+    // Check if staff
+    if (Auth::guard('staff')->check()) {
+        $staff = Auth::guard('staff')->user();
+        $products = Products::where('shop_id', $staff->shop_id)->get();
+        $categories = ProductCategory::whereNull('parent_id')->get();
+        $units = Unit::all();
+
+        // Staff view
+        return view('dashboard.staff.products.index', compact(
+            'products',
+            'categories',
+            'units'
+        ));
+    }
+
+    // Admin view
     $admin = Auth::user();
-
     $products = Products::where('shop_id', $admin->shop->id)->get();
-
     $categories = ProductCategory::whereNull('parent_id')->get();
     $units = Unit::all();
 
@@ -35,6 +49,8 @@ public function index()
         'units'
     ));
 }
+
+
 
 
     /**

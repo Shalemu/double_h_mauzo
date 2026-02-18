@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Customer;
+use Illuminate\Support\Facades\Auth;
+
 
 class CustomerController extends Controller
 {
@@ -25,6 +27,7 @@ class CustomerController extends Controller
         Customer::create([
             'name'  => $request->name,
             'phone' => $request->phone,
+            'shop_id' => Auth::guard('staff')->user()->shop_id,
         ]);
 
         return redirect()->back()->with('success', 'Customer added successfully!');

@@ -7,201 +7,146 @@ use Illuminate\Support\Facades\DB;
 use App\Models\Sale;
 use App\Models\SaleItem;
 use App\Models\Products;
-use Carbon\Carbon;
 use App\Models\Shops;
+use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\DailySalesExport;
 use App\Exports\DailySalesPdfExport;
-use Maatwebsite\Excel\Facades\Excel;
-
 
 class SaleController extends Controller
 {
     protected $staff;
 
-public function __construct()
-{
-    $this->middleware(function ($request, $next) {
-        if (!auth()->check() && !auth()->guard('staff')->check()) {
-            return redirect()->route('login');
+    public function __construct()
+    {
+        // Middleware to get the currently logged-in staff user
+        $this->middleware(function ($request, $next) {
+            $this->staff = auth()->guard('staff')->user();
+            return $next($request);
+        });
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | STAFF SALES LIST
+    |--------------------------------------------------------------------------
+    */
+    public function index($shopId)
+    {
+        $shop = Shops::findOrFail($shopId);
+
+        // Ensure staff can only see their own shop
+        if ($this->staff && $this->staff->shop_id != $shop->id) {
+            abort(403, 'Unauthorized');
         }
 
-        // Set staff if logged in as staff
-        $this->staff = auth()->guard('staff')->user();
+        // Get all sales for this shop
+        $sales = Sale::where('shop_id', $shop->id)
+            ->orderBy('created_at', 'desc')
+            ->get();
 
-        return $next($request);
-    });
-}
+        // Group sales by date
+        $salesByDate = $sales->groupBy(fn($sale) => $sale->created_at->format('Y-m-d'))
+            ->map(fn($group, $date) => [
+                'date' => $date,
+                'total' => $group->sum('total')
+            ])
+            ->values();
 
+        return view('dashboard.staff.sales.index', compact('shop', 'salesByDate'));
+    }
 
-    /**
-     * Display sales, optionally filtered by date
-     */
+    /*
+    |--------------------------------------------------------------------------
+    | STAFF DAILY SALES DETAIL
+    |--------------------------------------------------------------------------
+    */
 public function detail($shopId, $date)
 {
     $shop = Shops::findOrFail($shopId);
 
-    if ($this->staff && $this->staff->shop_id != $shop->id) {
-        abort(403, 'Unauthorized access to this shop.');
+    // Detect user type
+    if (auth()->guard('staff')->check()) {
+        $sales = Sale::with(['items.product', 'staff'])
+            ->where('shop_id', $shop->id)
+            ->whereDate('created_at', $date)
+            ->get();
+
+        $itemRows = $this->aggregateItems($sales);
+
+        return view('dashboard.staff.sales.detail', compact('shop', 'date', 'itemRows'));
     }
 
-    $sales = $shop->sales()
-        ->whereDate('sales.created_at', $date)
-        ->with('items.product', 'staff') // staff = aliyeuza
-        ->get();
+    // Admin view
+    if (auth()->guard('web')->check()) {
+        $sales = Sale::with(['items.product','staff'])
+            ->where('shop_id', $shop->id)
+            ->whereDate('created_at', $date)
+            ->get();
 
-    $itemRows = [];
+        $itemRows = $this->aggregateItems($sales);
 
-    // Aggregate by product + staff
-    foreach ($sales as $sale) {
-        $staffName = $sale->staff->full_name ?? 'Unknown';
-
-        foreach ($sale->items as $item) {
-            $key = $item->product->id . '|' . $staffName;
-
-            if (!isset($itemRows[$key])) {
-                $itemRows[$key] = [
-                    'product' => $item->product->name,
-                    'quantity' => 0,
-                    'revenue' => 0,
-                    'staff' => $staffName,
-                ];
-            }
-
-            $itemRows[$key]['quantity'] += $item->quantity;
-            $itemRows[$key]['revenue'] += $item->price * $item->quantity;
-        }
+        return view('dashboard.sales.detail', compact('shop', 'date', 'itemRows'));
     }
 
-    // Re-index array for Blade
-    $itemRows = array_values($itemRows);
-
-    return view('dashboard.sales.detail', compact('shop', 'date', 'itemRows'));
+    abort(403, 'Unauthorized access.');
 }
 
 
-public function detailItems($shopId, $date, Request $request)
-{
-    $shop = Shops::findOrFail($shopId);
+    /*
+    |--------------------------------------------------------------------------
+    | EXPORT DAILY SALES TO EXCEL
+    |--------------------------------------------------------------------------
+    */
+    public function exportExcel($shopId, $date)
+    {
+        $shop = Shops::findOrFail($shopId);
 
-    $productName = $request->query('product');
-    $staffName = $request->query('staff');
+        $sales = Sale::with(['items.product', 'staff'])
+            ->where('shop_id', $shop->id)
+            ->whereDate('created_at', $date)
+            ->get();
 
-    $sales = $shop->sales()
-        ->whereDate('sales.created_at', $date)
-        ->whereHas('staff', function($q) use ($staffName) {
-            $q->whereRaw("CONCAT(first_name,' ',last_name) = ?", [$staffName]);
-        })
-        ->with(['items.product'])
-        ->get();
+        $itemRows = $this->aggregateItems($sales);
 
-    // Filter only items matching the product
-    $filteredItems = [];
-    foreach ($sales as $sale) {
-        foreach ($sale->items as $item) {
-            if ($item->product->name === $productName) {
-                $filteredItems[] = [
-                    'time' => $sale->created_at->format('H:i'),
-                    'quantity' => $item->quantity,
-                    'price' => $item->price,
-                    'total' => $item->price * $item->quantity,
-                ];
-            }
-        }
+        return Excel::download(new DailySalesExport($itemRows), "daily_sales_{$date}.xlsx");
     }
 
-    return view('dashboard.sales.partials.detail-items', compact('filteredItems', 'productName', 'staffName'));
-}
+    /*
+    |--------------------------------------------------------------------------
+    | EXPORT DAILY SALES TO PDF
+    |--------------------------------------------------------------------------
+    */
+    public function exportPdf($shopId, $date)
+    {
+        $shop = Shops::findOrFail($shopId);
 
+        $sales = Sale::with(['items.product', 'staff'])
+            ->where('shop_id', $shop->id)
+            ->whereDate('created_at', $date)
+            ->get();
 
-public function exportExcel($shopId, $date)
-{
-    $shop = Shops::findOrFail($shopId);
+        $itemRows = $this->aggregateItems($sales);
 
-    $sales = $shop->sales()
-        ->whereDate('sales.created_at', $date)
-        ->with('items.product', 'staff')
-        ->get();
-
-    $itemRows = [];
-
-    // Aggregate by product + staff
-    foreach ($sales as $sale) {
-        $staffName = $sale->staff->full_name ?? 'Unknown';
-
-        foreach ($sale->items as $item) {
-            $key = $item->product->id . '|' . $staffName;
-
-            if (!isset($itemRows[$key])) {
-                $itemRows[$key] = [
-                    'product' => $item->product->name,
-                    'quantity' => 0,
-                    'revenue' => 0,
-                    'staff' => $staffName,
-                ];
-            }
-
-            $itemRows[$key]['quantity'] += $item->quantity;
-            $itemRows[$key]['revenue'] += $item->price * $item->quantity;
-        }
+        return (new DailySalesPdfExport($shop, $date, $itemRows))
+            ->download("daily_sales_{$date}.pdf");
     }
 
-    $itemRows = array_values($itemRows);
-
-    return Excel::download(new DailySalesExport($itemRows), 'daily_sales.xlsx');
-}
-
-public function exportPdf($shopId, $date)
-{
-    $shop = Shops::findOrFail($shopId);
-
-    $sales = $shop->sales()
-        ->whereDate('sales.created_at', $date)
-        ->with('items.product', 'staff')
-        ->get();
-
-    $itemRows = [];
-
-    // Aggregate by product + staff
-    foreach ($sales as $sale) {
-        $staffName = $sale->staff->full_name ?? 'Unknown';
-
-        foreach ($sale->items as $item) {
-            $key = $item->product->id . '|' . $staffName;
-
-            if (!isset($itemRows[$key])) {
-                $itemRows[$key] = [
-                    'product' => $item->product->name,
-                    'quantity' => 0,
-                    'revenue' => 0,
-                    'staff' => $staffName,
-                ];
-            }
-
-            $itemRows[$key]['quantity'] += $item->quantity;
-            $itemRows[$key]['revenue'] += $item->price * $item->quantity;
-        }
-    }
-
-    $itemRows = array_values($itemRows);
-
-    return (new DailySalesPdfExport($shop, $date, $itemRows))->download();
-}
-
-    /**
-     * Complete Sale / Checkout
-     */
-    public function checkout(Request $request)
+    /*
+    |--------------------------------------------------------------------------
+    | CHECKOUT (CREATE SALE)
+    |--------------------------------------------------------------------------
+    */
+    public function checkout(Request $request, $shopId)
     {
         $cart = $request->input('cart', []);
 
         if (empty($cart)) {
             return response()->json([
                 'success' => false,
-                'message' => 'Cart is empty'
+                'message' => 'Cart is empty.'
             ]);
         }
 
-        // Validate input
         $request->validate([
             'customer_id' => 'nullable|exists:customers,id',
             'payment_method' => 'required|string',
@@ -209,76 +154,68 @@ public function exportPdf($shopId, $date)
             'received_amount' => 'nullable|numeric|min:0',
             'bill_discount' => 'nullable|numeric|min:0',
             'shipping' => 'nullable|numeric|min:0',
-            'receipt' => 'nullable|boolean',
         ]);
 
         DB::beginTransaction();
 
         try {
-            $staff = auth()->guard('staff')->user();
+            $staff = $this->staff;
+
             $billDiscount = $request->bill_discount ?? 0;
             $shipping = $request->shipping ?? 0;
 
-            // Calculate subtotal
-            $subTotal = collect($cart)->sum(fn($item) => ($item['qty'] * $item['price']) - ($item['discount'] ?? 0));
+            $subTotal = collect($cart)->sum(fn($item) =>
+                ($item['qty'] * $item['price']) - ($item['discount'] ?? 0)
+            );
 
             $grandTotal = $subTotal - $billDiscount + $shipping;
-            $paymentMethod = $request->payment_method;
-            $paymentType = $request->payment_type;
             $received = $request->received_amount ?? 0;
-
             $remaining = 0;
             $change = 0;
 
-            // Handle payment methods
-            if ($paymentMethod === 'cash') {
+            if ($request->payment_method === 'cash') {
                 if ($received < $grandTotal) {
                     throw new \Exception("Received amount is less than total.");
                 }
                 $change = $received - $grandTotal;
             }
 
-            if ($paymentMethod === 'credit') {
+            if ($request->payment_method === 'credit') {
                 if (!$request->customer_id) {
                     throw new \Exception("Customer required for credit sale.");
                 }
                 $remaining = max(0, $grandTotal - $received);
             }
 
-            if (in_array($paymentMethod, ['bank', 'mobile']) && !$paymentType) {
-                throw new \Exception("Please select payment type.");
-            }
-
-            // Create the Sale
+            // Create sale
             $sale = Sale::create([
+                'shop_id' => $shopId,
                 'staff_id' => $staff->id,
                 'customer_id' => $request->customer_id,
                 'bill_discount' => $billDiscount,
                 'shipping' => $shipping,
-                'payment_method' => $paymentMethod,
-                'payment_type' => $paymentType,
+                'total' => $grandTotal,
+                'payment_method' => $request->payment_method,
+                'payment_type' => $request->payment_type,
                 'received_amount' => $received,
                 'remaining_amount' => $remaining,
                 'change_amount' => $change,
-                'total' => $grandTotal,
             ]);
 
-            // Process each cart item
+            // Save sale items
             foreach ($cart as $item) {
                 $product = Products::lockForUpdate()->find($item['product_id']);
 
                 if (!$product) {
-                    throw new \Exception("Product ID {$item['product_id']} not found.");
+                    throw new \Exception("Product not found.");
                 }
 
                 if ($item['qty'] > $product->quantity) {
-                    throw new \Exception("Not enough stock for {$product->name}. Remaining: {$product->quantity}");
+                    throw new \Exception("Not enough stock for {$product->name}");
                 }
 
-                // Decrement stock
                 $product->decrement('quantity', $item['qty']);
 
-                // Create SaleItem record
                 SaleItem::create([
                     'sale_id' => $sale->id,
                     'product_id' => $product->id,
@@ -295,7 +232,6 @@ public function exportPdf($shopId, $date)
                 'sale_id' => $sale->id,
                 'message' => 'Sale completed successfully!'
             ]);
-
         } catch (\Throwable $e) {
             DB::rollBack();
 
@@ -304,5 +240,36 @@ public function exportPdf($shopId, $date)
                 'message' => 'Checkout failed: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | HELPER: Aggregate Items
+    |--------------------------------------------------------------------------
+    */
+    private function aggregateItems($sales)
+    {
+        $rows = [];
+
+        foreach ($sales as $sale) {
+            $staffName = $sale->staff->full_name ?? 'Unknown';
+            foreach ($sale->items as $item) {
+                $key = $item->product->id . '|' . $staffName;
+
+                if (!isset($rows[$key])) {
+                    $rows[$key] = [
+                        'product' => $item->product->name,
+                        'quantity' => 0,
+                        'revenue' => 0,
+                        'staff' => $staffName,
+                    ];
+                }
+
+                $rows[$key]['quantity'] += $item->quantity;
+                $rows[$key]['revenue'] += $item->price * $item->quantity;
+            }
+        }
+
+        return array_values($rows);
     }
 }
