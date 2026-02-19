@@ -80,10 +80,10 @@ $shops = $shops ?? collect();
         <td>{{ $s->created_at->format('Y-m-d') }}</td>
         <td>
     
-            <a href="{{ route('staff.edit', $s->id) }}" class="btn btn-sm btn-info">Edit</a>
+            <a href="{{ route('staff.manage.edit', $s->id) }}" class="btn btn-sm btn-info">Edit</a>
 
 
-        <form action="{{ route('staff.destroy', $s->id) }}" method="POST" style="display:inline-block;">
+        <form action="{{ route('staff.manage.destroy', $s->id) }}" method="POST" style="display:inline-block;">
             @csrf
             @method('DELETE')
             <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Delete this staff?')">Delete</button>
@@ -116,7 +116,7 @@ $shops = $shops ?? collect();
         <div class="modal-dialog modal-lg" style="margin-top:160px;">
             <div class="modal-content">
 
-                <form method="POST" action="{{ route('staff.store') }}">
+                <form method="POST" action="{{ route('staff.manage.store') }}">
                     @csrf
 
                     <div class="modal-header">

@@ -42,12 +42,9 @@
     <a href="{{ route('staff.products.index') }}" class="btn btn-outline-info">
         <i class="bi bi-box-seam text-info"></i> Items
     </a>
-
-
-    <button class="btn btn-outline-secondary">
-        <i class="bi bi-people text-secondary"></i> Customers
-    </button>
-
+    <a href="{{ route('staff.customers.manage') }}" class="btn btn-outline-secondary">
+    <i class="bi bi-people"></i> Customers
+    </a>
 </div>
 
 </div>

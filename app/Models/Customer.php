@@ -12,4 +12,9 @@ class Customer extends Model
     protected $fillable = [
         'name', 'phone', 'email', 'address', 'shop_id'
     ];
+
+        public function sales()
+    {
+        return $this->hasMany(\App\Models\Sale::class);
+    }
 }

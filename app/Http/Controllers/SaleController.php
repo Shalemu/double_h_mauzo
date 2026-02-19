@@ -30,30 +30,36 @@ class SaleController extends Controller
     | STAFF SALES LIST
     |--------------------------------------------------------------------------
     */
-    public function index($shopId)
-    {
-        $shop = Shops::findOrFail($shopId);
+   public function index($shopId)
+{
+    $shop = Shops::findOrFail($shopId);
 
-        // Ensure staff can only see their own shop
-        if ($this->staff && $this->staff->shop_id != $shop->id) {
+    // Staff restriction
+    if (auth()->guard('staff')->check()) {
+        $staff = auth()->guard('staff')->user();
+
+        if ($staff->shop_id != $shop->id) {
             abort(403, 'Unauthorized');
         }
 
-        // Get all sales for this shop
-        $sales = Sale::where('shop_id', $shop->id)
-            ->orderBy('created_at', 'desc')
-            ->get();
-
-        // Group sales by date
-        $salesByDate = $sales->groupBy(fn($sale) => $sale->created_at->format('Y-m-d'))
-            ->map(fn($group, $date) => [
-                'date' => $date,
-                'total' => $group->sum('total')
-            ])
-            ->values();
-
-        return view('dashboard.staff.sales.index', compact('shop', 'salesByDate'));
+        $salesQuery = Sale::where('shop_id', $shop->id)
+            ->where('staff_id', $staff->id); 
+    } else {
+        // Admin sees all
+        $salesQuery = Sale::where('shop_id', $shop->id);
     }
+
+    $sales = $salesQuery->orderBy('created_at', 'desc')->get();
+
+    $salesByDate = $sales->groupBy(fn($sale) => $sale->created_at->format('Y-m-d'))
+        ->map(fn($group, $date) => [
+            'date' => $date,
+            'total' => $group->sum('total')
+        ])
+        ->values();
+
+    return view('dashboard.staff.sales.index', compact('shop', 'salesByDate'));
+}
 
     /*
     |--------------------------------------------------------------------------
@@ -64,10 +70,17 @@ public function detail($shopId, $date)
 {
     $shop = Shops::findOrFail($shopId);
 
-    // Detect user type
+    // STAFF VIEW
     if (auth()->guard('staff')->check()) {
+        $staff = auth()->guard('staff')->user();
+
+        if ($staff->shop_id != $shop->id) {
+            abort(403, 'Unauthorized');
+        }
+
         $sales = Sale::with(['items.product', 'staff'])
             ->where('shop_id', $shop->id)
+            ->where('staff_id', $staff->id) 
             ->whereDate('created_at', $date)
             ->get();
 
@@ -76,7 +89,7 @@ public function detail($shopId, $date)
         return view('dashboard.staff.sales.detail', compact('shop', 'date', 'itemRows'));
     }
 
-    // Admin view
+    // ADMIN VIEW
     if (auth()->guard('web')->check()) {
         $sales = Sale::with(['items.product','staff'])
             ->where('shop_id', $shop->id)
@@ -90,6 +103,7 @@ public function detail($shopId, $date)
 
     abort(403, 'Unauthorized access.');
 }
+
 
 
     /*

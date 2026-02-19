@@ -80,10 +80,10 @@ $shops = $shops ?? collect();
         <td><?php echo e($s->created_at->format('Y-m-d')); ?></td>
         <td>
     
-            <a href="<?php echo e(route('staff.edit', $s->id)); ?>" class="btn btn-sm btn-info">Edit</a>
+            <a href="<?php echo e(route('staff.manage.edit', $s->id)); ?>" class="btn btn-sm btn-info">Edit</a>
 
 
-        <form action="<?php echo e(route('staff.destroy', $s->id)); ?>" method="POST" style="display:inline-block;">
+        <form action="<?php echo e(route('staff.manage.destroy', $s->id)); ?>" method="POST" style="display:inline-block;">
             <?php echo csrf_field(); ?>
             <?php echo method_field('DELETE'); ?>
             <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Delete this staff?')">Delete</button>
@@ -116,7 +116,7 @@ $shops = $shops ?? collect();
         <div class="modal-dialog modal-lg" style="margin-top:160px;">
             <div class="modal-content">
 
-                <form method="POST" action="<?php echo e(route('staff.store')); ?>">
+                <form method="POST" action="<?php echo e(route('staff.manage.store')); ?>">
                     <?php echo csrf_field(); ?>
 
                     <div class="modal-header">

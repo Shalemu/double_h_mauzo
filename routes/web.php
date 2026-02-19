@@ -79,18 +79,31 @@ Route::prefix('dashboard/staff')
         Route::get('/products', [ProductController::class, 'index'])->name('products.index');
 
         // Customers
-        Route::get('/customers', [CustomerController::class, 'index'])->name('customers.index');
-        Route::post('/customers', [CustomerController::class, 'store'])->name('customers.store');
+       Route::prefix('customers')->name('customers.')->group(function () {
+            Route::get('/', [CustomerController::class, 'index'])->name('index');
+            Route::post('/', [CustomerController::class, 'store'])->name('store');
+            Route::get('/manage', [CustomerController::class, 'manage'])->name('manage');
+            Route::get('/{customer}', [CustomerController::class, 'show'])->name('show');
+
+            // Record Payment for a specific customer
+            Route::post('/{customer}/record-payment', [CustomerController::class, 'recordPayment'])->name('recordPayment');
+        });
+
+
 
         // Sales
         Route::prefix('sales')->group(function () {
-            Route::get('/{shop}', [SaleController::class, 'index'])->name('sales.index');
-            Route::get('/{shop}/{date}', [SaleController::class, 'detail'])->name('sales.detail');
-            Route::post('/sales/checkout/{shop}', [SaleController::class, 'checkout'])->name('sales.checkout');
+    Route::get('/{shop}', [SaleController::class, 'index'])->name('sales.index');
+    Route::get('/{shop}/{date}', [SaleController::class, 'detail'])->name('sales.detail');
 
-            Route::get('/{shop}/{date}/export-excel', [SaleController::class, 'exportExcel'])->name('sales.export.excel');
-            Route::get('/{shop}/{date}/export-pdf', [SaleController::class, 'exportPdf'])->name('sales.export.pdf');
-        });
+   
+    Route::post('/checkout/{shop}', [SaleController::class, 'checkout'])
+        ->name('sales.checkout');
+
+    Route::get('/{shop}/{date}/export-excel', [SaleController::class, 'exportExcel'])->name('sales.export.excel');
+    Route::get('/{shop}/{date}/export-pdf', [SaleController::class, 'exportPdf'])->name('sales.export.pdf');
+});
+
 
         // Cart
         Route::prefix('cart')->group(function () {
