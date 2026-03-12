@@ -10,8 +10,23 @@ class ProductsTemplateExport implements FromArray, WithHeadings
     public function array(): array
     {
         return [
-            // Empty row for user to fill
-            ['Product 1', 'Brand', 'Category', 'Subcategory', 'Unit', 10, 2, 1000, 1200, '123456789', '2026-12-31', 'Medium', 'Red'],
+            // Example row for user guidance
+            [
+                'Product 1',
+                'Brand',
+                'Category',
+                'Subcategory',
+                'Piece',
+                10,
+                2,
+                1000,
+                1200,
+                '123456789',
+                '2026-12-31',
+                'Medium',
+                'Red',
+                'retail' // sale_type example
+            ],
         ];
     }
 
@@ -31,6 +46,7 @@ class ProductsTemplateExport implements FromArray, WithHeadings
             'Expire Date',
             'Size',
             'Color',
+            'Sale Type'
         ];
     }
 }

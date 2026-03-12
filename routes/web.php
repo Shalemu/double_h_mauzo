@@ -92,18 +92,16 @@ Route::prefix('dashboard/staff')
 
 
         // Sales
-        Route::prefix('sales')->group(function () {
+    Route::prefix('sales')->group(function () {
     Route::get('/{shop}', [SaleController::class, 'index'])->name('sales.index');
     Route::get('/{shop}/{date}', [SaleController::class, 'detail'])->name('sales.detail');
-
-   
     Route::post('/checkout/{shop}', [SaleController::class, 'checkout'])
         ->name('sales.checkout');
-
     Route::get('/{shop}/{date}/export-excel', [SaleController::class, 'exportExcel'])->name('sales.export.excel');
     Route::get('/{shop}/{date}/export-pdf', [SaleController::class, 'exportPdf'])->name('sales.export.pdf');
+    Route::get('sales/{shop}/export/excel/{date}', [SaleController::class, 'exportExcel'])->name('sales.exportExcel');
+    Route::get('sales/{shop}/export/pdf/{date}', [SaleController::class, 'exportPdf'])->name('sales.exportPdf');
 });
-
 
         // Cart
         Route::prefix('cart')->group(function () {
@@ -222,9 +220,8 @@ Route::middleware(['web', 'auth'])->group(function () {
     });
 
     Route::prefix('fixed-expenses')->name('fixed-expenses.')->group(function () {
-        Route::get('{shop}', [FixedExpensesController::class, 'index'])->name('index');
-        Route::get('{shop}/create', [FixedExpensesController::class, 'create'])->name('create');
-        Route::post('{shop}', [FixedExpensesController::class, 'store'])->name('store');
+        Route::get('shop/{shop}', [FixedExpensesController::class, 'index'])->name('index');
+        Route::post('shop/{shop}', [FixedExpensesController::class, 'store'])->name('store');
         Route::get('{id}/edit', [FixedExpensesController::class, 'edit'])->name('edit');
         Route::put('{id}', [FixedExpensesController::class, 'update'])->name('update');
         Route::delete('{id}', [FixedExpensesController::class, 'destroy'])->name('destroy');

@@ -25,64 +25,52 @@ class FixedExpensesController extends Controller
     }
 
     // Store new fixed expense
-    public function store(Request $request, $shopId)
-    {
-        $request->validate([
-            'title'  => 'required|string|max:255',
-            'amount' => 'required|numeric|min:0',
-            'note'   => 'nullable|string',
-        ]);
+   public function store(Request $request, $shopId)
+{
+    $request->validate([
+        'title'  => 'required|string|max:255',
+        'amount' => 'required|numeric|min:0',
+        'note'   => 'nullable|string',
+    ]);
 
-        FixedExpense::create([
-            'shop_id' => $shopId,
-            'title'   => $request->title,
-            'amount'  => $request->amount,
-            'note'    => $request->note,
-        ]);
+    FixedExpense::create([
+        'shop_id' => $shopId,
+        'title'   => $request->title,
+        'amount'  => $request->amount,
+        'note'    => $request->note,
+    ]);
 
-                 
-        return redirect()->route('dashboard.shop.show', $shopId)
-             ->with('success', 'Fixed expense added successfully!');
-    }
+    return back()->with('success', 'Fixed expense added successfully!');
+}
 
-    // Show form to edit fixed expense
-    public function edit($id)
-    {
-        $expense = FixedExpense::findOrFail($id);
-        $shop = $expense->shop;
-
-        return view('dashboard.fixed_expenses.edit', compact('expense', 'shop'));
-    }
 
     // Update fixed expense
-    public function update(Request $request, $id)
+    public function update(Request $request,$id)
     {
         $expense = FixedExpense::findOrFail($id);
 
         $request->validate([
-            'title'  => 'required|string|max:255',
-            'amount' => 'required|numeric|min:0',
-            'note'   => 'nullable|string',
+            'title'=>'required|string|max:255',
+            'amount'=>'required|numeric|min:0',
+            'note'=>'nullable|string'
         ]);
 
         $expense->update([
-            'title'  => $request->title,
-            'amount' => $request->amount,
-            'note'   => $request->note,
+            'title'=>$request->title,
+            'amount'=>$request->amount,
+            'note'=>$request->note
         ]);
 
-        return redirect()->route('fixed-expenses.index', $expense->shop_id)
-                         ->with('success', 'Fixed expense updated successfully!');
+    return back()->with('success','Expense updated successfully');
     }
-
     // Delete fixed expense
     public function destroy($id)
-    {
-        $expense = FixedExpense::findOrFail($id);
-        $shopId = $expense->shop_id;
-        $expense->delete();
+{
+    $expense = FixedExpense::findOrFail($id);
 
-     return redirect()->route('dashboard.shop.show', $shopId)
-                         ->with('success', 'Fixed expense deleted successfully!');
-    }
+    $expense->delete();
+
+    return back()->with('success', 'Fixed expense deleted successfully!');
+}
+
 }

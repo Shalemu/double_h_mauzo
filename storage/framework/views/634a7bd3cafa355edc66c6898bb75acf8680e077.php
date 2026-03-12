@@ -23,7 +23,7 @@
         </div>
     <?php endif; ?>
 
-    <form action="<?php echo e(route('staff.update', $staff->id)); ?>" method="POST">
+  <form action="<?php echo e(route('staff.manage.update', $staff->id)); ?>" method="POST">
         <?php echo csrf_field(); ?>
         <?php echo method_field('PUT'); ?>
 
@@ -118,7 +118,7 @@
             <button type="submit" class="btn btn-success">
                 <i class="bi bi-save"></i> Save Changes
             </button>
-            <a href="<?php echo e(route('staff.index')); ?>" class="btn btn-secondary">
+            <a href="<?php echo e(route('staff.manage.index')); ?>" class="btn btn-secondary">
                 <i class="bi bi-arrow-left"></i> Back
             </a>
         </div>

@@ -2,23 +2,20 @@
     $shops = $shops ?? collect();
 @endphp
 
-<header class="app-header">
-    <nav class="cat__top-bar__menu d-flex align-items-center w-100">
+<!-- APP HEADER -->
+<header class="app-header fixed-top bg-white shadow-sm">
+    <nav class="cat__top-bar__menu d-flex align-items-center w-100 px-3 flex-nowrap">
 
         <!-- MY BUSINESS -->
         <div class="dropdown cat__menu-item">
-            <a href="#" class="dropdown-toggle cat__menu-link" data-bs-toggle="dropdown" aria-expanded="false">
+            <a href="#" class="dropdown-toggle cat__menu-link d-flex align-items-center gap-2" 
+               data-bs-toggle="dropdown" aria-expanded="false">
                 <span class="cat__menu-icon"><i class="icmn-briefcase"></i></span>
                 <span class="cat__menu-text">My Business</span>
             </a>
-
-            <ul class="dropdown-menu">
-                <li>
-          <a class="dropdown-item" href="{{ isset($shop) ? route('dashboard.shop.show', $shop->id) : route('dashboard.shop') }}">
-    <i class="icmn-store"></i> My Shop
-</a>
-
-           </li>
+            <ul class="dropdown-menu shadow-sm">
+                <li><a class="dropdown-item" href="{{ isset($shop) ? route('dashboard.shop.show', $shop->id) : route('dashboard.shop') }}">
+                    <i class="icmn-store"></i> My Shop</a></li>
                 <li><a class="dropdown-item" href="{{ url('sale-point') }}"><i class="icmn-location"></i> Sale Point</a></li>
                 <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#categoryModal"><i class="icmn-list"></i> Product Categories</a></li>
                 <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#unitModal"><i class="icmn-meter"></i> Units</a></li>
@@ -27,27 +24,27 @@
 
         <!-- INVOICE & ORDER -->
         <div class="dropdown cat__menu-item">
-            <a href="#" class="dropdown-toggle cat__menu-link" data-bs-toggle="dropdown" aria-expanded="false">
+            <a href="#" class="dropdown-toggle cat__menu-link d-flex align-items-center gap-2"
+               data-bs-toggle="dropdown" aria-expanded="false">
                 <span class="cat__menu-icon"><i class="icmn-file-text"></i></span>
                 <span class="cat__menu-text">Invoice & Order</span>
             </a>
-
-            <ul class="dropdown-menu">
+            <ul class="dropdown-menu shadow-sm">
                 <li><a class="dropdown-item" href="{{ url('quotation') }}"><i class="icmn-file-plus"></i> Quotation</a></li>
                 <li><a class="dropdown-item" href="{{ url('purchase-order') }}"><i class="icmn-cart"></i> Purchase Order</a></li>
-                <li><a class="dropdown-item" href="{{ url('suppliers') }}"><i class="icmn-truck"></i> My Supplier</a></li>
+                <li><a class="dropdown-item" href="{{ url('suppliers') }}"><i class="icmn-truck"></i> Supplier</a></li>
                 <li><a class="dropdown-item" href="{{ url('customers') }}"><i class="icmn-users"></i> Customer</a></li>
             </ul>
         </div>
 
         <!-- USER MANAGEMENT -->
         <div class="dropdown cat__menu-item">
-            <a href="#" class="dropdown-toggle cat__menu-link" data-bs-toggle="dropdown" aria-expanded="false">
+            <a href="#" class="dropdown-toggle cat__menu-link d-flex align-items-center gap-2"
+               data-bs-toggle="dropdown" aria-expanded="false">
                 <span class="cat__menu-icon"><i class="icmn-users"></i></span>
                 <span class="cat__menu-text">User Management</span>
             </a>
-
-            <ul class="dropdown-menu">
+            <ul class="dropdown-menu shadow-sm">
                 <li><a class="dropdown-item" href="{{ route('staff.manage.index') }}"><i class="icmn-user"></i> My Staff</a></li>
                 <li><a class="dropdown-item" href="{{ route('dashboard.role') }}"><i class="icmn-lock"></i> Role & Permission</a></li>
             </ul>
@@ -55,12 +52,12 @@
 
         <!-- REPORTS -->
         <div class="dropdown cat__menu-item">
-            <a href="#" class="dropdown-toggle cat__menu-link" data-bs-toggle="dropdown" aria-expanded="false">
+            <a href="#" class="dropdown-toggle cat__menu-link d-flex align-items-center gap-2"
+               data-bs-toggle="dropdown" aria-expanded="false">
                 <span class="cat__menu-icon"><i class="icmn-stats-bars"></i></span>
                 <span class="cat__menu-text">Reports</span>
             </a>
-
-            <ul class="dropdown-menu">
+            <ul class="dropdown-menu shadow-sm">
                 <li><a class="dropdown-item" href="{{ url('report/sales') }}"><i class="icmn-stats-growth"></i> Sale Report</a></li>
                 <li><a class="dropdown-item" href="{{ url('report/purchase') }}"><i class="icmn-cart"></i> Purchase Report</a></li>
                 <li><a class="dropdown-item" href="{{ url('report/invoice') }}"><i class="icmn-file-text"></i> Invoice Report</a></li>
@@ -70,17 +67,26 @@
             </ul>
         </div>
 
-        <!-- USER PROFILE & LOGOUT -->
+
+
+        <!-- LOGOUT -->
         <div class="cat__logout ms-auto">
             <form method="POST" action="{{ route('logout') }}">
                 @csrf
-                <button type="submit" class="cat__logout-btn" title="Logout" onclick="return confirm('Are you sure you want to logout?');">
+                <button type="submit" class="btn btn-outline-danger" title="Logout"
+                        onclick="return confirm('Are you sure you want to logout?');">
                     <i class="icmn-exit"></i>
                 </button>
             </form>
         </div>
+
     </nav>
 </header>
+
+
+
+
+
 
 <br><br><br>
 
@@ -96,10 +102,6 @@
             <form action="{{ route('units.store') }}" method="POST">
                 @csrf
                 <div class="modal-body">
-                    @if(session('success'))
-                        <div class="alert alert-success">{{ session('success') }}</div>
-                    @endif
-
                     <div class="mb-3">
                         <label>Unit Name</label>
                         <input type="text" name="name" class="form-control" required>
@@ -129,10 +131,6 @@
             <form action="{{ route('categories.store') }}" method="POST">
                 @csrf
                 <div class="modal-body">
-                    @if(session('success'))
-                        <div class="alert alert-success">{{ session('success') }}</div>
-                    @endif
-
                     <div class="mb-3">
                         <label>Category Name</label>
                         <input type="text" name="name" class="form-control" placeholder="e.g Beverages" required>
@@ -163,21 +161,6 @@
         </div>
     </div>
 </div>
-
-<!-- Optional: Auto-close modal after success -->
-@if(session('success'))
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        var categoryModal = new bootstrap.Modal(document.getElementById('categoryModal'));
-        categoryModal.hide();
-        alert("{{ session('success') }}");
-    });
-</script>
-@endif
-
-
-
-
 
 <style>
 
@@ -341,41 +324,43 @@
 
 /* ===== DROPDOWN PANEL ===== */
 .dropdown-menu {
-    min-width: 230px;
-    /* border-radius: 14px; */
-    padding: 10px;
+    min-width: 260px;
+    padding: 10px 0;
     border: none;
-    box-shadow: 0 14px 40px rgba(0,0,0,0.12);
-    animation: dropdownSmooth 0.25s ease;
-    background: #ffffff;
-    border-radius: 1px;
+    border-radius: 12px; 
+    background: #fff;
     box-shadow: 0 20px 50px rgba(0,0,0,0.15);
     transform-origin: top;
-    margin-top: 30px;
+    margin-top: 10px;
 }
 
 /* Dropdown items */
 .dropdown-item {
-    display: flex;
-    align-items: center;
+    display: flex !important;        /* force flex layout */
+    align-items: center !important;  /* vertical center */
+    justify-content: flex-start;     /* left align */
     gap: 12px;
-    padding: 10px 14px;
-    border-radius: 10px;
+    padding: 8px 16px;
+    border-radius: 8px;
     font-weight: 500;
     transition: all 0.2s ease;
-    margin-top: 20px;
+    white-space: nowrap;              /* prevent wrapping */
+    line-height: 1;                   /* make icon and text aligned */
 }
 
 /* Dropdown icons */
 .dropdown-item i {
     width: 28px;
     height: 28px;
+    min-width: 28px;
     border-radius: 50%;
     background: #f2f4f8;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 13px;
+    flex-shrink: 0;
+    line-height: 1;                  /* vertical align inside circle */
 }
 
 /* Hover dropdown */
@@ -389,6 +374,10 @@
     color: #fff;
 }
 
+/* Optional: prevent icon/text wrapping on small screens */
+.dropdown-item > * {
+    white-space: nowrap;
+}
 /* Animation */
 @keyframes dropdownSmooth {
     from {

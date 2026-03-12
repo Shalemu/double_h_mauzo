@@ -159,6 +159,7 @@
                 <th>Stock</th>
                 <th>Last Purchasing Price</th>
                 <th>Last Selling Price</th>
+                <th>Sale Type</th>
             </tr>
         </thead>
         <tbody>
@@ -168,6 +169,7 @@
                     <td><?php echo e($product->quantity); ?></td>
                     <td><?php echo e($product->purchase_price); ?></td>
                     <td><?php echo e($product->selling_price); ?></td>
+                    <td><?php echo e(ucfirst($product->sale_type ?? '-')); ?></td> 
                 </tr>
             <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                 <tr>
@@ -187,6 +189,7 @@
                             <th>Item</th>
                             <th>Expiry Date</th>
                             <th>Stock</th>
+                            <th>Sale Type</th>
                         </tr>
                     </thead>
              <tbody>
@@ -195,6 +198,7 @@
                     <td><?php echo e($product->name); ?></td>
                     <td><?php echo e(\Carbon\Carbon::parse($product->expire_date)->format('Y-m-d')); ?></td>
                     <td><?php echo e($product->quantity); ?></td>
+                    <td><?php echo e(ucfirst($product->sale_type ?? '-')); ?></td> 
                 </tr>
             <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                 <tr>
@@ -212,6 +216,7 @@
                         <tr>
                             <th>Item</th>
                             <th>Stock</th>
+                            <th>Sale Type</th>
                         </tr>
                     </thead>
             <tbody>
@@ -220,6 +225,7 @@
     <tr>
         <td><?php echo e($product->name); ?></td>
         <td><?php echo e($product->quantity); ?></td>
+        <td><?php echo e(ucfirst($product->sale_type ?? '-')); ?></td> 
     </tr>
 <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
     <tr>
@@ -242,6 +248,7 @@
                             <th>Item</th>
                             <th>Expiry Date</th>
                             <th>Stock</th>
+                            <th>Sale Type</th>
                         </tr>
                     </thead>
                 <tbody>
@@ -250,6 +257,7 @@
                     <td><?php echo e($product->name); ?></td>
                     <td><?php echo e(\Carbon\Carbon::parse($product->expire_date)->format('Y-m-d')); ?></td>
                     <td><?php echo e($product->quantity); ?></td>
+                    <td><?php echo e(ucfirst($product->sale_type ?? '-')); ?></td> 
                 </tr>
             <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                 <tr>
@@ -268,6 +276,7 @@
                             <th>Item</th>
                             <th>Disposed Date</th>
                             <th>Quantity</th>
+                            <th>Sale Type</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -276,6 +285,7 @@
                     <td><?php echo e($product->name); ?></td>
                     <td><?php echo e(\Carbon\Carbon::parse($product->disposed_at)->format('Y-m-d') ?? 'N/A'); ?></td>
                     <td><?php echo e($product->quantity); ?></td>
+                    <td><?php echo e(ucfirst($product->sale_type ?? '-')); ?></td> 
                 </tr>
             <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                 <tr>

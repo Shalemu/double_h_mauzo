@@ -80,3 +80,17 @@
 <!-- ============================= -->
 <script src="{!! asset('/dist/modules/menu-left/common/menu-left.cleanui.js') !!}"></script>
 <script src="{!! asset('/dist/modules/menu-right/common/menu-right.cleanui.js') !!}"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" integrity="sha512-pkVbR7X2M6w6CkBSqzKJ5zZezp+1R5q3I4bBkQ5zX8zUuJYxM6i3Vm8A+xF+U8x0Pz7oGdK7pD6g9j9V6FZrZg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+
+
+<!-- DataTables Bootstrap 5 CSS -->
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+
+<!-- jQuery (required by DataTables) -->
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
+<!-- DataTables JS -->
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>

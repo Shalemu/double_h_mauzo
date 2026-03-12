@@ -23,7 +23,7 @@
         </div>
     @endif
 
-    <form action="{{ route('staff.update', $staff->id) }}" method="POST">
+  <form action="{{ route('staff.manage.update', $staff->id) }}" method="POST">
         @csrf
         @method('PUT')
 
@@ -118,7 +118,7 @@
             <button type="submit" class="btn btn-success">
                 <i class="bi bi-save"></i> Save Changes
             </button>
-            <a href="{{ route('staff.index') }}" class="btn btn-secondary">
+            <a href="{{ route('staff.manage.index') }}" class="btn btn-secondary">
                 <i class="bi bi-arrow-left"></i> Back
             </a>
         </div>

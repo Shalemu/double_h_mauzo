@@ -104,15 +104,17 @@ public function update(Request $request, $id)
     $staff->save();
 
   
-return redirect()->route('staff.index')->with('success', 'Staff updated successfully.');
+return redirect()->route('staff.manage.index')->with('success', 'Staff updated successfully.');
 
     
 }
 
-public function destroy(Staff $staff)
+public function destroy($id)
 {
+    $staff = Staff::findOrFail($id);
     $staff->delete();
-    return redirect()->route('staff.index')->with('success', 'Staff deleted successfully.');
+
+    return redirect()->route('staff.manage.index')->with('success', 'Staff deleted successfully.');
 }
 
 }

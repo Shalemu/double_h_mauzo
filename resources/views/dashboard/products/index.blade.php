@@ -74,7 +74,7 @@
 
             </div>
             <!-- Table -->
-            <table class="table table-hover table-bordered text-center" id="productTable" style="width: 100%;">
+           <table class="table table-striped table-hover table-bordered text-center" id="productTable" style="width: 100%;">
                 <thead class="table-warning">
                     <tr>
                         <th>Img</th>
@@ -84,6 +84,7 @@
                         <th>Purchase Price</th>
                         <th>Sale Price</th>
                         <th>Expire Date</th>
+                        <th>Sale Type</th>
                         <th>Action</th>
                     </tr>
                 </thead>
@@ -103,6 +104,7 @@
         <td>{{ $product->purchase_price ? number_format($product->purchase_price) : '-' }}</td>
         <td>{{ $product->selling_price ? number_format($product->selling_price) : '-' }}</td>
         <td>{{ $product->expire_date ? \Carbon\Carbon::parse($product->expire_date)->format('Y-m-d') : '-' }}</td>
+        <td>{{ ucfirst($product->sale_type ?? '-') }}</td> 
         <td>
             <div class="btn-group">
                <button class="btn btn-primary btn-sm edit-product-btn" 
@@ -145,13 +147,28 @@
     </section>
     <!-- END: ecommerce/product-list -->
 
+        <script>
+    $(document).ready(function() {
+        $('#productTable').DataTable({
+            "paging": true,            // Enable pagination
+            "lengthChange": true,      // Allow user to change number of items per page
+            "pageLength": 10,          // Default rows per page
+            "searching": true,         // Enable search box
+            "ordering": true,          // Enable sorting
+            "info": true,              // Show "Showing 1 to X of Y entries"
+            "autoWidth": false,
+            "responsive": true         // Make table responsive
+        });
+    });
+    </script>
+
 
 
  <!-- Trigger button -->
 
 
 <!-- Add Product Modal -->
-<div class="modal fade" id="addProductModal" tabindex="-1" aria-labelledby="addProductModalLabel" aria-hidden="true" style="margin-top: 100px;">
+<div class="modal fade" id="addProductModal" tabindex="-1" aria-labelledby="addProductModalLabel" aria-hidden="true" style="margin-top: 0px;">
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
       <form id="addProductForm" action="{{ route('products.store') }}" method="POST" enctype="multipart/form-data">
@@ -234,6 +251,15 @@
               <label for="selling_price" class="form-label">Retail Selling Price (Tsh)</label>
               <input type="number" class="form-control" id="selling_price" name="selling_price" min="0">
             </div>
+
+            <div class="col-md-6">
+            <label class="form-label">Sale Type <span class="text-danger">*</span></label>
+            <select class="form-select" name="sale_type" required>
+                <option value="retail">Retail (Reja Reja)</option>
+                <option value="wholesale">Wholesale (Jumla)</option>
+                <option value="both">Retail & Wholesale</option>
+            </select>
+          </div>
 
             <!-- Invoice Number -->
             <div class="col-md-6">
@@ -545,16 +571,17 @@ document.addEventListener('DOMContentLoaded', function() {
 </div>
 
 
-<!-- Scripts -->
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Initialize DataTables
-    if (jQuery().DataTable) {
-        $('#productTable').DataTable({
-            responsive: true,
-            "lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]],
-            "autoWidth": false
-        });
-    }
-});
-</script>
+
+
+<style>
+  #productTable td img {
+    border-radius: 5px;
+    object-fit: cover;
+    height: 50px;
+    width: 50px;
+}
+
+#productTable .btn-group button {
+    margin-right: 5px;
+}
+</style>

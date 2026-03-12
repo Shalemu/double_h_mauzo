@@ -236,6 +236,7 @@ public function detail($shopId, $date)
                     'quantity' => $item['qty'],
                     'price' => $item['price'],
                     'discount' => $item['discount'] ?? 0,
+                    'sale_type' => $item['sale_type'] ?? 'retail', 
                 ]);
             }
 
@@ -276,6 +277,7 @@ public function detail($shopId, $date)
                         'quantity' => 0,
                         'revenue' => 0,
                         'staff' => $staffName,
+                        'sale_type' => $item->product->sale_type ?? '-',
                     ];
                 }
 

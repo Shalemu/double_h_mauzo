@@ -23,7 +23,8 @@ class DailySalesExport implements FromArray, WithHeadings
                 $row['quantity'],
                 $row['revenue'],
                 $row['staff'],
-                'View Report', // Placeholder for Action
+                $row['sale_type'],
+              
             ];
         }, $this->rows, array_keys($this->rows));
     }
@@ -36,7 +37,8 @@ class DailySalesExport implements FromArray, WithHeadings
             'Quantity Sold',
             'Total (TZS)',
             'Sold by',
-            'Action'
+            'Sale Type'
+           
         ];
     }
 }

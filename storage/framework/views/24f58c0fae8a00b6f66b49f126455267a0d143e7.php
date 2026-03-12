@@ -1,147 +1,135 @@
 <?php
     $shops = $shops ?? collect();
+     $staff = Auth::guard('staff')->user();
 ?>
 
-<header class="app-header">
-    <nav class="cat__top-bar__menu d-flex align-items-center w-100">
+<!-- APP HEADER -->
+<!-- STAFF HEADER -->
+<header class="app-header fixed-top bg-white shadow-sm">
+    <nav class="cat__top-bar__menu d-flex align-items-center w-100 px-3 flex-nowrap">
 
-        <!-- DASHBOARD -->
-        <!-- <a href="<?php echo e(url('dashboard')); ?>" class="cat__menu-item">
-            <span class="cat__menu-icon"><i class="icmn-home"></i></span>
-            <span class="cat__menu-text">Dashboard</span>
-        </a> -->
-
-        <!-- MY BUSINESS -->
+        
         <div class="dropdown cat__menu-item">
-            <a href="javascript:void(0)" class="dropdown-toggle cat__menu-link" data-toggle="dropdown">
-                <span class="cat__menu-icon"><i class="icmn-briefcase"></i></span>
-                <span class="cat__menu-text">My Business</span>
-            </a>
-
-            <div class="dropdown-menu">
-                <a class="dropdown-item" href="<?php echo e(url('dashboard.shop')); ?>">
-                    <i class="icmn-store"></i> My Shop
-                </a>
-                <a class="dropdown-item" href="<?php echo e(url('sale-point')); ?>">
-                    <i class="icmn-location"></i> Sale Point
-                </a>
-                <a class="dropdown-item" href="javascript:void(0)" data-toggle="modal" data-target="#categoryModal">
-                    <i class="icmn-list"></i> Product Categories
-                </a>
-                <a class="dropdown-item" href="javascript:void(0)" data-toggle="modal" data-target="#unitModal">
-                    <i class="icmn-meter"></i> Units
-                </a>
-            </div>
-        </div>
-
-        <!-- INVOICE & ORDER -->
-        <div class="dropdown cat__menu-item">
-            <a href="javascript:void(0)" class="dropdown-toggle cat__menu-link" data-toggle="dropdown">
+            <a href="#" class="dropdown-toggle cat__menu-link d-flex align-items-center gap-2"
+               data-bs-toggle="dropdown" aria-expanded="false">
                 <span class="cat__menu-icon"><i class="icmn-file-text"></i></span>
                 <span class="cat__menu-text">Invoice & Order</span>
             </a>
-            <div class="dropdown-menu">
-                <a class="dropdown-item" href="<?php echo e(url('quotation')); ?>">
-                    <i class="icmn-file-plus"></i> Quotation
-                </a>
-                <a class="dropdown-item" href="<?php echo e(url('purchase-order')); ?>">
-                    <i class="icmn-cart"></i> Purchase Order
-                </a>
-                <a class="dropdown-item" href="<?php echo e(url('suppliers')); ?>">
-                    <i class="icmn-truck"></i> My Supplier
-                </a>
-                <a class="dropdown-item" href="<?php echo e(url('customers')); ?>">
-                    <i class="icmn-users"></i> Customer
-                </a>
-            </div>
-        </div>
+            <ul class="dropdown-menu shadow-sm">
+                <li><a class="dropdown-item" href="<?php echo e(url('quotation')); ?>"><i class="icmn-file-plus"></i> Quotation</a></li>
+                <li><a class="dropdown-item" href="<?php echo e(url('purchase-order')); ?>"><i class="icmn-cart"></i> Purchase Order</a></li>
+                <li><a class="dropdown-item" href="<?php echo e(url('suppliers')); ?>"><i class="icmn-truck"></i> Supplier</a></li>
+                <li><a class="dropdown-item" href="<?php echo e(url('customers')); ?>"><i class="icmn-users"></i> Customer</a></li>
 
-        <!-- USER MANAGEMENT -->
+                
+                <?php $staff = Auth::guard('staff')->user(); ?>
+                <?php if($staff && $staff->can_wholesale): ?> 
+                    <li><a class="dropdown-item" href="<?php echo e(url('wholesale')); ?>"><i class="icmn-basket"></i> Wholesale Sale</a></li>
+                <?php endif; ?>
+            </ul>
+        </div>
         <div class="dropdown cat__menu-item">
-            <a href="javascript:void(0)" class="dropdown-toggle cat__menu-link" data-toggle="dropdown">
-                <span class="cat__menu-icon"><i class="icmn-users"></i></span>
-                <span class="cat__menu-text">User Management</span>
+            <a href="#" class="dropdown-toggle cat__menu-link d-flex align-items-center gap-2"
+               data-bs-toggle="dropdown" aria-expanded="false">
+                <span class="cat__menu-icon"><i class="icmn-basket"></i></span>
+                <span class="cat__menu-text">Wholesale Sale</span>
             </a>
-            <div class="dropdown-menu">
-                <a class="dropdown-item" href="<?php echo e(url('staff.index')); ?>">
-                    <i class="icmn-user"></i> My Staff
-                </a>
-                <a class="dropdown-item" href="<?php echo e(url('dashboard.role')); ?>">
-                    <i class="icmn-lock"></i> Role & Permission
-                </a>
-            </div>
+            
         </div>
 
-
-        <!-- REPORTS -->
-        <div class="dropdown cat__menu-item">
-            <a href="javascript:void(0)" class="dropdown-toggle cat__menu-link" data-toggle="dropdown">
-                <span class="cat__menu-icon"><i class="icmn-stats-bars"></i></span>
-                <span class="cat__menu-text">Reports</span>
-            </a>
-            <div class="dropdown-menu">
-                <a class="dropdown-item" href="<?php echo e(url('report/sales')); ?>">
-                    <i class="icmn-stats-growth"></i> Sale Report
-                </a>
-                <a class="dropdown-item" href="<?php echo e(url('report/purchase')); ?>">
-                    <i class="icmn-cart"></i> Purchase Report
-                </a>
-                <a class="dropdown-item" href="<?php echo e(url('report/invoice')); ?>">
-                    <i class="icmn-file-text"></i> Invoice Report
-                </a>
-                <a class="dropdown-item" href="<?php echo e(url('report/profit')); ?>">
-                    <i class="icmn-coins"></i> Profit Report
-                </a>
-                <a class="dropdown-item" href="<?php echo e(url('report/stock')); ?>">
-                    <i class="icmn-box"></i> Stock Report
-                </a>
-                <a class="dropdown-item" href="<?php echo e(url('stock-list')); ?>">
-                    <i class="icmn-list"></i> Stock List
-                </a>
-            </div>
-        </div>
-
-        <!-- USER PROFILE & LOGOUT (RIGHT SIDE) -->
         
-
-       <div class="cat__logout ml-auto">
-    <form method="POST" action="<?php echo e(route('logout')); ?>">
-        <?php echo csrf_field(); ?>
-        <button type="submit"
-                class="cat__logout-btn"
-                title="Logout"
-                onclick="return confirm('Are you sure you want to logout?');">
-            <i class="icmn-exit"></i>
-        </button>
-    </form>
-</div>
-
+        <?php if(Auth::guard('staff')->check()): ?>
+        <div class="cat__logout ms-auto">
+            <form method="POST" action="<?php echo e(route('logout')); ?>">
+                <?php echo csrf_field(); ?>
+                <button type="submit" class="btn btn-outline-danger" title="Logout"
+                        onclick="return confirm('Are you sure you want to logout?');">
+                    <i class="icmn-exit"></i>
+                </button>
+            </form>
         </div>
+        <?php endif; ?>
 
     </nav>
 </header>
 
+
+<!-- Include Bootstrap JS at the end of body -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
 <br><br><br>
 
+<!-- UNIT MODAL -->
+<div class="modal fade" id="unitModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header">
+                <h5 class="modal-title">Add Unit</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
 
+            <form action="<?php echo e(route('units.store')); ?>" method="POST">
+                <?php echo csrf_field(); ?>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label>Unit Name</label>
+                        <input type="text" name="name" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label>Short Name</label>
+                        <input type="text" name="short_name" class="form-control" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">Save Unit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 
+<!-- CATEGORY MODAL -->
+<div class="modal fade" id="categoryModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header">
+                <h5 class="modal-title">Add Product Category</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
 
+            <form action="<?php echo e(route('categories.store')); ?>" method="POST">
+                <?php echo csrf_field(); ?>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label>Category Name</label>
+                        <input type="text" name="name" class="form-control" placeholder="e.g Beverages" required>
+                    </div>
 
+                    <div class="mb-3">
+                        <label>Description</label>
+                        <textarea name="description" class="form-control" rows="3"></textarea>
+                    </div>
 
+                    <?php if(isset($parentCategories) && count($parentCategories)): ?>
+                        <div class="mb-3">
+                            <label>Parent Category (optional)</label>
+                            <select name="parent_id" class="form-control">
+                                <option value="">None</option>
+                                <?php $__currentLoopData = $parentCategories; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $parent): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                    <option value="<?php echo e($parent->id); ?>"><?php echo e($parent->name); ?></option>
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                            </select>
+                        </div>
+                    <?php endif; ?>
+                </div>
 
-
-<!-- Optional: Auto-close modal after success -->
-<?php if(session('success')): ?>
-<script>
-    $(document).ready(function() {
-        $('#categoryModal').modal('hide'); // hide modal automatically
-        alert("<?php echo e(session('success')); ?>"); // optional toast
-    });
-</script>
-<?php endif; ?>
-
-
-
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">Save Category</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 
 <style>
 
@@ -305,41 +293,43 @@
 
 /* ===== DROPDOWN PANEL ===== */
 .dropdown-menu {
-    min-width: 230px;
-    /* border-radius: 14px; */
-    padding: 10px;
+    min-width: 260px;
+    padding: 10px 0;
     border: none;
-    box-shadow: 0 14px 40px rgba(0,0,0,0.12);
-    animation: dropdownSmooth 0.25s ease;
-    background: #ffffff;
-    border-radius: 1px;
+    border-radius: 12px; 
+    background: #fff;
     box-shadow: 0 20px 50px rgba(0,0,0,0.15);
     transform-origin: top;
-    margin-top: 30px;
+    margin-top: 10px;
 }
 
 /* Dropdown items */
 .dropdown-item {
-    display: flex;
-    align-items: center;
+    display: flex !important;        /* force flex layout */
+    align-items: center !important;  /* vertical center */
+    justify-content: flex-start;     /* left align */
     gap: 12px;
-    padding: 10px 14px;
-    border-radius: 10px;
+    padding: 8px 16px;
+    border-radius: 8px;
     font-weight: 500;
     transition: all 0.2s ease;
-    margin-top: 20px;
+    white-space: nowrap;              /* prevent wrapping */
+    line-height: 1;                   /* make icon and text aligned */
 }
 
 /* Dropdown icons */
 .dropdown-item i {
     width: 28px;
     height: 28px;
+    min-width: 28px;
     border-radius: 50%;
     background: #f2f4f8;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 13px;
+    flex-shrink: 0;
+    line-height: 1;                  /* vertical align inside circle */
 }
 
 /* Hover dropdown */
@@ -353,6 +343,10 @@
     color: #fff;
 }
 
+/* Optional: prevent icon/text wrapping on small screens */
+.dropdown-item > * {
+    white-space: nowrap;
+}
 /* Animation */
 @keyframes  dropdownSmooth {
     from {

@@ -81,6 +81,22 @@
 
 </header>
 
+<?php if(session('success')): ?>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        Swal.fire({
+            icon: 'success',
+            title: 'Success!',
+            text: "<?php echo e(session('success')); ?>",
+            timer: 2500,
+            timerProgressBar: true,
+            showConfirmButton: false
+        });
+    });
+</script>
+<?php endif; ?>
+
 <!-- Bootstrap Icons -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
 

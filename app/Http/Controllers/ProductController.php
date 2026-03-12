@@ -22,18 +22,39 @@ class ProductController extends Controller
 
 public function index()
 {
-    // Check if staff
     if (Auth::guard('staff')->check()) {
         $staff = Auth::guard('staff')->user();
         $products = Products::where('shop_id', $staff->shop_id)->get();
         $categories = ProductCategory::whereNull('parent_id')->get();
         $units = Unit::all();
 
-        // Staff view
+        $today = Carbon::today();
+
+        $runningOutProducts = $products->filter(function($p) {
+            return $p->quantity > 0 && $p->quantity <= $p->min_quantity;
+        });
+
+        $expiringProducts = $products->filter(function($p) use ($today) {
+            return $p->expire_date
+                   && Carbon::parse($p->expire_date)->between($today, $today->copy()->addDays(7));
+        });
+
+        $expiredProducts = $products->filter(function($p) use ($today) {
+            return $p->expire_date && Carbon::parse($p->expire_date)->lt($today);
+        });
+
+        $disposedProducts = $products->filter(function($p) {
+            return $p->disposed == 1;
+        });
+
         return view('dashboard.staff.products.index', compact(
             'products',
             'categories',
-            'units'
+            'units',
+            'runningOutProducts',
+            'expiringProducts',
+            'expiredProducts',
+            'disposedProducts'
         ));
     }
 
@@ -74,6 +95,7 @@ public function store(Request $request)
         'unit_id' => 'required|integer',
         'selling_price' => 'nullable|numeric|min:0',
         'barcode' => 'nullable|string',
+        'sale_type' => 'required|in:retail,wholesale,both',
         'expire_date' => 'nullable|date',
         'image' => 'nullable|image|max:2048',
     ]);
@@ -94,6 +116,7 @@ public function store(Request $request)
         'expire_date',
         'size',
         'color',
+        'sale_type'
     ]);
 
     $admin = Auth::user();

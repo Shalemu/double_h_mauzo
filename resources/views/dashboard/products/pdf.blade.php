@@ -45,6 +45,7 @@
                 <th>Expire Date</th>
                 <th>Size</th>
                 <th>Color</th>
+                <th>Sale Type</th>
             </tr>
         </thead>
         <tbody>
@@ -62,6 +63,7 @@
                 <td>{{ $product->expire_date ?? '-' }}</td>
                 <td>{{ $product->size ?? '-' }}</td>
                 <td>{{ $product->color ?? '-' }}</td>
+                <td>{{ $product->sale_type ?? '-' }}</td>
             </tr>
             @endforeach
         </tbody>

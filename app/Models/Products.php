@@ -31,6 +31,7 @@ class Products extends Model
         'size',
         'color',
         'image',
+        'sale_type',
         'store_id',
         'shop_id',
         'admin_id',
