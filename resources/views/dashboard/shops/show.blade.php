@@ -102,6 +102,13 @@
                     </td>
                 </tr>
 
+                <tr>
+            <td>Credit (Debt)</td>
+            <td class="text-end text-danger">
+                {{ number_format($totalCredit, 2) }}
+            </td>
+        </tr>
+
 
                             </table>
                         </div>

@@ -68,12 +68,35 @@ class Shops extends Model
     */
 
     // Stock value (capital)
-    public function getCalculatedCapitalAttribute()
-    {
-        return $this->products->sum(fn($product) =>
-            ($product->purchase_price ?? 0) * ($product->quantity ?? 0)
-        );
-    }
+public function getStockValueAttribute()
+{
+    return $this->products->sum(fn($product) =>
+        ($product->purchase_price ?? 0) * ($product->quantity ?? 0)
+    );
+}
+
+public function getCalculatedCapitalAttribute()
+{
+    $totalSales = $this->sales()->sum('total');
+
+    $totalExpenses = 
+        $this->expenses()->sum('amount') +
+        $this->fixedExpenses()->sum('amount');
+
+    $totalPurchasePaid = $this->purchases()->sum('amount_paid');
+
+    return $this->capital 
+        + $totalSales 
+        - $totalExpenses 
+        - $totalPurchasePaid;
+}
+
+public function getTotalCreditAttribute()
+{
+    return $this->purchases()
+        ->where('payment_type', 'credit')
+        ->sum('remaining_credit');
+}
 
     // Total wages
     public function getTotalWagesAttribute()

@@ -1,6 +1,10 @@
 @php
 $shops = $shops ?? collect();
 $totalCapital = 0;
+$currentCapital = $shop->calculated_capital; // total value of products in stock
+$stockValue = $shop->calculated_capital;     // can be same as above or computed differently
+$realCapital = $shop->capital;               // initial capital or cash in hand
+$totalCredit = $shop->purchases()->where('payment_type', 'credit')->sum('remaining_credit');
 @endphp
 
 

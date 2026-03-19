@@ -438,6 +438,8 @@ document.addEventListener('DOMContentLoaded', function () {
               <input type="number" class="form-control" id="edit_selling_price" name="selling_price" min="0">
             </div>
 
+            
+
             <!-- Expire Date -->
             <div class="col-md-6">
               <label for="edit_expire_date" class="form-label">Expire Date</label>

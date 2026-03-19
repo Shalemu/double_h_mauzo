@@ -278,6 +278,17 @@ public function exportExcel()
     return response()->json($products);
 }
 
+public function filterBySaleType(Request $request)
+{
+    $type = $request->query('type', 'both'); // retail, wholesale, or both
+
+    $products = Products::when($type !== 'both', function($q) use ($type) {
+        $q->where('sale_type', $type);
+    })->get();
+
+    return response()->json($products);
+}
+
 
    public function runningOut()
     {

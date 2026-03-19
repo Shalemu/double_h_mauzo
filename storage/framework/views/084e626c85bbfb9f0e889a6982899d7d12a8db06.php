@@ -108,6 +108,14 @@
                     </td>
                 </tr>
 
+                <tr>
+            <td>Credit (Debt)</td>
+            <td class="text-end text-danger">
+                <?php echo e(number_format($totalCredit, 2)); ?>
+
+            </td>
+        </tr>
+
 
                             </table>
                         </div>

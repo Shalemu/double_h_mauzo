@@ -99,5 +99,40 @@ document.querySelectorAll('.view-date').forEach(link => {
     });
 });
 
+
+function attachSaleTypeFilter() {
+        const radios = document.querySelectorAll('input[name="sale-type"]');
+        radios.forEach(radio => {
+            radio.addEventListener('change', function() {
+                const selectedType = this.value;
+                const table = document.getElementById('sales-detail-table');
+                if (!table) return;
+
+                const tableRows = table.querySelectorAll('tbody tr[data-sale-type]');
+                let anyVisible = false;
+
+                tableRows.forEach(row => {
+                    const rowType = row.dataset.saleType || 'retail';
+                    if (selectedType === 'both' || rowType === selectedType) {
+                        row.style.display = '';
+                        anyVisible = true;
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+
+                // Show or hide "No sales" row
+                const noSalesRow = document.getElementById('no-sales-row');
+                if (noSalesRow) noSalesRow.style.display = anyVisible ? 'none' : '';
+            });
+        });
+
+        // Trigger default filter on load
+        const checkedRadio = document.querySelector('input[name="sale-type"]:checked');
+        if (checkedRadio) checkedRadio.dispatchEvent(new Event('change'));
+    }
+
 </script>
+
+
 <?php /**PATH E:\PROJECT\double h\double h\resources\views/dashboard/sales/index.blade.php ENDPATH**/ ?>

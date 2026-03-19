@@ -6,6 +6,7 @@
             <th>Product</th>
             <th>Supplier</th>
             <th>Qty</th>
+            <th>Sale Type</th>
             <th>Price</th>
             <th>Total</th>
         </tr>
@@ -17,6 +18,7 @@
             <td><?php echo e($p->product->name); ?></td>
             <td><?php echo e($p->supplier->name); ?></td>
             <td><?php echo e($p->quantity); ?></td>
+            <td><?php echo e(ucfirst($p->sale_type ?? '-')); ?></td>
             <td><?php echo e(number_format($p->purchase_price, 2)); ?></td>
             <td><?php echo e(number_format($p->quantity * $p->purchase_price, 2)); ?></td>
         </tr>

@@ -6,9 +6,9 @@
 
         <!-- HEADER -->
         <div class="card-header bg-white d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">Sales Report for {{ $shop->name ?? 'Double H Cosmetics Shop' }}</h5>
+            <h5 class="mb-0">Sales Report for <?php echo e($shop->name ?? 'Double H Cosmetics Shop'); ?></h5>
             <!-- Back Button -->
-            <a href="{{ url()->previous() }}" class="btn btn-sm btn-secondary">
+            <a href="<?php echo e(url()->previous()); ?>" class="btn btn-sm btn-secondary">
                 &larr; Back
             </a>
         </div>
@@ -43,24 +43,25 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @forelse ($salesByDate as $date => $saleData)
+                        <?php $__empty_1 = true; $__currentLoopData = $salesByDate; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $date => $saleData): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
                         <tr>
-                            <td>{{ $loop->iteration }}</td>
+                            <td><?php echo e($loop->iteration); ?></td>
                             
                             <td>
-                            <a href="javascript:void(0)" class="view-date" data-url="{{ route('admin.sales.detail', ['shop' => $shop->id, 'date' => $saleData['date']]) }}" style="text-decoration: none;">
-                                {{ $saleData['date'] }}
+                            <a href="javascript:void(0)" class="view-date" data-url="<?php echo e(route('admin.sales.detail', ['shop' => $shop->id, 'date' => $saleData['date']])); ?>" style="text-decoration: none;">
+                                <?php echo e($saleData['date']); ?>
+
                             </a>
                         </td>
 
                             </td>
-                            <td>{{ number_format($saleData['total'], 2) }}</td>
+                            <td><?php echo e(number_format($saleData['total'], 2)); ?></td>
                         </tr>
-                        @empty
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                         <tr>
                             <td colspan="3">No sales for this date.</td>
                         </tr>
-                        @endforelse
+                        <?php endif; ?>
                     </tbody>
                 </table>
             </div>
@@ -132,5 +133,4 @@ function attachSaleTypeFilter() {
     }
 
 </script>
-
-
+<?php /**PATH E:\PROJECT\double h\double h\resources\views/dashboard/sales_returns/index.blade.php ENDPATH**/ ?>

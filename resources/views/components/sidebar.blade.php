@@ -44,8 +44,8 @@
             </a>
         </li>
 
-        <li class="nav-item {{ request()->is('sales-return*') ? 'active' : '' }}">
-            <a href="{{ url('sales-return') }}">
+        <li class="nav-item {{ request()->is('sales-returns*') ? 'active' : '' }}">
+            <a href="#" data-content="sales-return-section">
                 <i class="bi bi-arrow-counterclockwise"></i>
                 <span>Sales Return</span>
             </a>

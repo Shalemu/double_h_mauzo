@@ -7,13 +7,13 @@
 <!-- ============================= -->
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 
-
 <!-- ============================= -->
 <!-- ICONS -->
 <!-- ============================= -->
 <link rel="stylesheet" href="<?php echo asset('/dist/vendors/font-awesome/css/font-awesome.min.css'); ?>">
 <link rel="stylesheet" href="<?php echo asset('/dist/vendors/font-icomoon/style.css'); ?>">
 <link rel="stylesheet" href="<?php echo asset('/dist/vendors/font-linearicons/style.css'); ?>">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 
 <!-- ============================= -->
 <!-- VENDORS CSS -->
@@ -23,7 +23,6 @@
 <link rel="stylesheet" href="<?php echo asset('/dist/vendors/select2/dist/css/select2.min.css'); ?>">
 <link rel="stylesheet" href="<?php echo asset('/dist/vendors/datatables/media/css/dataTables.bootstrap5.min.css'); ?>">
 <link rel="stylesheet" href="<?php echo asset('/dist/vendors/dropify/dist/css/dropify.min.css'); ?>">
-<link rel="stylesheet" href="<?php echo asset('/dist/vendors/fullcalendar/dist/fullcalendar.min.css'); ?>">
 <link rel="stylesheet" href="<?php echo asset('/dist/vendors/summernote/dist/summernote.css'); ?>">
 <link rel="stylesheet" href="<?php echo asset('/dist/vendors/c3/c3.min.css'); ?>">
 <link rel="stylesheet" href="<?php echo asset('/dist/vendors/chartist/dist/chartist.min.css'); ?>">
@@ -52,10 +51,10 @@
 <!-- JAVASCRIPT CORE -->
 <!-- ============================= -->
 
-<!-- jQuery (single version only) -->
+<!-- ✅ ONLY ONE jQuery -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
-<!-- Bootstrap 5 Bundle (includes Popper) -->
+<!-- Bootstrap -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
 <!-- ============================= -->
@@ -67,7 +66,6 @@
 <script src="<?php echo asset('/dist/vendors/datatables/media/js/jquery.dataTables.min.js'); ?>"></script>
 <script src="<?php echo asset('/dist/vendors/datatables/media/js/dataTables.bootstrap5.min.js'); ?>"></script>
 <script src="<?php echo asset('/dist/vendors/dropify/dist/js/dropify.min.js'); ?>"></script>
-<script src="<?php echo asset('/dist/vendors/fullcalendar/dist/fullcalendar.min.js'); ?>"></script>
 <script src="<?php echo asset('/dist/vendors/summernote/dist/summernote.min.js'); ?>"></script>
 <script src="<?php echo asset('/dist/vendors/chart.js/dist/Chart.bundle.min.js'); ?>"></script>
 <script src="<?php echo asset('/dist/vendors/owl.carousel/dist/owl.carousel.min.js'); ?>"></script>
@@ -76,21 +74,31 @@
 <script src="<?php echo asset('/dist/vendors/nprogress/nprogress.js'); ?>"></script>
 
 <!-- ============================= -->
+<!-- OPTIONAL: DATATABLES CDN (KEEP ONLY IF NEEDED) -->
+<!-- ============================= -->
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+
+<!-- ============================= -->
+<!-- SWEETALERT -->
+<!-- ============================= -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<!-- ============================= -->
+<!-- FULLCALENDAR (FIXED) -->
+<!-- ============================= -->
+
+<!-- ✅ REQUIRED dependency -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
+
+<!-- FullCalendar -->
+<link rel="stylesheet" href="<?php echo asset('/dist/vendors/fullcalendar/dist/fullcalendar.min.css'); ?>">
+<script src="<?php echo asset('/dist/vendors/fullcalendar/dist/fullcalendar.min.js'); ?>"></script>
+
+<!-- ============================= -->
 <!-- CLEAN UI TEMPLATE JS -->
 <!-- ============================= -->
 <script src="<?php echo asset('/dist/modules/menu-left/common/menu-left.cleanui.js'); ?>"></script>
-<script src="<?php echo asset('/dist/modules/menu-right/common/menu-right.cleanui.js'); ?>"></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" integrity="sha512-pkVbR7X2M6w6CkBSqzKJ5zZezp+1R5q3I4bBkQ5zX8zUuJYxM6i3Vm8A+xF+U8x0Pz7oGdK7pD6g9j9V6FZrZg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-
-
-
-<!-- DataTables Bootstrap 5 CSS -->
-<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
-
-<!-- jQuery (required by DataTables) -->
-<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-
-<!-- DataTables JS -->
-<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script><?php /**PATH E:\PROJECT\double h\double h\resources\views/components/header.blade.php ENDPATH**/ ?>
+<script src="<?php echo asset('/dist/modules/menu-right/common/menu-right.cleanui.js'); ?>">
+</script><?php /**PATH E:\PROJECT\double h\double h\resources\views/components/header.blade.php ENDPATH**/ ?>

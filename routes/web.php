@@ -38,6 +38,9 @@ use App\Http\Controllers\FixedExpensesController;
 use App\Http\Controllers\PurchasesController;
 use App\Http\Controllers\SupplierController;
 
+// Sale return 
+use App\Http\Controllers\SaleReturnController;
+
 /*
 |--------------------------------------------------------------------------
 | Public Routes
@@ -197,6 +200,13 @@ Route::middleware(['web', 'auth'])->group(function () {
     |--------------------------------------------------------------------------
     */
     Route::resource('sales', SaleController::class)->only(['index', 'show']);
+
+
+
+Route::prefix('shops')->group(function () {
+    Route::get('{shopId}/sales-returns', [SaleReturnController::class, 'index'])->name('sales-returns.index');
+    Route::post('sales-returns/store', [SaleReturnController::class, 'store'])->name('sales-returns.store');
+});
  
     // Admin
    Route::get('sales/{shop}/date/{date}', [SaleController::class, 'detail'])->name('admin.sales.detail');
