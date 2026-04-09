@@ -37,15 +37,42 @@
             
         </div>
 
-        {{-- LOGOUT --}}
-        @if(Auth::guard('staff')->check())
-        <div class="cat__logout ms-auto">
-            <form method="POST" action="{{ route('logout') }}">
-                @csrf
-                <button type="submit" class="btn btn-outline-danger" title="Logout"
-                        onclick="return confirm('Are you sure you want to logout?');">
-                    <i class="icmn-exit"></i>
-                </button>
+       <!-- LOGOUT -->
+@if(Auth::guard('staff')->check())
+<div class="cat__logout ms-auto">
+    <form id="logoutForm" action="{{ route('logout') }}" method="POST" style="display: none;">
+        @csrf
+    </form>
+
+    <button type="button" class="btn btn-outline-danger cat__logout-btn" id="logoutBtn" title="Logout">
+        <i class="icmn-exit"></i>
+    </button>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const logoutBtn = document.getElementById('logoutBtn');
+    const logoutForm = document.getElementById('logoutForm');
+
+    logoutBtn.addEventListener('click', function() {
+        Swal.fire({
+            title: 'Are you sure?',
+            text: "You will be logged out!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Yes, logout!',
+            cancelButtonText: 'Cancel'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                logoutForm.submit();
+            }
+        });
+    });
+});
+</script>
+
             </form>
         </div>
         @endif

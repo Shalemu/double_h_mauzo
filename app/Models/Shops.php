@@ -61,47 +61,93 @@ class Shops extends Model
         return $this->hasMany(FixedExpense::class, 'shop_id');
     }
 
+    // Purchase invoices
+    public function invoices()
+    {
+        return $this->hasMany(PurchaseInvoice::class, 'shop_id');
+    }
+
+    // Purchase items through invoices
+    public function purchaseItems()
+    {
+        return $this->hasManyThrough(
+            PurchaseItem::class,
+            PurchaseInvoice::class,
+            'shop_id',             // Foreign key on PurchaseInvoice
+            'purchase_invoice_id', // Foreign key on PurchaseItem
+            'id',                  // Local key on Shops
+            'id'                   // Local key on PurchaseInvoice
+        );
+    }
+
+    // Credit payments through invoices
+    public function creditPayments()
+    {
+        return $this->hasManyThrough(
+            CreditPayment::class,
+            PurchaseInvoice::class,
+            'shop_id',             // Foreign key on PurchaseInvoice
+            'purchase_invoice_id', // Foreign key on CreditPayment
+            'id',                  // Local key on Shops
+            'id'                   // Local key on PurchaseInvoice
+        );
+    }
+
     /*
     |--------------------------------------------------------------------------
     | COMPUTED ATTRIBUTES
     |--------------------------------------------------------------------------
     */
 
-    // Stock value (capital)
-public function getStockValueAttribute()
-{
-    return $this->products->sum(fn($product) =>
-        ($product->purchase_price ?? 0) * ($product->quantity ?? 0)
-    );
-}
+    // Stock value (capital in products)
+    public function getStockValueAttribute()
+    {
+        return $this->products->sum(fn($product) =>
+            ($product->purchase_price ?? 0) * ($product->quantity ?? 0)
+        );
+    }
 
-public function getCalculatedCapitalAttribute()
-{
-    $totalSales = $this->sales()->sum('total');
+    // Calculated capital = initial capital + sales - expenses - purchases
+    public function getCalculatedCapitalAttribute()
+    {
+        $totalSales = $this->sales()->sum('total');
+        $totalExpenses = $this->expenses()->sum('amount') + $this->fixedExpenses()->sum('amount');
+        $totalPurchasePaid = $this->invoices()->sum('amount_paid');
 
-    $totalExpenses = 
-        $this->expenses()->sum('amount') +
-        $this->fixedExpenses()->sum('amount');
+        return ($this->capital ?? 0) + $totalSales - $totalExpenses - $totalPurchasePaid;
+    }
 
-    $totalPurchasePaid = $this->purchases()->sum('amount_paid');
+    // Total credit remaining
+    public function getTotalCreditAttribute()
+    {
+        return $this->invoices()
+            ->where('payment_type', 'credit')
+            ->sum('remaining_amount');
+    }
 
-    return $this->capital 
-        + $totalSales 
-        - $totalExpenses 
-        - $totalPurchasePaid;
-}
+    // Daily credit
+    public function getDailyCreditAttribute()
+    {
+        return $this->invoices()
+            ->where('payment_type', 'credit')
+            ->whereDate('purchased_at', Carbon::today())
+            ->sum('remaining_amount');
+    }
 
-public function getTotalCreditAttribute()
-{
-    return $this->purchases()
-        ->where('payment_type', 'credit')
-        ->sum('remaining_credit');
-}
+    // Monthly credit
+    public function getMonthlyCreditAttribute()
+    {
+        return $this->invoices()
+            ->where('payment_type', 'credit')
+            ->whereMonth('purchased_at', Carbon::now()->month)
+            ->whereYear('purchased_at', Carbon::now()->year)
+            ->sum('remaining_amount');
+    }
 
     // Total wages
     public function getTotalWagesAttribute()
     {
-        return $this->staff->sum('wages');
+        return $this->staff->sum('wage');
     }
 
     // Total employees
@@ -112,7 +158,7 @@ public function getTotalCreditAttribute()
 
     /*
     |--------------------------------------------------------------------------
-    | PROFIT CALCULATIONS (POS ACCURATE)
+    | PROFIT CALCULATIONS
     |--------------------------------------------------------------------------
     */
 
@@ -138,13 +184,13 @@ public function getTotalCreditAttribute()
     public function getTotalCostOfGoodsSoldAttribute()
     {
         return $this->sales->sum(function ($sale) {
-            return $sale->items->sum(function ($item) {
-                return ($item->purchase_price ?? 0) * ($item->quantity ?? 0);
-            });
+            return $sale->items->sum(fn($item) =>
+                ($item->purchase_price ?? 0) * ($item->quantity ?? 0)
+            );
         });
     }
 
-    // Net Profit (REAL POS PROFIT)
+    // Net Profit
     public function getProfitAttribute()
     {
         $sales = $this->sales->sum('total');
@@ -169,7 +215,7 @@ public function getTotalCreditAttribute()
             ->whereDate('sales.created_at', Carbon::today());
     }
 
-    // Operating Expenses Today
+    // Expenses Today
     public function expensesToday()
     {
         return $this->expenses()
@@ -187,7 +233,7 @@ public function getTotalCreditAttribute()
     public function totalExpensesToday()
     {
         return $this->expensesToday()->sum('amount')
-             + $this->fixedExpensesToday()->sum('amount');
+            + $this->fixedExpensesToday()->sum('amount');
     }
 
     // Sales This Month
@@ -198,7 +244,7 @@ public function getTotalCreditAttribute()
             ->whereYear('sales.created_at', Carbon::now()->year);
     }
 
-    // Operating Expenses This Month
+    // Expenses This Month
     public function expensesThisMonth()
     {
         return $this->expenses()
@@ -218,11 +264,46 @@ public function getTotalCreditAttribute()
     public function totalExpensesThisMonth()
     {
         return $this->expensesThisMonth()->sum('amount')
-             + $this->fixedExpensesThisMonth()->sum('amount');
+            + $this->fixedExpensesThisMonth()->sum('amount');
     }
 
-       public function purchases()
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | SCOPES & GROUPED DATA
+    |--------------------------------------------------------------------------
+    */
+
+    // Grouped invoices by date (for dashboard)
+    public function creditInvoicesByDate()
     {
-        return $this->hasMany(Purchases::class, 'shop_id');
+        return $this->invoices()
+            ->where('payment_type', 'credit')
+            ->get()
+            ->groupBy(fn($invoice) => $invoice->purchased_at->format('Y-m-d'));
     }
+
+    public function orders()
+{
+    return $this->hasManyThrough(
+        Order::class,  
+        Staff::class,   
+        'shop_id',      
+        'staff_id',     
+        'id',          
+        'id'           
+    );
+}
+    public function purchases()
+    {
+        return $this->hasMany(PurchaseInvoice::class, 'shop_id');
+    }
+
+        //feedback
+public function feedbacks()
+{
+    return $this->hasMany(\App\Models\Feedback::class, 'shop_id');
+}
+    
 }

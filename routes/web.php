@@ -41,6 +41,12 @@ use App\Http\Controllers\SupplierController;
 // Sale return 
 use App\Http\Controllers\SaleReturnController;
 
+use App\Http\Controllers\PurchaseInvoiceController;
+
+use App\Http\Controllers\OrdersController;
+
+use App\Http\Controllers\FeedbackController;
+
 /*
 |--------------------------------------------------------------------------
 | Public Routes
@@ -95,16 +101,16 @@ Route::prefix('dashboard/staff')
 
 
         // Sales
-    Route::prefix('sales')->group(function () {
-    Route::get('/{shop}', [SaleController::class, 'index'])->name('sales.index');
-    Route::get('/{shop}/{date}', [SaleController::class, 'detail'])->name('sales.detail');
-    Route::post('/checkout/{shop}', [SaleController::class, 'checkout'])
-        ->name('sales.checkout');
-    Route::get('/{shop}/{date}/export-excel', [SaleController::class, 'exportExcel'])->name('sales.export.excel');
-    Route::get('/{shop}/{date}/export-pdf', [SaleController::class, 'exportPdf'])->name('sales.export.pdf');
-    Route::get('sales/{shop}/export/excel/{date}', [SaleController::class, 'exportExcel'])->name('sales.exportExcel');
-    Route::get('sales/{shop}/export/pdf/{date}', [SaleController::class, 'exportPdf'])->name('sales.exportPdf');
-});
+        Route::prefix('sales')->group(function () {
+        Route::get('/{shop}', [SaleController::class, 'index'])->name('sales.index');
+        Route::get('/{shop}/{date}', [SaleController::class, 'detail'])->name('sales.detail');
+        Route::post('/checkout/{shop}', [SaleController::class, 'checkout'])
+            ->name('sales.checkout');
+        Route::get('/{shop}/{date}/export-excel', [SaleController::class, 'exportExcel'])->name('sales.export.excel');
+        Route::get('/{shop}/{date}/export-pdf', [SaleController::class, 'exportPdf'])->name('sales.export.pdf');
+        Route::get('sales/{shop}/export/excel/{date}', [SaleController::class, 'exportExcel'])->name('sales.exportExcel');
+        Route::get('sales/{shop}/export/pdf/{date}', [SaleController::class, 'exportPdf'])->name('sales.exportPdf');
+    });
 
         // Cart
         Route::prefix('cart')->group(function () {
@@ -127,6 +133,26 @@ Route::prefix('dashboard/staff')
 
         // Transactions
         Route::post('/transaction/checkout', [TransactionController::class, 'checkout'])->name('transaction.checkout');
+
+
+    // Orders
+        Route::prefix('orders')->name('orders.')->group(function () {
+            Route::get('/', [OrdersController::class, 'index'])->name('index'); 
+            Route::get('/create', [OrdersController::class, 'create'])->name('create');
+            Route::post('/store', [OrdersController::class, 'store'])->name('store');
+            Route::get('/my-orders', [OrdersController::class, 'myOrders'])->name('my_orders');
+            Route::get('/{order}', [OrdersController::class, 'show'])->name('show');
+        });
+
+
+//    feedback
+        Route::prefix('report-issue')->name('report.issue.')->group(function () {
+            Route::get('/', [FeedbackController::class, 'index'])->name('index');
+            Route::post('/', [FeedbackController::class, 'store'])->name('store');
+        });
+
+
+
     });
 
 /*
@@ -194,6 +220,13 @@ Route::middleware(['web', 'auth'])->group(function () {
     Route::get('dashboard/products/expiring', [ProductController::class, 'expiring'])->name('products.expiring');
     Route::get('dashboard/products/finished', [ProductController::class, 'finished'])->name('products.finished');
 
+    // trash
+
+    Route::prefix('deleted-products')->group(function () {
+        Route::get('/', [ProductController::class, 'trash'])->name('products.trash');               // Trash page
+        Route::post('/restore/{id}', [ProductController::class, 'restore'])->name('products.restore');  // Restore
+        Route::delete('/force-delete/{id}', [ProductController::class, 'forceDelete'])->name('products.forceDelete'); // Force delete
+    });
     /*
     |--------------------------------------------------------------------------
     | Sales
@@ -203,10 +236,10 @@ Route::middleware(['web', 'auth'])->group(function () {
 
 
 
-Route::prefix('shops')->group(function () {
-    Route::get('{shopId}/sales-returns', [SaleReturnController::class, 'index'])->name('sales-returns.index');
-    Route::post('sales-returns/store', [SaleReturnController::class, 'store'])->name('sales-returns.store');
-});
+    Route::prefix('shops')->group(function () {
+        Route::get('{shopId}/sales-returns', [SaleReturnController::class, 'index'])->name('sales-returns.index');
+        Route::post('sales-returns/store', [SaleReturnController::class, 'store'])->name('sales-returns.store');
+    });
  
     // Admin
    Route::get('sales/{shop}/date/{date}', [SaleController::class, 'detail'])->name('admin.sales.detail');
@@ -242,19 +275,40 @@ Route::prefix('shops')->group(function () {
     | Purchases & Suppliers
     |--------------------------------------------------------------------------
     */
-    Route::prefix('purchases')->name('purchases.')->group(function () {
-        Route::get('/', [PurchasesController::class, 'index'])->name('index');
-        Route::get('/create', [PurchasesController::class, 'create'])->name('create');
-        Route::post('/', [PurchasesController::class, 'store'])->name('store');
-        Route::get('/shops/{shop}/purchases/{date}', [PurchasesController::class, 'detail'])->name('detail');
-        Route::get('/products/new-item', [PurchasesController::class, 'newItem'])->name('products.new_item');
-    });
+Route::prefix('purchases')->name('purchases.')->group(function () {
+    Route::get('/', [PurchasesController::class, 'index'])->name('index');
+    Route::get('/create', [PurchasesController::class, 'create'])->name('create');
+    Route::post('/', [PurchasesController::class, 'store'])->name('store');
+    Route::get('/shops/{shop}/purchases/{date}', [PurchasesController::class, 'detail'])->name('detail');
+    Route::get('/history/{invoice}', [PurchasesController::class, 'history'])->name('history');
+    Route::get('/print/{invoice}', [PurchasesController::class, 'print'])->name('print');
+
+    Route::get('/new-product', [PurchasesController::class, 'newProduct'])->name('new_product');
+    Route::post('/new-product', [PurchasesController::class, 'storeNewProduct'])->name('store_new_product');
+});
 
     Route::prefix('suppliers')->name('suppliers.')->group(function () {
         Route::get('/', [SupplierController::class, 'index'])->name('index');
         Route::get('/create', [SupplierController::class, 'create'])->name('create');
         Route::post('/', [SupplierController::class, 'store'])->name('store');
     });
+
+    // credit
+
+    Route::get('/dashboard/purchases/credit', [ShopsController::class, 'purchaseCredits'])
+    ->name('purchases.credit');
+
+    //depost
+    Route::post('/purchases/deposit', [PurchasesController::class, 'deposit'])
+    ->name('purchases.deposit');
+
+    // purchasing invoice
+  
+   
+    Route::get('/invoices', [PurchaseInvoiceController::class, 'index'])->name('invoices.index');
+    Route::get('/invoices/{id}', [PurchaseInvoiceController::class, 'show'])->name('invoices.show');
+
+
 
     /*
     |--------------------------------------------------------------------------
@@ -276,5 +330,27 @@ Route::prefix('shops')->group(function () {
         Route::put('roles/{role}', [RoleController::class, 'update'])->name('roles.update');
         Route::delete('roles/{role}', [RoleController::class, 'destroy'])->name('roles.destroy');
     });
+
+
+ 
+
+Route::prefix('dashboard/admin')->name('admin.')->middleware('auth:web')->group(function() {
+    Route::get('/shops/{shop}/orders', [ShopsController::class, 'orders'])->name('shops.orders');
+
+    Route::get('/orders/{order}', [OrdersController::class, 'show'])
+    ->name('orders.show');
+
+    Route::put('/orders/{order}/status', [OrdersController::class, 'updateStatus'])
+        ->name('orders.updateStatus');
+});
+
+    //view feedback
+Route::get('/dashboard/shop/{shop}', [ShopsController::class, 'show'])
+    ->name('dashboard.shop.show');
+
+Route::patch('/admin/feedback/{feedback}/resolve', [FeedbackController::class, 'resolve'])
+    ->name('admin.feedback.resolve')
+    ->middleware('auth:web');
+
 
 });

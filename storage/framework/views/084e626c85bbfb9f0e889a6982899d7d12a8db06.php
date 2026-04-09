@@ -24,64 +24,68 @@
 
                 <!-- TODAY -->
                 <div class="col-md-4 mb-3">
-                    <div class="card border-warning h-100">
-                        <div class="card-header bg-warning text-white">Today</div>
-                        <div class="card-body p-2">
-                            <table class="table table-sm mb-0">
-                                <tr>
-                                    <td>Sales</td>
-                                    <td class="text-end"><?php echo e(number_format($todaySales, 2)); ?></td>
-                                </tr>
-                                <tr>
-                                    <td>Expenses</td>
-                                    <td class="text-end"><?php echo e(number_format($todayExpenses, 2)); ?></td>
-                                </tr>
-                    <tr class="fw-bold">
-                    <td class="<?php echo e((float)$totalProfit < 0 ? 'text-danger' : 'text-success'); ?>">
-                        <?php echo e((float)$totalProfit < 0 ? 'Loss' : 'Profit'); ?>
+            <div class="card border-warning h-100">
+                <div class="card-header bg-warning text-white">Today</div>
+                <div class="card-body p-2">
+                    <table class="table table-sm mb-0">
+                        <tr>
+                            <td>Sales</td>
+                            <td class="text-end"><?php echo e(number_format($todaySales, 2)); ?></td>
+                        </tr>
+                        <tr>
+                            <td>Expenses</td>
+                            <td class="text-end"><?php echo e(number_format($todayExpenses, 2)); ?></td>
+                        </tr>
+                        <tr>
+                            <td>Credit (Debt)</td>
+                            <td class="text-end text-danger"><?php echo e(number_format($dailyCredit ?? 0, 2)); ?></td>
+                        </tr>
+                        <tr class="fw-bold">
+                            <td class="<?php echo e((float)$todayProfit < 0 ? 'text-danger' : 'text-success'); ?>">
+                                <?php echo e((float)$todayProfit < 0 ? 'Loss' : 'Profit'); ?>
+
+                            </td>
+                            <td class="text-end <?php echo e((float)$todayProfit < 0 ? 'text-danger' : 'text-success'); ?>">
+                                <?php echo e(number_format($todayProfit, 2)); ?>
+
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+                <!-- THIS MONTH -->
+                <div class="col-md-4 mb-3">
+    <div class="card border-warning h-100">
+        <div class="card-header bg-warning text-white"><?php echo e(now()->format('Y, M')); ?></div>
+        <div class="card-body p-2">
+            <table class="table table-sm mb-0">
+                <tr>
+                    <td>Sales</td>
+                    <td class="text-end"><?php echo e(number_format($monthSales, 2)); ?></td>
+                </tr>
+                <tr>
+                    <td>Expenses</td>
+                    <td class="text-end"><?php echo e(number_format($monthExpenses, 2)); ?></td>
+                </tr>
+                <tr>
+                    <td>Credit (Debt)</td>
+                    <td class="text-end text-danger"><?php echo e(number_format($monthlyCredit ?? 0, 2)); ?></td>
+                </tr>
+                <tr class="fw-bold">
+                    <td class="<?php echo e((float)$monthProfit < 0 ? 'text-danger' : 'text-success'); ?>">
+                        <?php echo e((float)$monthProfit < 0 ? 'Loss' : 'Profit'); ?>
 
                     </td>
-                    <td class="text-end <?php echo e((float)$totalProfit < 0 ? 'text-danger' : 'text-success'); ?>">
-                        <?php echo e(number_format($totalProfit, 2)); ?>
+                    <td class="text-end <?php echo e((float)$monthProfit < 0 ? 'text-danger' : 'text-success'); ?>">
+                        <?php echo e(number_format($monthProfit, 2)); ?>
 
                     </td>
                 </tr>
-
-
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- THIS MONTH -->
-                <div class="col-md-4 mb-3">
-                    <div class="card border-warning h-100">
-                        <div class="card-header bg-warning text-white"><?php echo e(now()->format('Y, M')); ?></div>
-                        <div class="card-body p-2">
-                            <table class="table table-sm mb-0">
-                                <tr>
-                                    <td>Sales</td>
-                                    <td class="text-end"><?php echo e(number_format($monthSales, 2)); ?></td>
-                                </tr>
-                                <tr>
-                                    <td>Expenses</td>
-                                    <td class="text-end"><?php echo e(number_format($monthExpenses, 2)); ?></td>
-                                </tr>
-                          <tr class="fw-bold">
-                        <td class="<?php echo e((float)$totalProfit < 0 ? 'text-danger' : 'text-success'); ?>">
-                            <?php echo e((float)$totalProfit < 0 ? 'Loss' : 'Profit'); ?>
-
-                        </td>
-                        <td class="text-end <?php echo e((float)$totalProfit < 0 ? 'text-danger' : 'text-success'); ?>">
-                            <?php echo e(number_format($totalProfit, 2)); ?>
-
-                        </td>
-                    </tr>
-
-                            </table>
-                        </div>
-                    </div>
-                </div>
+            </table>
+        </div>
+    </div>
+</div>
 
                 <!-- CURRENT STOCK -->
                 <div class="col-md-4 mb-3">
@@ -90,7 +94,7 @@
                         <div class="card-body p-2">
                              <table class="table table-sm mb-0">
                                 <tr>
-                                    <td>Capital</td>
+                                    <td>Stock Value</td>
                                     <td class="text-end"><?php echo e(number_format($currentCapital, 2)); ?></td>
                                 </tr>
                                 <tr>
@@ -210,7 +214,7 @@
                 </tr>
             <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                 <tr>
-                    <td colspan="3" class="text-center">No products expiring in the next 7 days</td>
+                    <td colspan="3" class="text-center"> No products expiring in the next year</td>
                 </tr>
             <?php endif; ?>
         </tbody>

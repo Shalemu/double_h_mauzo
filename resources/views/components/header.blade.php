@@ -89,7 +89,7 @@
 <!-- FULLCALENDAR (FIXED) -->
 <!-- ============================= -->
 
-<!-- ✅ REQUIRED dependency -->
+<!--  REQUIRED dependency -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
 
 <!-- FullCalendar -->

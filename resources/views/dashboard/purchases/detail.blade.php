@@ -14,13 +14,26 @@
     <tbody>
         @foreach($purchases as $index => $p)
         <tr>
+            {{-- SN --}}
             <td>{{ $index + 1 }}</td>
-            <td>{{ $p->product->name }}</td>
-            <td>{{ $p->supplier->name }}</td>
-            <td>{{ $p->quantity }}</td>
+
+            {{-- Product name (check if product exists) --}}
+            <td>{{ $p->product?->name ?? '-' }}</td>
+
+            {{-- Supplier name (check if invoice and supplier exist) --}}
+            <td>{{ $p->invoice?->supplier?->name ?? '-' }}</td>
+
+            {{-- Quantity --}}
+            <td>{{ $p->quantity ?? 0 }}</td>
+
+            {{-- Sale type --}}
             <td>{{ ucfirst($p->sale_type ?? '-') }}</td>
-            <td>{{ number_format($p->purchase_price, 2) }}</td>
-            <td>{{ number_format($p->quantity * $p->purchase_price, 2) }}</td>
+
+            {{-- Price --}}
+            <td>{{ number_format($p->purchase_price ?? 0, 2) }}</td>
+
+            {{-- Total --}}
+            <td>{{ number_format(($p->quantity ?? 0) * ($p->purchase_price ?? 0), 2) }}</td>
         </tr>
         @endforeach
     </tbody>

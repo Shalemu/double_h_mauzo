@@ -1,10 +1,6 @@
 @php
 $shops = $shops ?? collect();
 $totalCapital = 0;
-$currentCapital = $shop->calculated_capital; // total value of products in stock
-$stockValue = $shop->calculated_capital;     // can be same as above or computed differently
-$realCapital = $shop->capital;               // initial capital or cash in hand
-$totalCredit = $shop->purchases()->where('payment_type', 'credit')->sum('remaining_credit');
 @endphp
 
 
@@ -81,6 +77,10 @@ $totalCredit = $shop->purchases()->where('payment_type', 'credit')->sum('remaini
             <div class="col-md-6">
                 <input type="text" name="location" class="form-control" placeholder="Location" required>
             </div>
+                <div class="col-md-4">
+        <input type="number" name="capital" class="form-control" placeholder="Initial Capital">
+    </div>
+
         </div>
 
         <button type="submit" class="btn btn-success btn-sm">Save Shop</button>
@@ -104,38 +104,41 @@ $totalCredit = $shop->purchases()->where('payment_type', 'credit')->sum('remaini
             <th>Name</th>
             <th>Employee</th>
             <th>Total Wages (TZS)</th>
-            <th>Capital (TZS)</th>
+            <th>Stock Value (TZS)</th>
+            <th>Real Capital (TZS)</th>
             <th>Location</th>
         </tr>
     </thead>
     <tbody>
-        @if($shops->count() > 0)
-            @foreach($shops as $shop)
-                <tr>
-                    <td>
-                <a href="{{ route('dashboard.shop.show', ['shop' => $shop->id]) }}">
-                    {{ $shop->name }}
-                </a>
+        @php $totalStock = 0; $totalCapital = 0; @endphp
 
-                    </td>
-                    <td>{{ $shop->total_employees }}</td>
-                    <td>{{ number_format($shop->total_wages) }}</td>
-                    <td>{{ number_format($shop->calculated_capital, 2) }}</td>
-                    <td>{{ $shop->location }}</td>
-                </tr>
-
-                @php
-                    $totalCapital += $shop->calculated_capital;
-                @endphp
-            @endforeach
-        @else
+        @forelse($shops as $shop)
             <tr>
-                <td colspan="5">No shops found.</td>
+                <td>
+                    <a href="{{ route('dashboard.shop.show', ['shop' => $shop->id]) }}">
+                        {{ $shop->name }}
+                    </a>
+                </td>
+                <td>{{ $shop->total_employees }}</td>
+                <td>{{ number_format($shop->total_wages) }}</td>
+                <td>{{ number_format($shop->calculated_capital, 2) }}</td>
+                <td>{{ number_format($shop->realCapital, 2) }}</td>
+                <td>{{ $shop->location }}</td>
             </tr>
-        @endif
+
+            @php
+                $totalStock += $shop->calculated_capital;
+                $totalCapital += $shop->realCapital;
+            @endphp
+        @empty
+            <tr>
+                <td colspan="6">No shops found.</td>
+            </tr>
+        @endforelse
 
         <tr class="table-success">
-            <td colspan="3"><strong>Total Capital</strong></td>
+            <td colspan="3"><strong>Total</strong></td>
+            <td><strong>{{ number_format($totalStock, 2) }}</strong></td>
             <td><strong>{{ number_format($totalCapital, 2) }}</strong></td>
             <td></td>
         </tr>

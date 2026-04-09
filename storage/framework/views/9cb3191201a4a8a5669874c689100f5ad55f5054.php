@@ -21,29 +21,35 @@
 <div class="col-12 d-flex flex-wrap" style="gap:12px;padding-left:20px;">
 
     <button class="btn btn-outline-danger">
-        <i class="bi bi-cart-plus text-danger"></i> Summary
+        <i class="bi bi-cart-plus"></i> Summary
     </button>
 
-    <button class="btn btn-outline-success">
+    <!-- <button class="btn btn-outline-success">
         <i class="bi bi-bag-plus text-success"></i> Purchases
-    </button>
+    </button> -->
 
 
 
      <a href="<?php echo e(route('staff.expenses.index', auth('staff')->user()->shop_id)); ?>" class="btn btn-outline-warning">
-        <i class="bi bi-cash-stack text-warning"></i> Expenses
+        <i class="bi bi-cash-stack"></i> Expenses
     </a>
 
 
       <a href="<?php echo e(route('staff.sales.index', auth('staff')->user()->shop_id)); ?>" class="btn btn-outline-primary">
-        <i class="bi bi-shop text-primary"></i> Sales
+        <i class="bi bi-shop"></i> Sales
     </a>
 
     <a href="<?php echo e(route('staff.products.index')); ?>" class="btn btn-outline-info">
-        <i class="bi bi-box-seam text-info"></i> Items
+        <i class="bi bi-box-seam "></i> Items
     </a>
     <a href="<?php echo e(route('staff.customers.manage')); ?>" class="btn btn-outline-secondary">
     <i class="bi bi-people"></i> Customers
+    </a>
+    <a href="<?php echo e(route('staff.orders.index')); ?>" class="btn btn-outline-success">
+        <i class="bi bi-cash-stack"></i> Orders
+    </a>
+    <a href="<?php echo e(route('staff.report.issue.index')); ?>" class="btn btn-outline-danger">
+        <i class="bi bi-exclamation-circle"></i> Report Issue
     </a>
 </div>
 

@@ -84,6 +84,28 @@
             ], \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
         </div>
 
+        <div id="credit-section" class="dashboard-section">
+        <?php echo $__env->make('dashboard.credit.index', [
+            'credits' => $credits ?? collect(),
+            'creditByDate' => $creditByDate ?? collect(), 
+            'dailyCredit' => $dailyCredit ?? 0,
+            'monthlyCredit' => $monthlyCredit ?? 0, 
+            'totalCredit' => $totalCredit ?? 0,
+            'date' => $date ?? \Carbon\Carbon::today(),
+        ], \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
+        </div>
+
+
+        <div id="order-section" class="dashboard-section">
+        <?php echo $__env->make('dashboard.orders.index', [
+
+        'orders' => $orders ?? collect(),
+        'shop' => $shop ?? null
+
+        ], \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
+        </div>
+
+
         <!-- =================== EXPENSES =================== -->
         <div id="expense-section" class="dashboard-section">
             <?php echo $__env->make('dashboard.expenses.index', [
@@ -114,6 +136,21 @@
                 'shop' => $shop ?? null
             ], \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
         </div>
+
+        <div id="deleted_products-section" class="dashboard-section">
+            <?php echo $__env->make('dashboard.deleted_product.index', [
+                'products' => $deletedProducts, 
+                'categories' => $categories, 
+                'units' => $units
+            ], \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
+        </div>
+
+        <div id="report_issue-section" class="dashboard-section">
+        <?php echo $__env->make('dashboard.report_issue.index', [
+
+        ], \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
+        </div>
+
 
     </div>
 

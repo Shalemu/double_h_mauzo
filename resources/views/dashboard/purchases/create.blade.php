@@ -1,7 +1,5 @@
 <div class="mb-3 d-flex gap-2">
-    <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#addProductModal">
-        <i class="bi bi-plus-circle"></i> New Item
-    </button>
+<button type="button" id="btnNewItem" class="btn btn-info"> <i class="bi bi-plus-circle"></i> New Item </button>
 
     <button type="button" class="btn btn-light" data-bs-toggle="modal" data-bs-target="#addSupplierModal">
         <i class="bi bi-person-plus"></i> Add Supplier
@@ -43,6 +41,10 @@
                         @endforeach
                     </select>
                 </div>
+                <div class="col-md-6 mt-2">
+        <label>Invoice Number</label>
+        <input type="text" name="invoice_number" class="form-control" placeholder="Enter Invoice Number">
+    </div>
             </div>
 
             <hr>
@@ -105,21 +107,22 @@
 
           
             <!-- PAYMENT -->
-            <div class="row mt-3">
-                <div class="col-md-6">
-                    <select name="payment_type" id="paymentType" class="form-select" required>
-                        <option value="">Payment Type</option>
-                        <option value="cash">Cash</option>
-                        <option value="credit">Credit</option>
-                    </select>
-                </div>
-
-                <!-- UNIQUE amountPaidBox -->
-                <div class="col-md-6" id="amountPaidBox" style="display:none;">
-                    <input type="number" name="amount_paid" id="amountPaid" class="form-control" placeholder="Amount Paid">
-                    <small id="remainingCredit" class="text-danger mt-1 d-block">Remaining Credit: 0</small>
-                </div>
+        <div class="row mt-3">
+            <div class="col-md-6">
+                <label>Payment Type</label>
+                <select name="payment_type" id="paymentType" class="form-select" required>
+                    <option value="">Select Payment Type</option>
+                    <option value="cash">Cash</option>
+                    <option value="credit">Credit</option>
+                </select>
             </div>
+
+            <div class="col-md-6" id="amountPaidBox" style="display:none;">
+                <label>Initial Deposit</label>
+                <input type="number" name="amount_paid" id="amountPaid" class="form-control" placeholder="Initial Deposit">
+                <small id="remainingCredit" class="text-danger mt-1 d-block">Remaining Credit: 0</small>
+            </div>
+        </div>
 
             <!-- Hidden -->
             <input type="hidden" name="items" id="itemsInput">
@@ -133,3 +136,102 @@
     </div>
 </section>
 
+<!-- Add Supplier Modal -->
+<div class="modal fade" id="addSupplierModal" tabindex="-1" aria-labelledby="addSupplierModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-3">
+
+            <div class="modal-header bg-light">
+                <h5 class="modal-title" id="addSupplierModalLabel">
+                    <i class="bi bi-person-plus me-2"></i> Add New Supplier
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+           <form id="supplierForm" method="POST" action="{{ route('suppliers.store') }}">
+                @csrf
+
+                <div class="modal-body">
+                    <div class="row g-3">
+
+                        <div class="col-md-6">
+                            <label class="form-label">Supplier Name</label>
+                            <input type="text" name="name" class="form-control" placeholder="Enter supplier name" required>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Email</label>
+                            <input type="email" name="email" class="form-control" placeholder="example@email.com">
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Phone</label>
+                            <input type="text" name="phone" class="form-control" placeholder="Phone number">
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Address</label>
+                            <input type="text" name="address" class="form-control" placeholder="Supplier address">
+                        </div>
+
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        Close
+                    </button>
+
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-save me-1"></i> Save Supplier
+                    </button>
+                </div>
+            </form>
+
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const supplierForm = document.getElementById('supplierForm');
+
+    supplierForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        let formData = new FormData(this);
+
+        fetch("{{ route('suppliers.store') }}", {
+            method: "POST",
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            },
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            Swal.fire({
+                icon: 'success',
+                title: 'Success',
+                text: 'Supplier added successfully'
+            });
+
+            this.reset();
+
+            let modal = bootstrap.Modal.getInstance(document.getElementById('addSupplierModal'));
+            modal.hide();
+        })
+        .catch(error => {
+            console.error(error);
+
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Failed to save supplier'
+            });
+        });
+    });
+});
+</script>

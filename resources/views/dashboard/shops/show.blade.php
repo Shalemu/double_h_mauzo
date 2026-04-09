@@ -24,60 +24,64 @@
 
                 <!-- TODAY -->
                 <div class="col-md-4 mb-3">
-                    <div class="card border-warning h-100">
-                        <div class="card-header bg-warning text-white">Today</div>
-                        <div class="card-body p-2">
-                            <table class="table table-sm mb-0">
-                                <tr>
-                                    <td>Sales</td>
-                                    <td class="text-end">{{ number_format($todaySales, 2) }}</td>
-                                </tr>
-                                <tr>
-                                    <td>Expenses</td>
-                                    <td class="text-end">{{ number_format($todayExpenses, 2) }}</td>
-                                </tr>
-                    <tr class="fw-bold">
-                    <td class="{{ (float)$totalProfit < 0 ? 'text-danger' : 'text-success' }}">
-                        {{ (float)$totalProfit < 0 ? 'Loss' : 'Profit' }}
-                    </td>
-                    <td class="text-end {{ (float)$totalProfit < 0 ? 'text-danger' : 'text-success' }}">
-                        {{ number_format($totalProfit, 2) }}
-                    </td>
-                </tr>
-
-
-                            </table>
-                        </div>
-                    </div>
+            <div class="card border-warning h-100">
+                <div class="card-header bg-warning text-white">Today</div>
+                <div class="card-body p-2">
+                    <table class="table table-sm mb-0">
+                        <tr>
+                            <td>Sales</td>
+                            <td class="text-end">{{ number_format($todaySales, 2) }}</td>
+                        </tr>
+                        <tr>
+                            <td>Expenses</td>
+                            <td class="text-end">{{ number_format($todayExpenses, 2) }}</td>
+                        </tr>
+                        <tr>
+                            <td>Credit (Debt)</td>
+                            <td class="text-end text-danger">{{ number_format($dailyCredit ?? 0, 2) }}</td>
+                        </tr>
+                        <tr class="fw-bold">
+                            <td class="{{ (float)$todayProfit < 0 ? 'text-danger' : 'text-success' }}">
+                                {{ (float)$todayProfit < 0 ? 'Loss' : 'Profit' }}
+                            </td>
+                            <td class="text-end {{ (float)$todayProfit < 0 ? 'text-danger' : 'text-success' }}">
+                                {{ number_format($todayProfit, 2) }}
+                            </td>
+                        </tr>
+                    </table>
                 </div>
-
+            </div>
+        </div>
                 <!-- THIS MONTH -->
                 <div class="col-md-4 mb-3">
-                    <div class="card border-warning h-100">
-                        <div class="card-header bg-warning text-white">{{ now()->format('Y, M') }}</div>
-                        <div class="card-body p-2">
-                            <table class="table table-sm mb-0">
-                                <tr>
-                                    <td>Sales</td>
-                                    <td class="text-end">{{ number_format($monthSales, 2) }}</td>
-                                </tr>
-                                <tr>
-                                    <td>Expenses</td>
-                                    <td class="text-end">{{ number_format($monthExpenses, 2) }}</td>
-                                </tr>
-                          <tr class="fw-bold">
-                        <td class="{{ (float)$totalProfit < 0 ? 'text-danger' : 'text-success' }}">
-                            {{ (float)$totalProfit < 0 ? 'Loss' : 'Profit' }}
-                        </td>
-                        <td class="text-end {{ (float)$totalProfit < 0 ? 'text-danger' : 'text-success' }}">
-                            {{ number_format($totalProfit, 2) }}
-                        </td>
-                    </tr>
-
-                            </table>
-                        </div>
-                    </div>
-                </div>
+    <div class="card border-warning h-100">
+        <div class="card-header bg-warning text-white">{{ now()->format('Y, M') }}</div>
+        <div class="card-body p-2">
+            <table class="table table-sm mb-0">
+                <tr>
+                    <td>Sales</td>
+                    <td class="text-end">{{ number_format($monthSales, 2) }}</td>
+                </tr>
+                <tr>
+                    <td>Expenses</td>
+                    <td class="text-end">{{ number_format($monthExpenses, 2) }}</td>
+                </tr>
+                <tr>
+                    <td>Credit (Debt)</td>
+                    <td class="text-end text-danger">{{ number_format($monthlyCredit ?? 0, 2) }}</td>
+                </tr>
+                <tr class="fw-bold">
+                    <td class="{{ (float)$monthProfit < 0 ? 'text-danger' : 'text-success' }}">
+                        {{ (float)$monthProfit < 0 ? 'Loss' : 'Profit' }}
+                    </td>
+                    <td class="text-end {{ (float)$monthProfit < 0 ? 'text-danger' : 'text-success' }}">
+                        {{ number_format($monthProfit, 2) }}
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+</div>
 
                 <!-- CURRENT STOCK -->
                 <div class="col-md-4 mb-3">
@@ -86,7 +90,7 @@
                         <div class="card-body p-2">
                              <table class="table table-sm mb-0">
                                 <tr>
-                                    <td>Capital</td>
+                                    <td>Stock Value</td>
                                     <td class="text-end">{{ number_format($currentCapital, 2) }}</td>
                                 </tr>
                                 <tr>
@@ -203,7 +207,7 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="3" class="text-center">No products expiring in the next 7 days</td>
+                    <td colspan="3" class="text-center"> No products expiring in the next year</td>
                 </tr>
             @endforelse
         </tbody>

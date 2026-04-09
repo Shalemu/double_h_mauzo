@@ -13,6 +13,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use App\Exports\ProductsTemplateExport;  
 use App\Imports\ProductsImport;   
 use Carbon\Carbon;
+use App\Models\ProductTrash;
 
 
 
@@ -236,7 +237,7 @@ public function exportExcel()
     }
 
 
-    public function filterByStatus($status)
+public function filterByStatus($status)
 {
     $today = Carbon::today();
 
@@ -248,29 +249,29 @@ public function exportExcel()
         case 'running':
             $query->whereColumn('quantity', '<=', 'min_quantity')
                   ->where('quantity', '>', 0);
-        break;
+            break;
 
-        // Expiring (expire_date within next 7 days)
+        // Expiring (expire_date within next 1 year)
         case 'expiring':
             $query->whereNotNull('expire_date')
-                  ->whereBetween('expire_date', [$today, $today->copy()->addDays(7)]);
-        break;
+                  ->whereBetween('expire_date', [$today, $today->copy()->addYear()]);
+            break;
 
         // Finished (quantity = 0)
         case 'finished':
             $query->where('quantity', 0);
-        break;
+            break;
 
         // Expired (expire_date < today)
         case 'expired':
             $query->whereNotNull('expire_date')
                   ->where('expire_date', '<', $today);
-        break;
+            break;
 
-        // Disposed (you must have disposed column OR table)
+        // Disposed (disposed = 1)
         case 'disposed':
-            $query->where('disposed', 1); // only if you have this column
-        break;
+            $query->where('disposed', 1);
+            break;
     }
 
     $products = $query->get();
@@ -303,17 +304,22 @@ public function filterBySaleType(Request $request)
     /**
      * Expiring (expire_date within next 7 days)
      */
-    public function expiring()
-    {
-        $today = Carbon::today();
+/**
+ * Expiring (expire_date within next 1 year)
+ */
+        public function expiring()
+        {
+            $today = Carbon::today();
 
-        $products = Products::withTrashed()
-            ->whereNotNull('expire_date')
-            ->whereBetween('expire_date', [$today, $today->copy()->addDays(7)])
-            ->get();
+            // Get products with expire_date in the future, within the next year
+            $products = Products::withTrashed()
+                ->whereNotNull('expire_date')
+                ->where('expire_date', '>', $today) // future only
+                ->where('expire_date', '<=', $today->copy()->addYear()) // within next 1 year
+                ->get();
 
-        return view('dashboard.products.expiring', compact('products'));
-    }
+            return view('dashboard.products.expiring', compact('products'));
+        }
 
     /**
      * Finished (quantity = 0)
@@ -349,13 +355,87 @@ public function finished()
     /**
      * Disposed (disposed = 1)
      */
-    public function disposed()
-    {
-        $products = Products::withTrashed()
-            ->where('disposed', 1)
-            ->get();
+    public function destroy($id)
+{
+    $product = Products::findOrFail($id);
 
-        return view('dashboard.products.disposed', compact('products'));
-    }
+    // Move to trash
+    ProductTrash::create([
+        'original_id' => $product->id,
+        'shop_id' => $product->shop_id,
+        'name' => $product->name,
+        'brand' => $product->brand,
+        'category_id' => $product->category_id,
+        'unit_id' => $product->unit_id,
+        'quantity' => $product->quantity,
+        'min_quantity' => $product->min_quantity,
+        'purchase_price' => $product->purchase_price,
+        'selling_price' => $product->selling_price,
+        'invoice_number' => $product->invoice_number,
+        'barcode' => $product->barcode,
+        'expire_date' => $product->expire_date,
+        'size' => $product->size,
+        'color' => $product->color,
+        'sale_type' => $product->sale_type,
+        'image' => $product->image,
+        'admin_id' => $product->admin_id,
+    ]);
+
+    // Delete the original product
+    $product->delete();
+
+    return response()->json(['success' => 'Product moved to trash successfully.']);
+}
+
+
+public function trash()
+{
+    $trashedProducts = ProductTrash::all();
+    return view('dashboard.products.trash', compact('trashedProducts'));
+}
+
+public function restore($id)
+{
+    $trashed = ProductTrash::findOrFail($id);
+
+    // Create new product (let Laravel handle ID automatically)
+    $product = Products::create([
+        'shop_id' => $trashed->shop_id,
+        'name' => $trashed->name,
+        'brand' => $trashed->brand,
+        'category_id' => $trashed->category_id,
+        'unit_id' => $trashed->unit_id,
+        'quantity' => $trashed->quantity,
+        'min_quantity' => $trashed->min_quantity,
+        'purchase_price' => $trashed->purchase_price,
+        'selling_price' => $trashed->selling_price,
+        'invoice_number' => $trashed->invoice_number,
+        'barcode' => $trashed->barcode,
+        'expire_date' => $trashed->expire_date,
+        'size' => $trashed->size,
+        'color' => $trashed->color,
+        'sale_type' => $trashed->sale_type,
+        'image' => $trashed->image,
+        'admin_id' => $trashed->admin_id,
+    ]);
+
+    $trashed->delete();
+
+    return response()->json([
+        'success' => 'Product restored successfully!',
+        'product_id' => $product->id
+    ]);
+}
+
+
+public function forceDelete($id)
+{
+    $trashed = ProductTrash::findOrFail($id);
+    $trashed->delete();
+
+    return response()->json([
+        'success' => 'Product permanently deleted!'
+    ]);
+}
 
 }

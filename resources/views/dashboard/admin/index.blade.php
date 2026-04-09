@@ -152,7 +152,7 @@
             </div>
 
             <!-- Right: Shop Tables -->
-           <div class="col-xl-7">
+        <div class="col-xl-7">
     <div class="cat__core__widget p-3 h-100" style="background:#fff;">
         <!-- Shop Tabs -->
         <ul class="nav nav-tabs mb-3" id="shopTab" role="tablist">
@@ -197,71 +197,6 @@
     </div>
 </div><br>
 
-
-
-<!-- <div class="row">
-    <div class="col-lg-6">
-        <div class="cat__core__widget">
-            <p class="pt-3 px-3"><strong>REVENUE STATISTICS (Last 7 Days)</strong></p>
-            <div class="chart-line height-300 chartist"></div>
-        </div>
-    </div>
-    <div class="col-lg-6">
-        <div class="cat__core__widget">
-            <p class="pt-3 px-3"><strong>GROWTH (Current Year)</strong></p>
-            <div class="chart-overlapping-bar height-300 chartist"></div>
-        </div>
-    </div>
-</div> -->
-
- <!-- Product Sales Table -->
-    <!-- <div class="container-fluid mt-4">
-        <div class="row g-4" style="padding-left:30px; padding-right:30px;">
-            <div class="col-lg-12">
-                <div class="cat__core__widget">
-                    <p class="pt-3 px-3"><strong>PRODUCT SALES SUMMARY (ALL SHOPS)</strong></p>
-                    <div class="table-responsive">
-                        <table class="table table-hover nowrap" width="100%">
-                            <thead class="thead-light">
-                                <tr>
-                                    <th>Product Name</th>
-                                    <th>Quantity Sold</th>
-                                    <th>Unit Price (TZS)</th>
-                                    <th>Total Sales (TZS)</th>
-                                    <th>Date Sold</th>
-                                    <th>Profit (TZS)</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach($shops as $shop)
-                                    @foreach($shop->sales as $sale)
-                                        @foreach($sale->items as $item)
-                                            <tr>
-                                                <td>{{ $item->product->name }}</td>
-                                                <td>{{ $item->quantity }}</td>
-                                                <td>{{ number_format($item->unit_price, 2) }}</td>
-                                                <td>{{ number_format($item->quantity * $item->unit_price, 2) }}</td>
-                                                <td>{{ $sale->created_at->format('Y/m/d') }}</td>
-                                                <td>{{ number_format(($item->unit_price - $item->product->purchase_price) * $item->quantity, 2) }}</td>
-                                            </tr>
-                                        @endforeach
-                                    @endforeach
-                                @endforeach
-                            </tbody>
-                            <tfoot class="table-light">
-                                <tr>
-                                    <th colspan="3">Total</th>
-                                    <th>{{ number_format($totalSales, 2) }}</th>
-                                    <th></th>
-                                    <th>{{ number_format($grossProfit, 2) }}</th>
-                                </tr>
-                            </tfoot>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div> -->
 
 <!-- START: page scripts -->
 <script>

@@ -233,9 +233,8 @@ return [
 		'Form' => Collective\Html\FormFacade::class,
 		'Html' => Collective\Html\HtmlFacade::class,
 		'Image' => Intervention\Image\Facades\Image::class,
-        'Helper' => App\Helpers\Helper::class, 
         'Str'   => Illuminate\Support\Str::class,
-        'Input' => Illuminate\Support\Facades\Input::class,
+     
     ],
 
 ];

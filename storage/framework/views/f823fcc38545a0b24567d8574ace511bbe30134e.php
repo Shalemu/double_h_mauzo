@@ -3,6 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="<?php echo e(csrf_token()); ?>">
 
     <title><?php echo $__env->yieldContent('title'); ?> - DOUBLE H COSMETICS Admin Panel</title>
 
@@ -115,7 +116,6 @@ document.addEventListener("DOMContentLoaded", function(){
 
 <script>
 function initPurchaseForm() {
-
     const formContainer = document.getElementById('add-purchase-container');
     if (!formContainer) return;
 
@@ -134,21 +134,19 @@ function initPurchaseForm() {
     const remainingEl = formContainer.querySelector('#remainingCredit');
     const remainingInput = formContainer.querySelector('#remainingCreditInput');
     const saleType = formContainer.querySelector('#saleType');
+    const addBtn = formContainer.querySelector('#addItemBtn');
 
-    if (!product) return;
+    if (!product || !addBtn) return;
 
-    // Auto-fill prices
     product.addEventListener('change', () => {
         const opt = product.options[product.selectedIndex];
         buy.value = opt.getAttribute('data-buy') || '';
         sell.value = opt.getAttribute('data-sell') || '';
     });
 
-    // Add item
-    const addBtn = formContainer.querySelector('#addItemBtn');
     addBtn.addEventListener('click', () => {
         if (!product.value || !qty.value || !buy.value) {
-            alert('Please fill all item fields.');
+            Swal.fire('Error', 'Please fill all item fields.', 'error');
             return;
         }
 
@@ -158,7 +156,7 @@ function initPurchaseForm() {
             quantity: parseFloat(qty.value),
             price: parseFloat(buy.value),
             selling_price: parseFloat(sell.value || 0),
-             sale_type: saleType.value
+            sale_type: saleType.value
         });
 
         renderItems();
@@ -196,17 +194,26 @@ function initPurchaseForm() {
         updateRemainingCredit();
     }
 
-    // Remove item
     table.addEventListener('click', e => {
         if (e.target.classList.contains('remove-item')) {
-            const index = e.target.dataset.index;
-            items.splice(index, 1);
+            items.splice(e.target.dataset.index, 1);
             renderItems();
         }
     });
 
-    // Payment type
-    paymentType.addEventListener('change', () => {
+    function updateRemainingCredit() {
+        const total = parseFloat(totalEl.innerText) || 0;
+        const paid = parseFloat(paidInput?.value || 0);
+        const remaining = Math.max(0, total - paid);
+
+        remainingEl.innerText = `Remaining Credit: ${remaining.toFixed(2)}`;
+
+        if (remainingInput) {
+            remainingInput.value = remaining.toFixed(2);
+        }
+    }
+
+    paymentType?.addEventListener('change', () => {
         const total = parseFloat(totalEl.innerText) || 0;
 
         if (paymentType.value === 'credit') {
@@ -220,27 +227,123 @@ function initPurchaseForm() {
         updateRemainingCredit();
     });
 
-    // Paid input change
     paidInput?.addEventListener('input', updateRemainingCredit);
 
-    function updateRemainingCredit() {
-        const total = parseFloat(totalEl.innerText) || 0;
-        const paid = parseFloat(paidInput?.value || 0);
-        const remaining = Math.max(0, total - paid);
-
-        remainingEl.innerText = `Remaining Credit: ${remaining.toFixed(2)}`;
-        remainingInput.value = remaining.toFixed(2); // store for Laravel
-    }
-
-    // Ensure items exist before submitting
-    formContainer.querySelector('form').addEventListener('submit', e => {
+    formContainer.querySelector('form')?.addEventListener('submit', e => {
         if (items.length === 0) {
             e.preventDefault();
-            alert('Add at least one item before submitting!');
+            Swal.fire('Error', 'Add at least one item.', 'error');
+            return;
+        }
+
+        itemsInput.value = JSON.stringify(items);
+    });
+}
+
+
+
+
+function initNewProductForm() {
+    const form = document.getElementById('newProductForm');
+    if (!form) return;
+
+    const paymentType = form.querySelector('#paymentType');
+    const amountBox = form.querySelector('#amountPaidBox');
+    const paidInput = form.querySelector('#amountPaid');
+    const remainingEl = form.querySelector('#remainingCredit');
+    const submitBtn = form.querySelector('#submitNewProduct');
+
+    const purchasePrice = form.querySelector('input[name="purchase_price"]');
+    const quantity = form.querySelector('input[name="quantity"]');
+
+    // Update remaining credit
+    function updateRemainingCredit() {
+        const qty = parseFloat(quantity.value || 0);
+        const price = parseFloat(purchasePrice.value || 0);
+        const paid = parseFloat(paidInput.value || 0);
+        const total = qty * price;
+        const remaining = Math.max(0, total - paid);
+        remainingEl.innerText = `Remaining Credit: ${remaining.toFixed(2)}`;
+    }
+
+    // Show/hide deposit box
+    paymentType.addEventListener('change', function () {
+        if (this.value === 'credit') {
+            amountBox.style.display = 'block';
+            paidInput.value = 0;
+        } else {
+            amountBox.style.display = 'none';
+            paidInput.value = '';
+        }
+        updateRemainingCredit();
+    });
+
+    paidInput.addEventListener('input', updateRemainingCredit);
+    purchasePrice.addEventListener('input', updateRemainingCredit);
+    quantity.addEventListener('input', updateRemainingCredit);
+
+    // Cancel button
+    const cancelBtn = form.querySelector('#cancelNewProduct');
+    cancelBtn.addEventListener('click', () => {
+        document.getElementById('newProductContainer').style.display = 'none';
+        document.getElementById('add-purchase-container').style.display = 'block';
+    });
+
+    // Submit button
+    submitBtn.addEventListener('click', async function () {
+        const shopId = form.querySelector('select[name="shop_id"]').value;
+        const name = form.querySelector('input[name="name"]').value.trim();
+        const qty = parseFloat(quantity.value);
+        const price = parseFloat(purchasePrice.value);
+        const supplier = form.querySelector('select[name="supplier_id"]').value;
+        const payment = paymentType.value;
+
+        if (!shopId || !name || !qty || !price || !supplier || !payment) {
+            Swal.fire('Validation Error', 'Please fill all required fields', 'warning');
+            return;
+        }
+
+        // Prepare FormData
+        const formData = new FormData(form);
+
+        try {
+            const res = await fetch("<?php echo e(route('purchases.store_new_product')); ?>", {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    'Accept': 'application/json'
+                },
+                body: formData
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) throw data;
+
+            Swal.fire('Success', data.success || 'Product purchased successfully', 'success');
+
+            // Reset form
+            form.reset();
+            amountBox.style.display = 'none';
+            remainingEl.innerText = 'Remaining Credit: 0.00';
+
+            document.getElementById('newProductContainer').style.display = 'none';
+            document.getElementById('add-purchase-container').style.display = 'block';
+        } catch (error) {
+            console.error('AJAX Error:', error);
+
+            if (error.errors) {
+                // Laravel validation errors
+                const messages = Object.values(error.errors).flat().join('<br>');
+                Swal.fire({ icon: 'error', title: 'Validation Error', html: messages });
+            } else if (error.message) {
+                Swal.fire('Error', error.message, 'error');
+            } else {
+                Swal.fire('Error', 'Failed to save product', 'error');
+            }
         }
     });
 }
-document.addEventListener('DOMContentLoaded', initPurchaseForm);
 </script>
 
 </body>

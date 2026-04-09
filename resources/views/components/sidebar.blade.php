@@ -43,6 +43,18 @@
                 <span>Sales</span>
             </a>
         </li>
+        <li class="nav-item {{ request()->is('credit*') ? 'active' : '' }}">
+            <a href="#" data-content="credit-section">
+                <i class="bi bi-cash-stack"></i>
+                <span>Credit</span>
+            </a>
+        </li>
+        <li class="nav-item {{ request()->is('credit*') ? 'active' : '' }}">
+            <a href="#" data-content="order-section">
+                <i class="bi bi-cash-stack"></i>
+                <span>Orders</span>
+            </a>
+        </li>
 
         <li class="nav-item {{ request()->is('sales-returns*') ? 'active' : '' }}">
             <a href="#" data-content="sales-return-section">
@@ -65,24 +77,32 @@
             </a>
         </li>
 
-        <li class="nav-item {{ request()->is('deleted-products*') ? 'active' : '' }}">
-            <a href="{{ url('deleted-products') }}">
+        <li class="nav-item {{ request()->is('trash*') ? 'active' : '' }}">
+            <a href="{{ url('deleted_products') }}" data-content="deleted_products-section">
                 <i class="bi bi-trash"></i>
                 <span>Deleted Products</span>
             </a>
         </li>
 
+
+
+        <li class="nav-item {{ request()->is('report*') ? 'active' : '' }}">
+            <a href="{{ url('report_issue') }}" data-content="report_issue-section">
+                <i class="bi bi-box-seam"></i>
+                <span>Report_issue</span>
+            </a>
+        </li>
+
+
+
     </ul>
-
-
-    
 
 </aside>
 
 <style>
 .sidenav {
     width: 260px;
-    height: calc(100vh - 80px);
+    height: calc(100vh - 180px); /* Adjust based on top offset */
     position: fixed;
     left: 0;
     top: 180px;
@@ -90,6 +110,28 @@
     border-right: 1px solid #e5e7eb;
     font-family: 'Poppins', sans-serif;
     z-index: 1000;
+
+    overflow-y: auto; /* Make sidebar scrollable */
+    overflow-x: hidden;
+    padding-bottom: 20px; /* extra space for last item */
+
+    scrollbar-width: thin;
+    scrollbar-color: #f97316 #f1f5f9;
+}
+
+.sidenav::-webkit-scrollbar {
+    width: 8px;
+}
+
+.sidenav::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 4px;
+}
+
+.sidenav::-webkit-scrollbar-thumb {
+    background-color: #f97316;
+    border-radius: 4px;
+    border: 2px solid #f1f5f9;
 }
 
 /* SHOP INFO */
@@ -98,7 +140,6 @@
     padding: 25px 15px;
     border-bottom: 1px solid #e5e7eb;
 }
-
 .shop-info img {
     width: 70px;
     height: 70px;
@@ -106,7 +147,6 @@
     object-fit: cover;
     margin-bottom: 10px;
 }
-
 .shop-info h6 {
     font-size: 14px;
     font-weight: 600;
@@ -120,11 +160,9 @@
     padding: 15px 10px;
     margin: 0;
 }
-
 .nav-item {
     margin-bottom: 6px;
 }
-
 .nav-item a {
     display: flex;
     align-items: center;
@@ -136,7 +174,6 @@
     text-decoration: none;
     transition: all 0.2s ease;
 }
-
 .nav-item i {
     font-size: 16px;
 }

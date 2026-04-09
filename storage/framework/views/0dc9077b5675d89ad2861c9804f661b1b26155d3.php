@@ -15,7 +15,7 @@
 
 
 
-<div class="container-fluid mt-5">
+<div class="container-fluid mt-5" style="max-width: 1400px; margin:auto">
 
     <!-- Action Buttons -->
     <div class="d-flex justify-content-end gap-2 mb-3">
@@ -34,9 +34,7 @@
     <div class="card shadow-sm">
         <div class="card-header d-flex justify-content-between align-items-center bg-primary text-white">
             <h5 class="mb-0">Product List</h5>
-            <a href="<?php echo e(route('products.create')); ?>" class="btn btn-light btn-sm">
-                <i class="fa fa-plus"></i> Add Product
-            </a>
+
         </div>
 
         <div class="card-body">
@@ -102,7 +100,7 @@
 
 </div>
 
-<div class="row mt-4">
+<div class="row mt-4" style="max-width: 1400px; margin:auto">
     <div class="col-12">
         <!-- Status buttons -->
         <div class="btn-group mb-3" role="group" aria-label="Stock Status Filter">
@@ -110,13 +108,12 @@
             <button type="button" class="btn btn-outline-primary" data-status="expiring">Expiring</button>
             <button type="button" class="btn btn-outline-primary" data-status="finished">Finished</button>
             <button type="button" class="btn btn-outline-primary" data-status="expired">Expired</button>
-            <button type="button" class="btn btn-outline-primary" data-status="disposed">Disposed</button>
         </div>
     </div>
 </div>
 
 <!-- EXPORT + SEARCH -->
-<div class="card shadow-sm">
+<div class="card shadow-sm" style="max-width: 1400px; margin:auto">
         <div class="card-header d-flex justify-content-between align-items-center bg-primary text-white">
         <!-- Export buttons -->
         <div class="btn-group mb-2">
@@ -132,7 +129,7 @@
 </div>
 
 <!-- STATUS TABLES -->
-<div class="row">
+<div class="row" style="max-width: 1400px; margin:auto">
     <div class="col-12">
         <div id="status-tables">
             <!-- Running Out -->
@@ -244,32 +241,7 @@
         </tbody>
                 </table>
             </div>
-
-            <!-- Disposed -->
-            <div class="status-table d-none" data-status="disposed">
-                <table class="table table-bordered table-sm">
-                      <thead class="table-primary h-100">
-                        <tr>
-                            <th>Item</th>
-                            <th>Disposed Date</th>
-                            <th>Quantity</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-            <?php $__empty_1 = true; $__currentLoopData = $disposedProducts; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $product): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
-                <tr>
-                    <td><?php echo e($product->name); ?></td>
-                    <td><?php echo e(\Carbon\Carbon::parse($product->disposed_at)->format('Y-m-d') ?? 'N/A'); ?></td>
-                    <td><?php echo e($product->quantity); ?></td>
-                </tr>
-            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
-                <tr>
-                    <td colspan="3" class="text-center">No disposed products found</td>
-                </tr>
-            <?php endif; ?>
-        </tbody>
-                </table>
-            </div>
+            
         </div>
     </div>
 </div>

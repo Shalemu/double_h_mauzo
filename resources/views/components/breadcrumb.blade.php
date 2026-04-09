@@ -71,14 +71,32 @@
 
         <!-- LOGOUT -->
         <div class="cat__logout ms-auto">
-            <form method="POST" action="{{ route('logout') }}">
-                @csrf
-                <button type="submit" class="btn btn-outline-danger" title="Logout"
-                        onclick="return confirm('Are you sure you want to logout?');">
-                    <i class="icmn-exit"></i>
-                </button>
-            </form>
-        </div>
+    <form id="logoutForm" method="POST" action="{{ route('logout') }}">
+        @csrf
+        <button type="button" class="btn btn-outline-danger" title="Logout" id="logoutBtn">
+            <i class="icmn-exit"></i>
+        </button>
+    </form>
+</div>
+
+<script>
+document.getElementById('logoutBtn').addEventListener('click', function() {
+    Swal.fire({
+        title: 'Are you sure?',
+        text: "You will be logged out!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Yes, logout!',
+        cancelButtonText: 'Cancel'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            document.getElementById('logoutForm').submit();
+        }
+    });
+});
+</script>
 
     </nav>
 </header>

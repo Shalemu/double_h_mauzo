@@ -129,12 +129,12 @@
                 </ul>
                
                 <form action="{{ route('products.destroy', $product->id) }}" method="POST" style="display:inline-block;">
-                    @csrf
-                    @method('DELETE')
-                    <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Do you want to delete this?')">
-                        <i class="fa fa-trash"></i>
-                    </button>
-                </form>
+            @csrf
+            @method('DELETE')
+            <button type="button" class="btn btn-danger btn-sm btn-delete" data-id="{{ $product->id }}">
+                <i class="fa fa-trash"></i> Delete
+            </button>
+        </form>
             </div>
         </td>
     </tr>
@@ -160,7 +160,61 @@
             "responsive": true         // Make table responsive
         });
     });
-    </script>
+
+
+    document.addEventListener('DOMContentLoaded', function() {
+    const deleteButtons = document.querySelectorAll('.btn-delete');
+
+    deleteButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const productId = this.dataset.id;
+
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "This product will be moved to trash!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Yes, move to trash!',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    fetch(`/products/${productId}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'Accept': 'application/json',
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if(data.success){
+                            Swal.fire(
+                                'Moved!',
+                                data.success,
+                                'success'
+                            );
+
+                            // Remove the row from table
+                            const row = button.closest('tr');
+                            if(row){
+                                row.remove();
+                            }
+                        } else if(data.error) {
+                            Swal.fire('Error', data.error, 'error');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        Swal.fire('Error', 'Something went wrong!', 'error');
+                    });
+                }
+            });
+        });
+    });
+});
+</script>
 
 
 

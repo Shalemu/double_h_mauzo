@@ -35,6 +35,16 @@ class Staff extends Authenticatable
         return $this->belongsTo(Shops::class);
     }
 
+    public function orders()
+    {
+        return $this->hasMany(\App\Models\Order::class, 'staff_id');
+    }
+
+    public function expenses()
+    {
+        return $this->morphMany(Expenses::class, 'created_by');
+    }
+
     // Accessor
     public function getFullNameAttribute()
     {
@@ -46,10 +56,4 @@ class Staff extends Authenticatable
     {
         return 'phone';
     }
-
-    public function expenses()
-{
-    return $this->morphMany(Expenses::class, 'created_by');
-}
-
 }

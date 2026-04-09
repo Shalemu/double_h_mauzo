@@ -78,6 +78,10 @@ $totalCapital = 0;
             <div class="col-md-6">
                 <input type="text" name="location" class="form-control" placeholder="Location" required>
             </div>
+                <div class="col-md-4">
+        <input type="number" name="capital" class="form-control" placeholder="Initial Capital">
+    </div>
+
         </div>
 
         <button type="submit" class="btn btn-success btn-sm">Save Shop</button>
@@ -101,39 +105,42 @@ $totalCapital = 0;
             <th>Name</th>
             <th>Employee</th>
             <th>Total Wages (TZS)</th>
-            <th>Capital (TZS)</th>
+            <th>Stock Value (TZS)</th>
+            <th>Real Capital (TZS)</th>
             <th>Location</th>
         </tr>
     </thead>
     <tbody>
-        <?php if($shops->count() > 0): ?>
-            <?php $__currentLoopData = $shops; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $shop): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                <tr>
-                    <td>
-                <a href="<?php echo e(route('dashboard.shop.show', ['shop' => $shop->id])); ?>">
-                    <?php echo e($shop->name); ?>
+        <?php $totalStock = 0; $totalCapital = 0; ?>
 
-                </a>
-
-                    </td>
-                    <td><?php echo e($shop->total_employees); ?></td>
-                    <td><?php echo e(number_format($shop->total_wages)); ?></td>
-                    <td><?php echo e(number_format($shop->calculated_capital, 2)); ?></td>
-                    <td><?php echo e($shop->location); ?></td>
-                </tr>
-
-                <?php
-                    $totalCapital += $shop->calculated_capital;
-                ?>
-            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
-        <?php else: ?>
+        <?php $__empty_1 = true; $__currentLoopData = $shops; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $shop): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
             <tr>
-                <td colspan="5">No shops found.</td>
+                <td>
+                    <a href="<?php echo e(route('dashboard.shop.show', ['shop' => $shop->id])); ?>">
+                        <?php echo e($shop->name); ?>
+
+                    </a>
+                </td>
+                <td><?php echo e($shop->total_employees); ?></td>
+                <td><?php echo e(number_format($shop->total_wages)); ?></td>
+                <td><?php echo e(number_format($shop->calculated_capital, 2)); ?></td>
+                <td><?php echo e(number_format($shop->realCapital, 2)); ?></td>
+                <td><?php echo e($shop->location); ?></td>
+            </tr>
+
+            <?php
+                $totalStock += $shop->calculated_capital;
+                $totalCapital += $shop->realCapital;
+            ?>
+        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
+            <tr>
+                <td colspan="6">No shops found.</td>
             </tr>
         <?php endif; ?>
 
         <tr class="table-success">
-            <td colspan="3"><strong>Total Capital</strong></td>
+            <td colspan="3"><strong>Total</strong></td>
+            <td><strong><?php echo e(number_format($totalStock, 2)); ?></strong></td>
             <td><strong><?php echo e(number_format($totalCapital, 2)); ?></strong></td>
             <td></td>
         </tr>

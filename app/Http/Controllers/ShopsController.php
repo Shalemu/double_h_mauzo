@@ -6,6 +6,10 @@ use App\Models\Shops;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
+use App\Models\Supplier;
+use App\Models\Order;
+use App\Models\Feedback;
+use App\Models\ProductTrash;
 
 class ShopsController extends Controller
 {
@@ -14,26 +18,35 @@ class ShopsController extends Controller
      */
     public function index()
     {
-        $shops = Shops::with([
-            'staff', 
-            'products', 
-            'sales.items.product', 
-            'expenses', 
-            'fixedExpenses', 
-            'purchases'
-        ])->orderBy('name')->get();
+        $shops = Shops::with(['staff', 'products', 'sales', 'expenses', 'fixedExpenses', 'invoices'])
+            ->orderBy('name')
+            ->get();
 
-        // Ensure computed attributes are loaded
+        // Calculate summary for each shop
         $shops->each(function ($shop) {
-            $shop->calculated_capital = $shop->calculated_capital; // stock value
-            $shop->total_wages = $shop->total_wages;
-            $shop->total_employees = $shop->total_employees;
-            $shop->profit = $shop->profit;
-            $shop->total_credit = $shop->purchases()->where('payment_type', 'credit')->sum('remaining_credit');
+            // Stock value = total value of products in inventory
+            $shop->calculated_capital = $shop->products->sum(fn($p) => $p->quantity * $p->purchase_price);
+
+            // Employees & wages
+            $shop->total_employees = $shop->staff->count();
+            $shop->total_wages = $shop->staff->sum('wage');
+
+            // Profit = total sales - total expenses - wages
+            $totalSales = $shop->sales->sum('total');
+            $totalExpenses = $shop->expenses->sum('amount') + $shop->fixedExpenses->sum('amount') + $shop->total_wages;
+            $shop->profit = $totalSales - $totalExpenses;
+
+            // Real capital = initial capital + profit
+            $shop->realCapital = ($shop->capital ?? 0) + $shop->profit;
+
+            // Total credit (all-time)
+            $shop->total_credit = $shop->invoices->where('payment_type', 'credit')->sum('remaining_credit');
         });
 
         return view('dashboard.shops.shop', compact('shops'));
     }
+
+    
 
     /**
      * Store a new shop
@@ -62,70 +75,88 @@ class ShopsController extends Controller
      */
     public function show(Shops $shop)
     {
-        $shop->load([
-            'staff',
-            'products',
-            'expenses',
-            'fixedExpenses',
-            'sales.items.product',
-            'purchases'
-        ]);
+        $shop->load(['staff', 'products', 'expenses', 'fixedExpenses', 'sales.items.product', 'purchases']);
 
         $products = $shop->products;
+
+        $suppliers = Supplier::all();
+
+        $today = Carbon::today();
+       
+        $monthStart = Carbon::now()->startOfMonth()->startOfDay();
+        $monthEnd = Carbon::now()->endOfMonth()->endOfDay();
 
         // Product filters
         $finishedProducts = $products->where('quantity', 0);
         $runningOutProducts = $products->where('quantity', '>', 0)
             ->filter(fn($p) => $p->quantity <= $p->min_quantity);
-
-        $today = Carbon::today();
         $expiringProducts = $products->filter(fn($p) =>
             $p->expire_date && Carbon::parse($p->expire_date)->between($today, $today->copy()->addDays(7))
         );
-        $expiredProducts = $products->filter(fn($p) =>
-            $p->expire_date && Carbon::parse($p->expire_date)->lt($today)
-        );
+        $expiredProducts = $products->filter(fn($p) => $p->expire_date && Carbon::parse($p->expire_date)->lt($today));
         $disposedProducts = $products->filter(fn($p) => $p->disposed == 1);
 
-        // Daily wages
+        // Wages
+        $totalWages = $shop->total_wages ?? $shop->staff->sum('wage');
         $daysInMonth = now()->daysInMonth;
-        $dailyWages = $shop->total_wages / $daysInMonth;
+        $dailyWages = $totalWages / $daysInMonth;
 
         // TODAY REPORT
         $todaySales = $shop->salesToday()->sum('total');
-        $todayOperatingExpenses = $shop->expensesToday()->sum('amount');
-        $todayFixedExpenses = $shop->fixedExpensesToday()->sum('amount');
-        $todayExpenses = $todayOperatingExpenses + $todayFixedExpenses;
+        $todayExpenses = $shop->expensesToday()->sum('amount') + $shop->fixedExpensesToday()->sum('amount');
         $todayProfit = $todaySales - ($todayExpenses + $dailyWages);
 
         // MONTH REPORT
         $monthSales = $shop->salesThisMonth()->sum('total');
-        $monthOperatingExpenses = $shop->expensesThisMonth()->sum('amount');
-        $monthFixedExpenses = $shop->fixedExpensesThisMonth()->sum('amount');
-        $monthExpenses = $monthOperatingExpenses + $monthFixedExpenses;
-        $monthProfit = $monthSales - ($monthExpenses + $shop->total_wages);
+        $monthExpenses = $shop->expensesThisMonth()->sum('amount') + $shop->fixedExpensesThisMonth()->sum('amount') + $totalWages;
+        $monthProfit = $monthSales - $monthExpenses;
 
         // OVERALL REPORT
-        $totalSales = $shop->sales()->sum('total');
-        $totalOperatingExpenses = $shop->expenses()->sum('amount');
-        $totalFixedExpenses = $shop->fixedExpenses()->sum('amount');
-        $totalExpenses = $totalOperatingExpenses + $totalFixedExpenses;
-        $totalProfit = $totalSales - ($totalExpenses + $shop->total_wages);
-        $currentCapital = $shop->calculated_capital; // total value of products in stock
-$stockValue = $shop->calculated_capital;     // can be same as above or computed differently
-$realCapital = $shop->capital;               // initial capital or cash in hand
-$totalCredit = $shop->purchases()->where('payment_type', 'credit')->sum('remaining_credit');
+        $totalSales = $shop->sales->sum('total');
+        $totalExpenses = $shop->expenses->sum('amount') + $shop->fixedExpenses->sum('amount') + $totalWages;
+        $totalProfit = $totalSales - $totalExpenses;
 
-        // Stock value (inventory)
-        $stockValue = $shop->calculated_capital;
+        // STOCK & CAPITAL
+        $stockValue = $products->sum(fn($p) => $p->quantity * $p->purchase_price);
+        $currentCapital = $stockValue;
+        $realCapital = ($shop->capital ?? 0) + $totalProfit;
 
-        // Total credit (debt to suppliers)
-        $totalCredit = $shop->purchases()->where('payment_type', 'credit')->sum('remaining_credit');
+        //fixed expenses
+        $fixedExpenses = $shop->fixedExpenses()->get();
 
-        // Real capital = initial capital + sales - expenses - purchases paid
-        $realCapital = ($shop->capital ?? 0) + $totalSales - $totalExpenses - ($shop->purchases()->sum('amount_paid'));
+      
+            // TOTAL CREDIT
+        $totalCredit = $shop->invoices()
+            ->where('payment_type', 'credit')
+            ->sum('remaining_amount');
 
-        // GROUPED DATA
+        // TODAY CREDIT
+        $dailyCredit = $shop->invoices()
+            ->where('payment_type', 'credit')
+            ->whereDate('purchased_at', Carbon::today())
+            ->sum('remaining_amount');
+
+        // MONTH CREDIT
+        $monthlyCredit = $shop->invoices()
+            ->where('payment_type', 'credit')
+            ->whereBetween('purchased_at', [Carbon::now()->startOfMonth(), Carbon::now()->endOfMonth()])
+            ->sum('remaining_amount');
+
+  
+
+        // CREDIT GROUPED BY DATE
+        $creditByDate = $shop->invoices
+        ->where('payment_type', 'credit') // filter credit invoices using Collection filter
+        ->groupBy(fn($invoice) => Carbon::parse($invoice->purchased_at)->format('Y-m-d'))
+        ->map(fn($invoices, $date) => [
+            'date' => $date,
+            'total_amount' => $invoices->sum('total_amount'),
+            'remaining_amount' => $invoices->sum('remaining_amount'),
+            'items' => $invoices,
+        ])
+        ->sortKeysDesc();
+  
+        // Grouped data
         $salesByDate = $shop->sales
             ->groupBy(fn($sale) => $sale->created_at->format('Y-m-d'))
             ->map(fn($sales, $date) => [
@@ -144,42 +175,74 @@ $totalCredit = $shop->purchases()->where('payment_type', 'credit')->sum('remaini
             ])
             ->sortKeysDesc();
 
-        $fixedExpenses = $shop->fixedExpenses()->get();
 
-        $purchasesByDate = $shop->purchases
-            ->groupBy(fn($purchase) => $purchase->purchased_at->format('Y-m-d'))
+
+            $purchasesByDate = $shop->invoices
+            ->groupBy(fn($purchase) => Carbon::parse($purchase->purchased_at)->format('Y-m-d'))
             ->map(fn($purchases, $date) => [
                 'date' => $date,
-                'total' => $purchases->sum(fn($p) => $p->quantity * $p->purchase_price),
-                'items' => $purchases,
+                'total_amount' => $purchases->sum(fn($p) => $p->quantity * $p->purchase_price), // total
+                'total_paid'   => $purchases->sum('amount_paid'), // total paid
+                'remaining'    => $purchases->sum('remaining_amount'), // remaining credit
+                'items'        => $purchases,
             ])
             ->sortKeysDesc();
 
+        $orders = \App\Models\Order::with(['staff', 'items.product'])
+            ->where('shop_id', $shop->id)
+            ->orderByDesc('created_at')
+            ->get();
+
+        // Convert each order to array with relations
+        $ordersArray = $orders->map(fn($order) => $order->toArray());
+
+        // feedback issue
+    $feedbacks = $shop->feedbacks()
+        ->with('staff')
+        ->latest()
+        ->get();
+
+            // --- FETCH DELETED PRODUCTS ---
+    $deletedProducts = ProductTrash::where('shop_id', $shop->id)
+    ->with(['category','unit'])
+    ->orderByDesc('created_at') // use created_at instead of deleted_at
+    ->get();
+
         return view('dashboard.dashboard', compact(
-    'shop',
-    'products',
-    'finishedProducts',
-    'runningOutProducts',
-    'expiringProducts',
-    'expiredProducts',
-    'disposedProducts',
-    'todaySales',
-    'todayExpenses',
-    'todayProfit',
-    'monthSales',
-    'monthExpenses',
-    'monthProfit',
-    'currentCapital',
-    'stockValue',
-    'realCapital',
-    'totalSales',
-    'totalProfit',
-    'salesByDate',
-    'expensesByDate',
-    'fixedExpenses',
-    'totalFixedExpenses',
-    'purchasesByDate',
-    'totalCredit',
-));
+            'shop',
+            'products',
+            'finishedProducts',
+            'fixedExpenses',
+            'runningOutProducts',
+            'expiringProducts',
+            'expiredProducts',
+            'disposedProducts',
+            'deletedProducts',
+            'todaySales',
+            'todayExpenses',
+            'todayProfit',
+            'monthSales',
+            'monthExpenses',
+            'monthProfit',
+            'currentCapital',
+            'stockValue',
+            'realCapital',
+            'totalSales',
+            'totalProfit',
+            'salesByDate',
+            'expensesByDate',
+            'purchasesByDate',
+            'totalCredit',
+            'dailyCredit',
+            'monthlyCredit',
+            'creditByDate',
+             'suppliers' ,
+             'orders',
+             'ordersArray',
+             'feedbacks',
+            
+        ));
     }
+
+
 }
