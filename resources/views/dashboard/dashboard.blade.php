@@ -132,8 +132,12 @@
         <!-- =================== SALES RETURN =================== -->
         <div id="sales-return-section" class="dashboard-section">
             @include('dashboard.sales_returns.index', [
-                'returns' => $returns ?? collect(),
-                'shop' => $shop ?? null
+                'sales' => $sales ?? collect(),
+                'totalSales' => $totalSales ?? 0,
+                'totalItems' => $totalItems ?? 0,
+                'totalDiscount' => $totalDiscount ?? 0,
+                'totalShipping' => $totalShipping ?? 0,
+                'date' => $date ?? \Carbon\Carbon::today(),
             ])
         </div>
 

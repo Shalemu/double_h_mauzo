@@ -181,7 +181,7 @@ class PurchasesController extends Controller
                 'quantity' => $request->quantity,
                 'purchase_price' => $request->purchase_price,
                 'total' => $totalAmount,
-                'sale_type' => 'retail',
+                'sale_type' => $request->sale_type ?? 'retail',
             ]);
 
             // Update product stock

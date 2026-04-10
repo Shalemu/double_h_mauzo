@@ -4,91 +4,172 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Shops;
-use App\Models\SaleReturns;
+use App\Models\SaleReturn;
 use App\Models\SaleItem;
 use App\Models\Products;
+use App\Models\Sale;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class SaleReturnController extends Controller
 {
-    /**
-     * Display sales available for return and previous returns.
-     * Force all sales to be returnable for testing purposes.
-     */
+    // =========================
+    // INDEX
+    // =========================
     public function index($shopId)
     {
         $shop = Shops::findOrFail($shopId);
 
-        // Force all sale items for this shop to appear
         $sales = SaleItem::with(['sale.staff', 'product'])
             ->whereHas('sale', fn($q) => $q->where('shop_id', $shopId))
-            ->orderBy('created_at', 'desc')
+            ->orderByDesc('created_at')
             ->get()
-            ->map(fn($item) => (object)[
-                'id' => $item->id,
-                'sale_id' => $item->sale->id,
-                'date' => $item->sale->created_at,
-                'product_id' => $item->product_id,
-                'product' => $item->product,
-                'quantity' => max($item->quantity, 1), // ensure at least 1 for return
-                'revenue' => $item->price * max($item->quantity, 1),
-                'sale_type' => $item->product->sale_type ?? 'retail',
-            ]);
+            ->map(function ($item) {
+                return (object)[
+                    'id' => $item->id, // SALE ITEM ID (IMPORTANT)
+                    'product_id' => $item->product_id,
+                    'product' => $item->product,
+                    'quantity' => $item->quantity,
+                    'revenue' => $item->price * $item->quantity,
+                    'sale_type' => $item->product->sale_type ?? 'retail',
+                    'date' => $item->created_at,
+                ];
+            });
 
-        $returns = SaleReturns::with(['product', 'staff', 'sale'])
+        $returns = SaleReturn::with(['product', 'staff', 'saleItem'])
             ->where('shop_id', $shopId)
-            ->orderBy('returned_at', 'desc')
+            ->latest()
             ->get();
 
         return view('dashboard.sales_returns.index', compact('shop', 'sales', 'returns'));
     }
 
-    /**
-     * Store a sale return.
-     */
-    public function store(Request $request)
-    {
-        $request->validate([
-            'sale_id' => 'required|exists:sale_items,id',
-            'product_id' => 'required|exists:products,id',
-            'shop_id' => 'required|exists:shops,id',
-            'quantity' => 'required|numeric|min:1',
-            'sale_type' => 'required|in:retail,wholesale,both',
-            'amount' => 'required|numeric|min:0',
-            'reason' => 'nullable|string|max:255',
+    // =========================
+    // STORE RETURN
+    // =========================
+public function store(Request $request)
+{
+    
+    if (!auth()->guard('web')->check()) {
+        return response()->json([
+            'message' => 'Unauthorized. Only admin can process returns.'
+        ], 403);
+    }
+
+    $request->validate([
+        'sale_id' => 'required|exists:sale_items,id',
+        'product_id' => 'required|exists:products,id',
+        'shop_id' => 'required|exists:shops,id',
+        'quantity' => 'required|numeric|min:1',
+        'sale_type' => 'required|in:retail,wholesale,both',
+        'amount' => 'required|numeric|min:0',
+        'reason' => 'nullable|string|max:255',
+    ]);
+
+    DB::beginTransaction();
+
+    try {
+
+        $saleItem = SaleItem::findOrFail($request->sale_id);
+        $product  = Products::findOrFail($request->product_id);
+
+     
+        if ($request->quantity > $saleItem->quantity) {
+            return response()->json([
+                'message' => 'Return quantity exceeds sold quantity'
+            ], 422);
+        }
+
+        // ======================
+        // CREATE RETURN
+        // ======================
+        SaleReturn::create([
+            'sale_id'       => $saleItem->id,
+            'shop_id'       => $request->shop_id,
+            'product_id'    => $product->id,
+
+          
+            'processed_by'  => auth()->guard('web')->id(),
+
+            'quantity'      => $request->quantity,
+            'amount'        => $request->amount,
+            'sale_type'     => $request->sale_type,
+            'reason'        => $request->reason,
+            'returned_at'   => now(),
         ]);
 
-        DB::beginTransaction();
+        // ======================
+        // RESTOCK PRODUCT
+        // ======================
+        $product->increment('quantity', $request->quantity);
 
-        try {
-            $saleItem = SaleItem::with('sale')->findOrFail($request->sale_id);
-            $product = Products::findOrFail($request->product_id);
+        // ======================
+        // REDUCE SALE ITEM
+        // ======================
+        $saleItem->decrement('quantity', $request->quantity);
 
-            // Force return, even if quantity exceeds original (for testing)
-            $returnQuantity = $request->quantity;
+        DB::commit();
 
-            SaleReturns::create([
-                'sale_id' => $saleItem->id,
-                'shop_id' => $request->shop_id,
-                'product_id' => $product->id,
-                'staff_id' => Auth::id(),
-                'quantity' => $returnQuantity,
-                'amount' => $request->amount,
-                'sale_type' => $request->sale_type,
-                'reason' => $request->reason,
-                'returned_at' => now(),
-            ]);
+        return response()->json([
+            'message' => 'Sale returned successfully'
+        ]);
 
-            $product->increment('quantity', $returnQuantity);
-            $saleItem->decrement('quantity', $returnQuantity);
+    } catch (\Throwable $e) {
+        DB::rollBack();
 
-            DB::commit();
+        return response()->json([
+            'message' => $e->getMessage()
+        ], 500);
+    }
+}
+    // =========================
+    // DETAIL VIEW
+    // =========================
+    public function detail($shopId, $date)
+    {
+        $shop = Shops::findOrFail($shopId);
 
-            return redirect()->back()->with('success', 'Sale returned successfully.');
-        } catch (\Throwable $e) {
-            DB::rollBack();
-            return back()->withErrors(['error' => 'Failed to return sale: ' . $e->getMessage()]);
+        $sales = Sale::with(['items.product', 'staff'])
+            ->where('shop_id', $shop->id)
+            ->whereDate('created_at', $date)
+            ->get();
+
+        $itemRows = $this->aggregateItems($sales);
+
+        return view('dashboard.sales_returns.detail', compact('shop', 'date', 'itemRows'));
+    }
+
+    // =========================
+    // AGGREGATE ITEMS
+    // =========================
+    private function aggregateItems($sales)
+    {
+        $rows = [];
+
+        foreach ($sales as $sale) {
+            $staffName = $sale->staff->full_name ?? 'Unknown';
+
+            foreach ($sale->items as $item) {
+
+                $key = $item->product_id . '|' . $staffName;
+
+                if (!isset($rows[$key])) {
+                    $rows[$key] = [
+                        'sale_id' => $item->id, // SALE ITEM ID (IMPORTANT)
+                        'product_id' => $item->product_id,
+                        'product' => $item->product->name,
+                        'quantity' => 0,
+                        'revenue' => 0,
+                        'staff' => $staffName,
+                        'sale_type' => $item->product->sale_type ?? 'retail',
+                    ];
+                }
+
+                $rows[$key]['quantity'] += $item->quantity;
+                $rows[$key]['revenue'] += $item->price * $item->quantity;
+            }
         }
+
+        return array_values($rows);
     }
 }

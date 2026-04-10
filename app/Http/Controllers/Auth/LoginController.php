@@ -63,7 +63,7 @@ class LoginController extends Controller
         }
 
         // ----------------------------
-        // 2️⃣ Attempt Staff login (staff table)
+        //  Attempt Staff login (staff table)
         // ----------------------------
         $staff = Staff::where('phone', $login)->first();
 

@@ -60,6 +60,14 @@
             <label>Selling Price</label>
             <input type="number" name="selling_price" class="form-control" min="0" step="0.01">
         </div>
+                <div class="col-md-3">
+                    <label>Sale Type</label>
+            <select id="saleType" name="sale_type" class="form-select" required>
+                <option value="retail">Retail</option>
+                <option value="wholesale">Wholesale</option>
+                <option value="both">Both</option>
+            </select>
+        </div>
 
         <!-- Supplier -->
         <div class="col-md-6">

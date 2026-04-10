@@ -81,9 +81,7 @@
 
                                     <button
                                         type="submit"
-                                        class="btn btn-sm btn-danger"
-                                        onclick="return confirm('Are you sure you want to delete this expense?')">
-
+                                        class="btn btn-sm btn-danger delete-expense-btn">
                                         Delete
                                     </button>
 
@@ -264,84 +262,47 @@
 <!-- SWEET ALERT -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-
 <script>
+document.addEventListener('DOMContentLoaded', function () {
 
-document.addEventListener('DOMContentLoaded', function() {
+    // Delete confirmation
+    document.querySelectorAll('.delete-expense-btn').forEach(button => {
+        button.addEventListener('click', function (e) {
+            e.preventDefault();
 
-    /* TABLE SEARCH */
+            const form = this.closest('form');
 
-    const searchInput = document.getElementById('table-search');
-    const tableRows = document.querySelectorAll('#fixed-expenses-table tbody tr');
-
-    searchInput.addEventListener('input', function(){
-
-        const query = this.value.toLowerCase();
-
-        tableRows.forEach(row => {
-
-            const title = row.cells[1].textContent.toLowerCase();
-
-            row.style.display = title.includes(query) ? '' : 'none';
-
+            Swal.fire({
+                title: 'Delete Expense?',
+                text: "This expense will be permanently deleted.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Yes, delete it',
+                cancelButtonText: 'Cancel',
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    form.submit();
+                }
+            });
         });
-
-    });
-
-
-    /* EDIT MODAL */
-
-    const editButtons = document.querySelectorAll('.edit-btn');
-
-    editButtons.forEach(button => {
-
-        button.addEventListener('click', function(){
-
-            const id = this.dataset.id;
-            const title = this.dataset.title;
-            const amount = this.dataset.amount;
-            const note = this.dataset.note;
-
-            document.getElementById('edit-title').value = title;
-            document.getElementById('edit-amount').value = amount;
-            document.getElementById('edit-note').value = note ?? '';
-
-            const form = document.getElementById('editExpenseForm');
-
-            form.action = "/fixed-expenses/" + id;
-
-            const modal = new bootstrap.Modal(document.getElementById('editFixedExpenseModal'));
-
-            modal.show();
-
-        });
-
     });
 
 });
-
-
 </script>
 
-
 <?php if(session('success')): ?>
-
 <script>
-
 document.addEventListener("DOMContentLoaded", function(){
-
     Swal.fire({
-
         icon: 'success',
         title: 'Success',
         text: "<?php echo e(session('success')); ?>",
         timer: 2000,
         showConfirmButton: false
-
     });
-
 });
-
 </script>
-
 <?php endif; ?><?php /**PATH E:\PROJECT\double h\double h\resources\views/dashboard/fixed_expenses/index.blade.php ENDPATH**/ ?>

@@ -296,9 +296,10 @@ function initNewProductForm() {
         const qty = parseFloat(quantity.value);
         const price = parseFloat(purchasePrice.value);
         const supplier = form.querySelector('select[name="supplier_id"]').value;
+        const saleType = form.querySelector('#saleType').value;
         const payment = paymentType.value;
 
-        if (!shopId || !name || !qty || !price || !supplier || !payment) {
+        if (!shopId || !name || !qty || !price || !supplier || !payment || !saleType) {
             Swal.fire('Validation Error', 'Please fill all required fields', 'warning');
             return;
         }
@@ -345,6 +346,51 @@ function initNewProductForm() {
     });
 }
 </script>
+
+
+<script>
+document.addEventListener('click', function (e) {
+
+
+    // =========================
+    // OPEN RETURN MODAL
+    // =========================
+const returnBtn = e.target.closest('.return-sale-btn');
+if (returnBtn) {
+
+    const modalEl = document.getElementById('returnSaleModal');
+
+    if (!modalEl) {
+        console.error('Modal not found');
+        return;
+    }
+
+    const saleIdEl = document.getElementById('returnSaleId');
+    const productIdEl = document.getElementById('returnProductId');
+    const productNameEl = document.getElementById('returnProductName');
+    const qtyEl = document.getElementById('returnQuantity');
+    const amountEl = document.getElementById('returnAmount');
+    const typeEl = document.getElementById('returnSaleType');
+
+    if (saleIdEl) saleIdEl.value = returnBtn.dataset.saleId || '';
+    if (productIdEl) productIdEl.value = returnBtn.dataset.productId || '';
+    if (productNameEl) productNameEl.value = returnBtn.dataset.productName || '';
+    if (qtyEl) qtyEl.value = 1;
+    if (qtyEl) qtyEl.max = returnBtn.dataset.quantity || 1;
+    if (amountEl) amountEl.value = returnBtn.dataset.price || '';
+    if (typeEl) typeEl.value = returnBtn.dataset.saleType || 'retail';
+
+    const modal = new bootstrap.Modal(modalEl);
+    modal.show();
+
+    return;
+}
+
+});
+</script>
+
+
+
 
 </body>
 </html>

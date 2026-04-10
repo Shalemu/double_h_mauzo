@@ -13,148 +13,152 @@ $totalCapital = 0;
 <meta name="csrf-token" content="{{ csrf_token() }}">
 
 <div class="cat__content">
-    <div class="container-fluid">
-        <div class="row g-4" style="padding-left:30px; padding-right:30px;">
-            <div class="col-xl-10 mx-auto">
-                <div class="cat__core__widget p-3 h-100" style="background:#fff;">
+    <div class="container-fluid py-4">
+        <div class="row">
+            <div class="col-12">
+                
+                <!-- Premium Main Container -->
+                <div class="border rounded-4 shadow-sm bg-white p-4"
+                     style="max-width: 1500px; margin: auto; border: 1px solid #dee2e6 !important;">
 
-                    <!-- Top Bar: Search + Export | Back + Add Shop -->
-                    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
+                    <!-- Top Toolbar -->
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4 pb-3 border-bottom">
+                        
+                        <!-- Left Section -->
+                        <div class="d-flex align-items-center flex-wrap gap-2">
+                            <input 
+                                type="text" 
+                                id="shopSearch" 
+                                class="form-control"
+                                placeholder="Search shops..."
+                                style="width: 280px; border-radius: 10px;"
+                            >
 
-                        <!-- Left side -->
-                        <div class="d-flex align-items-center mb-2">
-                            <div style="margin-right:8px;">
-                                <input type="text" id="shopSearch" class="form-control form-control-sm" placeholder="Search shops...">
-                            </div>
-                            <div style="margin-right:8px;">
-                                <button class="btn btn-sm btn-success">Export Excel</button>
-                            </div>
-                            <div>
-                                <button class="btn btn-sm btn-danger">Export PDF</button>
-                            </div>
+                            <button class="btn btn-success px-3">
+                                <i class="bi bi-file-earmark-excel"></i> Export Excel
+                            </button>
+
+                            <button class="btn btn-danger px-3">
+                                <i class="bi bi-file-earmark-pdf"></i> Export PDF
+                            </button>
                         </div>
 
-                        <!-- Right side -->
-                        <div class="d-flex align-items-center mb-2">
-                            <div style="margin-right:8px;">
-                                <a href="{{ url()->previous() }}" class="btn btn-secondary btn-sm">Back</a>
-                            </div>
-                            <div>
-                                <button class="btn btn-primary btn-sm" id="toggleAddShop">Add Shop</button>
-                            </div>
-                        </div>
+                        <!-- Right Section -->
+                        <div class="d-flex align-items-center gap-2">
+                            <a href="{{ url()->previous() }}" class="btn btn-outline-secondary px-3">
+                                <i class="bi bi-arrow-left"></i> Back
+                            </a>
 
+                            <button class="btn btn-primary px-3" id="toggleAddShop">
+                                <i class="bi bi-plus-circle"></i> Add Shop
+                            </button>
+                        </div>
                     </div>
 
-<!-- Add Shop Form (hidden by default) -->
-<div id="addShopForm" class="mb-3" 
-     @if(!(session('success') || $errors->any())) style="display:none;" @endif>
+                    <!-- Add Shop Form -->
+                    <div id="addShopForm" class="border rounded-3 p-4 mb-4 bg-light"
+                         @if(!(session('success') || $errors->any())) style="display:none;" @endif>
 
-    <!-- Success / Error Messages -->
-    @if(session('success'))
-        <div class="alert alert-success">
-            {{ session('success') }}
-        </div>
-    @endif
+                        @if(session('success'))
+                            <div class="alert alert-success rounded-3">
+                                {{ session('success') }}
+                            </div>
+                        @endif
 
-    @if($errors->any())
-        <div class="alert alert-danger">
-            <ul class="mb-0">
-                @foreach($errors->all() as $error)
-                    <li>{{ $error }}</li>
-                @endforeach
-            </ul>
-        </div>
-    @endif
+                        @if($errors->any())
+                            <div class="alert alert-danger rounded-3">
+                                <ul class="mb-0">
+                                    @foreach($errors->all() as $error)
+                                        <li>{{ $error }}</li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        @endif
 
-    <!-- Add Shop Form -->
-    <form method="POST" action="{{ route('shops.store') }}">
-        @csrf
-        <div class="row g-2 mb-2">
-            <div class="col-md-6">
-                <input type="text" name="name" class="form-control" placeholder="Shop Name" required>
-            </div>
-            <div class="col-md-6">
-                <input type="text" name="location" class="form-control" placeholder="Location" required>
-            </div>
-                <div class="col-md-4">
-        <input type="number" name="capital" class="form-control" placeholder="Initial Capital">
-    </div>
+                        <form method="POST" action="{{ route('shops.store') }}">
+                            @csrf
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <input type="text" name="name" class="form-control"
+                                           placeholder="Shop Name" required>
+                                </div>
 
-        </div>
+                                <div class="col-md-4">
+                                    <input type="text" name="location" class="form-control"
+                                           placeholder="Location" required>
+                                </div>
 
-        <button type="submit" class="btn btn-success btn-sm">Save Shop</button>
-    </form>
-</div>
+                                <div class="col-md-4">
+                                    <input type="number" name="capital" class="form-control"
+                                           placeholder="Initial Capital">
+                                </div>
+                            </div>
 
+                            <div class="mt-3">
+                                <button type="submit" class="btn btn-success px-4">
+                                    Save Shop
+                                </button>
+                            </div>
+                        </form>
+                    </div>
 
-                    <!-- Shop Tabs (can be empty for now if you don't have dynamic tabs) -->
-                    <ul class="nav nav-tabs mb-3 justify-content-center" id="shopTab" role="tablist">
-                        <li class="nav-item" role="presentation">
-                            <a class="nav-link active" id="shop1-tab" data-bs-toggle="tab" href="#shop1" role="tab">Shops</a>
-                        </li>
-                    </ul>
+                    <!-- Table Container -->
+                    <div class="border rounded-3 p-3">
+                        <table class="table table-hover table-bordered align-middle text-center mb-0 shop-table">
+                            <thead class="table-warning">
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Employee</th>
+                                    <th>Total Wages (TZS)</th>
+                                    <th>Stock Value (TZS)</th>
+                                    <th>Real Capital (TZS)</th>
+                                    <th>Location</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @php $totalStock = 0; $totalCapital = 0; @endphp
 
-                    <!-- Tab Content (Tables) -->
-                    <div class="tab-content">
-                        <div class="tab-pane fade show active" id="shop1" role="tabpanel">
-<table class="table table-bordered text-center w-75 mx-auto text-uppercase shop-table">
-    <thead class="table-warning">
-        <tr>
-            <th>Name</th>
-            <th>Employee</th>
-            <th>Total Wages (TZS)</th>
-            <th>Stock Value (TZS)</th>
-            <th>Real Capital (TZS)</th>
-            <th>Location</th>
-        </tr>
-    </thead>
-    <tbody>
-        @php $totalStock = 0; $totalCapital = 0; @endphp
+                                @forelse($shops as $shop)
+                                    <tr>
+                                        <td>
+                                            <a href="{{ route('dashboard.shop.show', ['shop' => $shop->id]) }}"
+                                               class="text-decoration-none fw-semibold">
+                                                {{ $shop->name }}
+                                            </a>
+                                        </td>
+                                        <td>{{ $shop->total_employees }}</td>
+                                        <td>{{ number_format($shop->total_wages) }}</td>
+                                        <td>{{ number_format($shop->calculated_capital, 2) }}</td>
+                                        <td>{{ number_format($shop->realCapital, 2) }}</td>
+                                        <td>{{ $shop->location }}</td>
+                                    </tr>
 
-        @forelse($shops as $shop)
-            <tr>
-                <td>
-                    <a href="{{ route('dashboard.shop.show', ['shop' => $shop->id]) }}">
-                        {{ $shop->name }}
-                    </a>
-                </td>
-                <td>{{ $shop->total_employees }}</td>
-                <td>{{ number_format($shop->total_wages) }}</td>
-                <td>{{ number_format($shop->calculated_capital, 2) }}</td>
-                <td>{{ number_format($shop->realCapital, 2) }}</td>
-                <td>{{ $shop->location }}</td>
-            </tr>
+                                    @php
+                                        $totalStock += $shop->calculated_capital;
+                                        $totalCapital += $shop->realCapital;
+                                    @endphp
+                                @empty
+                                    <tr>
+                                        <td colspan="6">No shops found.</td>
+                                    </tr>
+                                @endforelse
 
-            @php
-                $totalStock += $shop->calculated_capital;
-                $totalCapital += $shop->realCapital;
-            @endphp
-        @empty
-            <tr>
-                <td colspan="6">No shops found.</td>
-            </tr>
-        @endforelse
+                                <tr class="table-success fw-bold">
+                                    <td colspan="3">Total</td>
+                                    <td>{{ number_format($totalStock, 2) }}</td>
+                                    <td>{{ number_format($totalCapital, 2) }}</td>
+                                    <td></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
 
-        <tr class="table-success">
-            <td colspan="3"><strong>Total</strong></td>
-            <td><strong>{{ number_format($totalStock, 2) }}</strong></td>
-            <td><strong>{{ number_format($totalCapital, 2) }}</strong></td>
-            <td></td>
-        </tr>
-    </tbody>
-</table>
-
-
-
-                        </div>
-                    </div> <!-- tab-content -->
-
-                </div> <!-- widget -->
+                </div>
             </div>
         </div>
     </div>
 </div>
+
 
 <!-- JS: Toggle form and live search -->
 <script>

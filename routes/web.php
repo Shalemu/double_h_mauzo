@@ -233,16 +233,15 @@ Route::middleware(['web', 'auth'])->group(function () {
     |--------------------------------------------------------------------------
     */
     Route::resource('sales', SaleController::class)->only(['index', 'show']);
+// ================= SALES RETURNS =================
 
 
-
-    Route::prefix('shops')->group(function () {
-        Route::get('{shopId}/sales-returns', [SaleReturnController::class, 'index'])->name('sales-returns.index');
-        Route::post('sales-returns/store', [SaleReturnController::class, 'store'])->name('sales-returns.store');
-    });
+       Route::get('sales_returns/{shop}/date/{date}', [SaleReturnController::class, 'detail'])->name('admin.sales_returns.detail');
  
     // Admin
    Route::get('sales/{shop}/date/{date}', [SaleController::class, 'detail'])->name('admin.sales.detail');
+   Route::post('sales-returns', [SaleReturnController::class, 'store'])
+    ->name('sales-returns.store');
 
     Route::get('sales/{shopId}/{date}/export-excel', [SaleController::class, 'exportExcel'])->name('sales.export.excel');
     Route::get('sales/{shopId}/{date}/export-pdf', [SaleController::class, 'exportPdf'])->name('sales.export.pdf');
