@@ -3,20 +3,31 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
     public function up(): void
     {
+        // Add column if not exists
         Schema::table('sale_returns', function (Blueprint $table) {
+            if (!Schema::hasColumn('sale_returns', 'processed_by')) {
+                $table->unsignedBigInteger('processed_by')
+                      ->nullable()
+                      ->after('staff_id');
+            }
+        });
 
-            // 1. drop old FK
-            $table->dropForeign(['staff_id']);
+        // Copy data ONLY if old column exists
+        if (Schema::hasColumn('sale_returns', 'staff_id')) {
+            DB::statement("
+                UPDATE sale_returns
+                SET processed_by = staff_id
+            ");
+        }
 
-            // 2. rename column
-            $table->renameColumn('staff_id', 'processed_by');
-
-            // 3. add new FK to users table (admin)
+        // Add foreign key (clean, no try/catch)
+        Schema::table('sale_returns', function (Blueprint $table) {
             $table->foreign('processed_by')
                   ->references('id')
                   ->on('users')
@@ -27,15 +38,8 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('sale_returns', function (Blueprint $table) {
-
             $table->dropForeign(['processed_by']);
-
-            $table->renameColumn('processed_by', 'staff_id');
-
-            $table->foreign('staff_id')
-                  ->references('id')
-                  ->on('staff')
-                  ->nullOnDelete();
+            $table->dropColumn('processed_by');
         });
     }
 };

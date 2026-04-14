@@ -11,14 +11,15 @@ class AddShopIdToSalesTable extends Migration
      */
     public function up()
     {
-        Schema::table('sales', function (Blueprint $table) {
-            // Add column nullable first to avoid FK errors
-            $table->foreignId('shop_id')
-                  ->nullable()
-                  ->after('staff_id')
-                  ->constrained('shops')
-                  ->cascadeOnDelete();
-        });
+        if (!Schema::hasColumn('sales', 'shop_id')) {
+            Schema::table('sales', function (Blueprint $table) {
+                $table->foreignId('shop_id')
+                      ->nullable()
+                      ->after('staff_id')
+                      ->constrained('shops')
+                      ->cascadeOnDelete();
+            });
+        }
     }
 
     /**
@@ -26,12 +27,11 @@ class AddShopIdToSalesTable extends Migration
      */
     public function down()
     {
-        Schema::table('sales', function (Blueprint $table) {
-            // Drop foreign key first
-            $table->dropForeign(['shop_id']);
-
-            // Then drop column
-            $table->dropColumn('shop_id');
-        });
+        if (Schema::hasColumn('sales', 'shop_id')) {
+            Schema::table('sales', function (Blueprint $table) {
+                $table->dropForeign(['shop_id']);
+                $table->dropColumn('shop_id');
+            });
+        }
     }
 }
