@@ -87,16 +87,6 @@
                                         data-staff="{{ $row['staff'] }}">
                                     View
                                 </button>
-
-                                <button class="btn btn-sm btn-warning return-sale-btn"
-                                        data-sale-id="{{ $row['sale_id'] ?? '' }}"
-                                        data-product-id="{{ $row['product_id'] ?? '' }}"
-                                        data-product-name="{{ $row['product'] }}"
-                                        data-quantity="{{ $row['quantity'] }}"
-                                        data-price="{{ $row['revenue'] / $row['quantity'] ?? 0 }}"
-                                        data-sale-type="{{ strtolower($row['sale_type'] ?? 'retail') }}">
-                                    Return
-                                </button>
                             </td>
                         </tr>
                         @empty
@@ -114,48 +104,4 @@
     </div>
 </div>
 
-<!-- SALE RETURN MODAL -->
-<div class="modal fade" id="returnSaleModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-        <form id="returnSaleForm" method="POST" action="{{ route('sales-returns.store') }}">
-            @csrf
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Return Sale</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <input type="hidden" name="sale_id" id="returnSaleId">
-                    <input type="hidden" name="product_id" id="returnProductId">
-                    <input type="hidden" name="shop_id" value="{{ $shop->id }}">
-                    <input type="hidden" name="sale_type" id="returnSaleType">
-
-                    <div class="mb-3">
-                        <label>Product</label>
-                        <input type="text" id="returnProductName" class="form-control" disabled>
-                    </div>
-
-                    <div class="mb-3">
-                        <label>Quantity to Return</label>
-                        <input type="number" name="quantity" id="returnQuantity" class="form-control" min="1" required>
-                    </div>
-
-                    <div class="mb-3">
-                        <label>Amount</label>
-                        <input type="number" name="amount" id="returnAmount" class="form-control" step="0.01" required>
-                    </div>
-
-                    <div class="mb-3">
-                        <label>Reason</label>
-                        <textarea name="reason" class="form-control" placeholder="Optional"></textarea>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="submit" class="btn btn-success">Return</button>
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                </div>
-            </div>
-        </form>
-    </div>
-</div>
 

@@ -1,3 +1,10 @@
+
+<!-- TOGGLE BUTTON (Place in your header/navbar) -->
+<button id="menu-toggle" class="menu-toggle">
+    <i class="bi bi-list"></i>
+</button>
+
+<!-- SIDEBAR -->
 <aside class="sidenav" id="sidenav-main">
 
     <!-- SHOP INFO -->
@@ -9,7 +16,7 @@
     <!-- NAVIGATION -->
     <ul class="nav-menu">
 
-        <li class="nav-item <?php echo e(request()->routeIs('dashboard.shop.show') ? 'active' : ''); ?>">
+                <li class="nav-item <?php echo e(request()->routeIs('dashboard.shop.show') ? 'active' : ''); ?>">
             <a href="<?php echo e(isset($shop) ? route('dashboard.shop.show', $shop->id) : '#'); ?>" data-content="shop-summary">
                 <i class="bi bi-speedometer2"></i>
                 <span>Summary Report</span>
@@ -84,8 +91,6 @@
             </a>
         </li>
 
-
-
         <li class="nav-item <?php echo e(request()->is('report*') ? 'active' : ''); ?>">
             <a href="<?php echo e(url('report_issue')); ?>" data-content="report_issue-section">
                 <i class="bi bi-box-seam"></i>
@@ -93,45 +98,41 @@
             </a>
         </li>
 
-
-
     </ul>
-
 </aside>
 
+<!-- MAIN CONTENT WRAPPER -->
+<div class="main-content">
+    <!-- Your page content here -->
+</div>
+
 <style>
+    /* TOGGLE BUTTON */
+.menu-toggle {
+    position: fixed;
+    top: 15px;
+    left: 15px;
+    background: #f97316;
+    color: #fff;
+    border: none;
+    padding: 8px 10px;
+    border-radius: 6px;
+    z-index: 1100;
+    display: none;
+}
+
+/* SIDEBAR */
 .sidenav {
     width: 260px;
-    height: calc(100vh - 180px); /* Adjust based on top offset */
+    height: calc(100vh - 180px);
     position: fixed;
     left: 0;
-    top: 180px;
+    top: 180px; 
     background: #ffffff;
     border-right: 1px solid #e5e7eb;
-    font-family: 'Poppins', sans-serif;
     z-index: 1000;
-
-    overflow-y: auto; /* Make sidebar scrollable */
-    overflow-x: hidden;
-    padding-bottom: 20px; /* extra space for last item */
-
-    scrollbar-width: thin;
-    scrollbar-color: #f97316 #f1f5f9;
-}
-
-.sidenav::-webkit-scrollbar {
-    width: 8px;
-}
-
-.sidenav::-webkit-scrollbar-track {
-    background: #f1f5f9;
-    border-radius: 4px;
-}
-
-.sidenav::-webkit-scrollbar-thumb {
-    background-color: #f97316;
-    border-radius: 4px;
-    border: 2px solid #f1f5f9;
+    overflow-y: auto;
+    transition: all 0.3s ease;
 }
 
 /* SHOP INFO */
@@ -140,29 +141,29 @@
     padding: 25px 15px;
     border-bottom: 1px solid #e5e7eb;
 }
+
 .shop-info img {
     width: 70px;
     height: 70px;
     border-radius: 8px;
     object-fit: cover;
-    margin-bottom: 10px;
 }
+
 .shop-info h6 {
-    font-size: 14px;
+    margin-top: 10px;
     font-weight: 600;
-    margin: 0;
-    color: #111827;
 }
 
 /* MENU */
 .nav-menu {
     list-style: none;
     padding: 15px 10px;
-    margin: 0;
 }
+
 .nav-item {
     margin-bottom: 6px;
 }
+
 .nav-item a {
     display: flex;
     align-items: center;
@@ -172,8 +173,9 @@
     font-size: 14px;
     color: #374151;
     text-decoration: none;
-    transition: all 0.2s ease;
+    transition: 0.2s;
 }
+
 .nav-item i {
     font-size: 16px;
 }
@@ -188,5 +190,54 @@
 /* HOVER */
 .nav-item a:hover {
     background: #f9fafb;
+}
+
+/* MAIN CONTENT */
+.main-content {
+    margin-left: 80px;
+    padding: 20px;
+    margin-top: -100px; 
+    transition: all 0.3s ease;
+}
+
+/* TABLET */
+@media (max-width: 992px) {
+    .sidenav {
+        width: 220px;
+    }
+
+    .main-content {
+        margin-left: 220px;
+    }
+}
+
+/* MOBILE */
+@media (max-width: 768px) {
+
+    .menu-toggle {
+        display: block;
+    }
+
+    .sidenav {
+        left: -260px;
+    }
+
+    .sidenav.active {
+        left: 0;
+    }
+
+    .main-content {
+        margin-left: 0;
+    }
+
+    .nav-item a {
+        font-size: 13px;
+        padding: 8px 10px;
+    }
+
+    .shop-info img {
+        width: 50px;
+        height: 50px;
+    }
 }
 </style><?php /**PATH E:\PROJECT\double h\double h\resources\views/components/sidebar.blade.php ENDPATH**/ ?>
