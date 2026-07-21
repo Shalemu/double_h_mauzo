@@ -11,7 +11,7 @@
 
     @section('title', 'Dashboard')
 
-    @include('main')
+    @include('components.header')
     @include('components/breadcrumb')
     @include('components/mainmenu')
 
@@ -21,19 +21,6 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <style>
-        .main-content {
-            position: relative;
-            top: 50px; 
-            margin-left: 70px;
-        }
-
-        @media (max-width: 992px) {
-            .main-content {
-                margin-left: 0;
-                margin-top: 120px;
-            }
-        }
-
         /* Hide sections by default except summary */
         .dashboard-section {
             display: none;
@@ -160,6 +147,8 @@
 
     <!-- =================== SCRIPTS =================== -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    @include('components.dashboard_scripts')
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {

@@ -1,7 +1,7 @@
-<div class="container-fluid mt-4 main-content">
+<div class="container-fluid mt-4">
 
     <!-- FIXED EXPENSES REPORT CARD -->
-    <div class="card shadow-sm" style="max-width: 1300px; margin: 0 auto;">
+    <div class="card shadow-sm w-100">
 
         <!-- HEADER -->
         <div class="card-header bg-white d-flex justify-content-between align-items-center">

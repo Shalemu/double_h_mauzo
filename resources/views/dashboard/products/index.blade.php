@@ -5,37 +5,85 @@
     $units      = $units      ?? collect();
 @endphp
 
-<div class="cat__content">
+<div>
 
-    <div class="d-flex justify-content-end gap-1 mt-3 flex-wrap" style="margin-top: 60px; margin-right: 80px;">
-        <a href="{{ url()->previous() }}" class="btn btn-secondary btn-sm">
-            <i class="fa fa-arrow-left"></i> Back
-        </a>
-        <button type="button" class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#uploadExcelModal">
-          <i class="fa fa-upload"></i> Upload Excel
-        </button>
+    <style>
+        .products-page-card {
+            border: none;
+            border-radius: 1rem;
+            overflow: hidden;
+            box-shadow: 0 .25rem .75rem rgba(0,0,0,.06);
+        }
+        .products-page-card .card-header {
+            background: #fff;
+            border-bottom: 1px solid #eef0f3;
+            padding: 1.1rem 1.4rem;
+        }
+        .products-page-card thead th {
+            font-size: .72rem;
+            letter-spacing: .04em;
+            text-transform: uppercase;
+            color: #6c757d;
+            background: #f8f9fb;
+            border-bottom-width: 1px;
+            white-space: nowrap;
+        }
+        .products-page-card tbody td {
+            vertical-align: middle;
+        }
+        .products-page-card tbody tr:hover {
+            background-color: #f8f9fb;
+        }
+        #productTable td img {
+            border-radius: 8px;
+            object-fit: cover;
+            height: 44px;
+            width: 44px;
+        }
+    </style>
+
+    <!-- PAGE HEADER -->
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3" style="margin-top: 20px;">
+        <h3 class="mb-0"><i class="bi bi-box-seam me-2 text-primary"></i>Manage Products</h3>
+        <div class="d-flex gap-2 flex-wrap">
+            <a href="{{ url()->previous() }}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Back
+            </a>
+            <button type="button" class="btn btn-outline-warning" data-bs-toggle="modal" data-bs-target="#uploadExcelModal">
+              <i class="bi bi-file-earmark-excel"></i> Upload Excel
+            </button>
+            <a href="{{ route('products.export.excel') }}" class="btn btn-outline-success">
+                <i class="bi bi-file-earmark-spreadsheet"></i> Export Excel
+            </a>
+            <a href="{{ route('products.export.pdf') }}" class="btn btn-outline-danger">
+                <i class="bi bi-file-earmark-pdf"></i> Export PDF
+            </a>
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addProductModal">
+                <i class="bi bi-plus-lg"></i> Add Product
+            </button>
+        </div>
     </div>
 
     <!-- Upload Excel Modal -->
-<div class="modal fade" id="uploadExcelModal" tabindex="-1" aria-labelledby="uploadExcelModalLabel" aria-hidden="true" style="margin-top: 150px;">
-  <div class="modal-dialog">
+<div class="modal fade" id="uploadExcelModal" tabindex="-1" aria-labelledby="uploadExcelModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
     <form action="{{ route('products.import.excel') }}" method="POST" enctype="multipart/form-data">
         @csrf
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="uploadExcelModalLabel">Upload Products Excel</h5>
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold" id="uploadExcelModalLabel"><i class="bi bi-file-earmark-excel me-2 text-success"></i>Upload Products Excel</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <p>You can <a href="{{ route('products.download.template') }}">download the sample Excel format</a> to fill in product data.</p>
+                <p class="text-muted">You can <a href="{{ route('products.download.template') }}">download the sample Excel format</a> to fill in product data.</p>
                 <div class="mb-3">
-                    <label for="excel_file" class="form-label">Choose Excel file</label>
+                    <label for="excel_file" class="form-label fw-semibold">Choose Excel file</label>
                     <input type="file" name="excel_file" id="excel_file" class="form-control" required>
                 </div>
             </div>
-            <div class="modal-footer">
+            <div class="modal-footer border-0 pt-0">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
                 <button type="submit" class="btn btn-success">Upload</button>
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
             </div>
         </div>
     </form>
@@ -48,44 +96,29 @@
         
 
     <!-- START: ecommerce/product-list -->
-    <section class="card" style="max-width: 1300px; margin-top: 40px; margin-left:120px;">
+    <section class="card products-page-card w-100">
         <!-- Card Header -->
         <div class="card-header d-flex justify-content-between align-items-center">
-            <span class="cat__core__title"><strong>Product List</strong></span>
-            
-          <a href="#" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#addProductModal">
-            <i class="fa fa-plus"></i> Add Product
-        </a>
+            <span class="fw-bold"><i class="bi bi-list-ul me-2"></i>Product List</span>
+            <span class="text-muted small">{{ $products->count() }} item(s)</span>
         </div>
 
-        
-
         <!-- Card Body -->
-        <div class="card-body">
-           
-     <div class="d-flex gap-2 mb-2">
-               <a href="{{ route('products.export.excel') }}" class="btn btn-success btn-sm">
-    <i class="fa fa-file-excel-o"></i> Export Excel
-      </a>
-
-      <a href="{{ route('products.export.pdf') }}" class="btn btn-danger btn-sm">
-          <i class="fa fa-file-pdf-o"></i> Export PDF
-      </a>
-
-            </div>
+        <div class="card-body p-0">
             <!-- Table -->
-           <table class="table table-striped table-hover table-bordered text-center" id="productTable" style="width: 100%;">
-                <thead class="table-warning">
+            <div class="table-responsive">
+           <table class="table table-bordered table-hover align-middle mb-0" id="productTable" style="width: 100%;">
+                <thead>
                     <tr>
                         <th>Img</th>
                         <th>Name</th>
-                        <th>Available Quantity</th>
-                        <th>Unit</th>
-                        <th>Purchase Price</th>
-                        <th>Sale Price</th>
-                        <th>Expire Date</th>
-                        <th>Sale Type</th>
-                        <th>Action</th>
+                        <th class="text-center">Available Quantity</th>
+                        <th class="text-center">Unit</th>
+                        <th class="text-end">Purchase Price</th>
+                        <th class="text-end">Sale Price</th>
+                        <th class="text-center">Expire Date</th>
+                        <th class="text-center">Sale Type</th>
+                        <th class="text-center">Action</th>
                     </tr>
                 </thead>
               <tbody>
@@ -93,19 +126,19 @@
     <tr>
         <td>
             @if($product->image)
-                <img src="{{ asset('storage/' . $product->image) }}" alt="Product Image" width="50">
+                <img src="{{ asset('storage/' . $product->image) }}" alt="Product Image">
             @else
-                <img src="https://via.placeholder.com/50" alt="No Image" width="50">
+                <img src="https://via.placeholder.com/50" alt="No Image">
             @endif
         </td>
-        <td>{{ $product->name }}</td>
-        <td>{{ $product->quantity ?? 0 }}</td>
-        <td>{{ $product->unit ? $product->unit->name : '-' }}</td>
-        <td>{{ $product->purchase_price ? number_format($product->purchase_price) : '-' }}</td>
-        <td>{{ $product->selling_price ? number_format($product->selling_price) : '-' }}</td>
-        <td>{{ $product->expire_date ? \Carbon\Carbon::parse($product->expire_date)->format('Y-m-d') : '-' }}</td>
-        <td>{{ ucfirst($product->sale_type ?? '-') }}</td> 
-        <td>
+        <td class="fw-semibold">{{ $product->name }}</td>
+        <td class="text-center">{{ $product->quantity ?? 0 }}</td>
+        <td class="text-center">{{ $product->unit ? $product->unit->name : '-' }}</td>
+        <td class="text-end">{{ $product->purchase_price ? number_format($product->purchase_price) : '-' }}</td>
+        <td class="text-end">{{ $product->selling_price ? number_format($product->selling_price) : '-' }}</td>
+        <td class="text-center">{{ $product->expire_date ? \Carbon\Carbon::parse($product->expire_date)->format('Y-m-d') : '-' }}</td>
+        <td class="text-center">{{ ucfirst($product->sale_type ?? '-') }}</td>
+        <td class="text-center">
             <div class="btn-group">
                <button class="btn btn-primary btn-sm edit-product-btn" 
         data-id="{{ $product->id }}"
@@ -142,6 +175,7 @@
 </tbody>
 
             </table>
+            </div>
 
         </div> <!-- /card-body -->
     </section>
@@ -222,15 +256,14 @@
 
 
 <!-- Add Product Modal -->
-<div class="modal fade" id="addProductModal" tabindex="-1" aria-labelledby="addProductModalLabel" aria-hidden="true" style="margin-top: 0px;">
-  <div class="modal-dialog modal-lg">
-    <div class="modal-content">
+<div class="modal fade" id="addProductModal" tabindex="-1" aria-labelledby="addProductModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg rounded-4">
       <form id="addProductForm" action="{{ route('products.store') }}" method="POST" enctype="multipart/form-data">
     @csrf
 
-        @csrf
-        <div class="modal-header">
-          <h5 class="modal-title" id="addProductModalLabel">Add New Product</h5>
+        <div class="modal-header border-0 pb-0">
+          <h5 class="modal-title fw-bold" id="addProductModalLabel"><i class="bi bi-plus-circle me-2 text-primary"></i>Add New Product</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
 
@@ -348,9 +381,9 @@
           </div>
         </div>
 
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-          <button type="submit" class="btn btn-success">Add Product</button>
+        <div class="modal-footer border-0 pt-0">
+          <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
+          <button type="submit" class="btn btn-primary">Add Product</button>
         </div>
       </form>
     </div>
@@ -428,14 +461,14 @@ document.addEventListener('DOMContentLoaded', function () {
 </div>
 
 <!-- Edit Product Modal -->
-<div class="modal fade" id="editProductModal" tabindex="-1" aria-labelledby="editProductModalLabel" aria-hidden="true" style="margin-top: 150px;">
-  <div class="modal-dialog modal-lg">
+<div class="modal fade" id="editProductModal" tabindex="-1" aria-labelledby="editProductModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
     <form id="editProductForm" method="POST" enctype="multipart/form-data">
       @csrf
       @method('PUT')
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="editProductModalLabel">Edit Product</h5>
+      <div class="modal-content border-0 shadow-lg rounded-4">
+        <div class="modal-header border-0 pb-0">
+          <h5 class="modal-title fw-bold" id="editProductModalLabel"><i class="bi bi-pencil-square me-2 text-primary"></i>Edit Product</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
@@ -508,9 +541,9 @@ document.addEventListener('DOMContentLoaded', function () {
             </div>
           </div>
         </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-          <button type="submit" class="btn btn-success">Update Product</button>
+        <div class="modal-footer border-0 pt-0">
+          <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary">Update Product</button>
         </div>
       </div>
     </form>
@@ -630,13 +663,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 <style>
-  #productTable td img {
-    border-radius: 5px;
-    object-fit: cover;
-    height: 50px;
-    width: 50px;
-}
-
 #productTable .btn-group button {
     margin-right: 5px;
 }

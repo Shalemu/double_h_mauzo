@@ -1,4 +1,4 @@
-<div class="container-fluid mt-4 main-content">
+<div class="container-fluid mt-4">
 
     <div class="card shadow-sm" style="max-width: 1300px; margin: 0 auto;">
 

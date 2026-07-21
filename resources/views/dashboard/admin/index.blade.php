@@ -6,6 +6,32 @@
 
 <meta name="csrf-token" content="{{ csrf_token() }}">
 
+<style>
+    .premium-stat-card {
+        border-width: 1px;
+        border-radius: 1rem;
+        transition: transform .18s ease, box-shadow .18s ease;
+        background: #fff;
+    }
+    .premium-stat-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 .75rem 1.5rem rgba(0,0,0,.08) !important;
+    }
+    .premium-stat-icon {
+        width: 52px;
+        height: 52px;
+        flex: 0 0 52px;
+        border-radius: 14px;
+    }
+    .premium-stat-label {
+        letter-spacing: .04em;
+        font-size: .72rem;
+    }
+    .premium-stat-value {
+        font-size: 1.35rem;
+    }
+</style>
+
 <div class="cat__content">
     <br><br>
 
@@ -41,60 +67,60 @@
     <div class="row g-4" style="padding-left: 30px; padding-right: 30px;">
 
         <!-- Gross Profit -->
-        <div class="col-lg-3 col-md-6">
-            <div class="cat__core__widget">
-                <div class="cat__core__step cat__core__step--success">
-                    <span class="cat__core__step__digit">
-                        <i class="icmn-database"></i>
-                    </span>
-                    <div class="cat__core__step__desc">
-                        <span class="cat__core__step__title">Gross Profit (All Shops)</span>
-                        <p>Tz: {{ number_format($grossProfit, 2) }}</p>
+        <div class="col-lg-3 col-md-6 d-flex">
+            <div class="card premium-stat-card border-success w-100 shadow-sm">
+                <div class="card-body d-flex align-items-center">
+                    <div class="premium-stat-icon bg-success text-white d-flex align-items-center justify-content-center me-3">
+                        <i class="bi bi-graph-up-arrow fs-4"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted text-uppercase premium-stat-label fw-semibold mb-1">Gross Profit (All Shops)</div>
+                        <div class="fw-bold premium-stat-value text-success">Tz: {{ number_format($grossProfit, 2) }}</div>
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- Total Expenses -->
-        <div class="col-lg-3 col-md-6">
-            <div class="cat__core__widget">
-                <div class="cat__core__step cat__core__step--primary">
-                    <span class="cat__core__step__digit">
-                        <i class="icmn-users"></i>
-                    </span>
-                    <div class="cat__core__step__desc">
-                        <span class="cat__core__step__title">Total Expenses (All Shops)</span>
-                        <p>Tz: {{ number_format($totalExpenses, 2) }}</p>
+        <div class="col-lg-3 col-md-6 d-flex">
+            <div class="card premium-stat-card border-primary w-100 shadow-sm">
+                <div class="card-body d-flex align-items-center">
+                    <div class="premium-stat-icon bg-primary text-white d-flex align-items-center justify-content-center me-3">
+                        <i class="bi bi-cash-stack fs-4"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted text-uppercase premium-stat-label fw-semibold mb-1">Total Expenses (All Shops)</div>
+                        <div class="fw-bold premium-stat-value text-primary">Tz: {{ number_format($totalExpenses, 2) }}</div>
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- Net Profit -->
-        <div class="col-lg-3 col-md-6">
-            <div class="cat__core__widget">
-                <div class="cat__core__step cat__core__step--danger">
-                    <span class="cat__core__step__digit">
-                        <i class="icmn-bullhorn"></i>
-                    </span>
-                    <div class="cat__core__step__desc">
-                        <span class="cat__core__step__title">Net Profit</span>
-                        <p>Tz: {{ number_format($netProfit, 2) }}</p>
+        <div class="col-lg-3 col-md-6 d-flex">
+            <div class="card premium-stat-card border-danger w-100 shadow-sm">
+                <div class="card-body d-flex align-items-center">
+                    <div class="premium-stat-icon bg-danger text-white d-flex align-items-center justify-content-center me-3">
+                        <i class="bi bi-piggy-bank fs-4"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted text-uppercase premium-stat-label fw-semibold mb-1">Net Profit</div>
+                        <div class="fw-bold premium-stat-value text-danger">Tz: {{ number_format($netProfit, 2) }}</div>
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- Sales -->
-        <div class="col-lg-3 col-md-6">
-            <div class="cat__core__widget">
-                <div class="cat__core__step cat__core__step--default">
-                    <span class="cat__core__step__digit">
-                        <i class="icmn-price-tags"></i>
-                    </span>
-                    <div class="cat__core__step__desc">
-                        <span class="cat__core__step__title">Sales (All Shops)</span>
-                        <p>Tz: {{ number_format($totalSales, 2) }}</p>
+        <div class="col-lg-3 col-md-6 d-flex">
+            <div class="card premium-stat-card border-warning w-100 shadow-sm">
+                <div class="card-body d-flex align-items-center">
+                    <div class="premium-stat-icon bg-warning text-white d-flex align-items-center justify-content-center me-3">
+                        <i class="bi bi-tags fs-4"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted text-uppercase premium-stat-label fw-semibold mb-1">Sales (All Shops)</div>
+                        <div class="fw-bold premium-stat-value text-warning-emphasis">Tz: {{ number_format($totalSales, 2) }}</div>
                     </div>
                 </div>
             </div>

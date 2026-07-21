@@ -48,14 +48,14 @@
                             : 'User')
                     }}
                 </div>
-                <div class="text-muted small">
-                    {{
-                        Auth::user()->role->name
-                        ?? (Auth::guard('staff')->check()
-                            ? Auth::guard('staff')->user()->role->name
-                            : 'User')
-                    }}
-                </div>
+        <div class="text-muted small">
+            {{
+                Auth::user()?->role?->name
+                ?? (Auth::guard('staff')->check()
+                    ? Auth::guard('staff')->user()?->role?->name
+                    : 'User')
+            }}
+        </div>
             </div>
 
             <i class="bi bi-person-circle"></i>

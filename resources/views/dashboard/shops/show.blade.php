@@ -1,10 +1,10 @@
 
 
 <!-- MAIN CONTENT -->
-<div class="container-fluid mt-4 main-content">
+<div class="container-fluid mt-4">
 
     <!-- SUMMARY CARD -->
-    <div class="card shadow-sm" style="max-width: 1300px; margin: 0 auto;">
+    <div class="card shadow-sm w-100">
 
         <!-- HEADER -->
         <div class="card-header bg-white d-flex justify-content-between align-items-center">
@@ -157,6 +157,7 @@
         <div id="status-tables">
             <!-- Running Out -->
        <div class="status-table" data-status="running">
+    <div class="table-responsive">
     <table class="table table-bordered table-sm">
         <thead class="table-primary h-100">
             <tr>
@@ -183,11 +184,13 @@
             @endforelse
         </tbody>
     </table>
+    </div>
 </div>
 
 
             <!-- Expiring -->
             <div class="status-table d-none" data-status="expiring">
+                <div class="table-responsive">
                 <table class="table table-bordered table-sm">
                     <thead class="table-primary h-100">
                         <tr>
@@ -212,10 +215,12 @@
             @endforelse
         </tbody>
                 </table>
+                </div>
             </div>
 
             <!-- Finished -->
             <div class="status-table d-none" data-status="finished">
+                <div class="table-responsive">
                 <table class="table table-bordered table-sm">
                    <thead class="table-primary h-100">
                         <tr>
@@ -243,10 +248,12 @@
 
 
                 </table>
+                </div>
             </div>
 
             <!-- Expired -->
             <div class="status-table d-none" data-status="expired">
+                <div class="table-responsive">
                 <table class="table table-bordered table-sm">
                       <thead class="table-primary h-100">
                         <tr>
@@ -271,10 +278,12 @@
             @endforelse
         </tbody>
                 </table>
+                </div>
             </div>
 
             <!-- Disposed -->
             <div class="status-table d-none" data-status="disposed">
+                <div class="table-responsive">
                 <table class="table table-bordered table-sm">
                       <thead class="table-primary h-100">
                         <tr>
@@ -299,6 +308,7 @@
             @endforelse
         </tbody>
                 </table>
+                </div>
             </div>
         </div>
     </div>

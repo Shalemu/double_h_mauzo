@@ -5,51 +5,121 @@ use Carbon\Carbon;
 @endphp
 
 
-<div class="container-fluid mt-4 main-content">
-    <div class="container-fluid align-items-center" style="max-width: 1300px; margin: 0 auto;">
-        <button type="button" class="btn btn-outline-secondary float-end" data-bs-toggle="modal" data-bs-target="#depositModal">
-    Deposit
-</button>
+<div class="container-fluid mt-4">
+    <div class="container-fluid align-items-center px-0">
 
-        <h3 class="mb-4 text-center">Credit Purchases</h3>
+        <style>
+            .credit-stat-card {
+                border: none;
+                border-radius: 1rem;
+                overflow: hidden;
+                transition: transform .18s ease, box-shadow .18s ease;
+                box-shadow: 0 .25rem .75rem rgba(0,0,0,.06);
+            }
+            .credit-stat-card:hover {
+                transform: translateY(-4px);
+                box-shadow: 0 .75rem 1.5rem rgba(0,0,0,.1);
+            }
+            .credit-stat-icon {
+                width: 52px;
+                height: 52px;
+                border-radius: 14px;
+                flex: 0 0 52px;
+            }
+            .credit-stat-label {
+                font-size: .72rem;
+                letter-spacing: .04em;
+            }
+            .credit-stat-value {
+                font-size: 1.3rem;
+            }
+            .credit-table-card {
+                border: none;
+                border-radius: 1rem;
+                overflow: hidden;
+                box-shadow: 0 .25rem .75rem rgba(0,0,0,.06);
+            }
+            .credit-table-card thead th {
+                font-size: .75rem;
+                letter-spacing: .04em;
+                text-transform: uppercase;
+                color: #6c757d;
+                border-bottom-width: 1px;
+            }
+            .credit-table-card tbody tr:hover {
+                background-color: #f8f9fb;
+            }
+            .credit-date-row td {
+                background: #eef1f6;
+                font-weight: 600;
+                color: #495057;
+            }
+            .remaining-credit-badge {
+                font-weight: 600;
+            }
+        </style>
 
-      
-        <div class="row mb-4">
-            <div class="col-md-4">
-                <div class="card border-info h-100 text-center">
-                    <div class="card-header bg-info text-white">Today</div>
-                    <div class="card-body">
-                        <h5>Tsh {{ number_format($dailyCredit ?? 0, 2) }}</h5>
+        <!-- HEADER -->
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+            <h3 class="mb-0"><i class="bi bi-credit-card-2-back me-2 text-primary"></i>Credit Purchases</h3>
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#depositModal">
+                <i class="bi bi-cash-coin me-1"></i> Deposit
+            </button>
+        </div>
+
+        <!-- SUMMARY CARDS -->
+        <div class="row g-4 mb-4">
+            <div class="col-lg-4 col-md-6 d-flex">
+                <div class="card credit-stat-card w-100">
+                    <div class="card-body d-flex align-items-center">
+                        <div class="credit-stat-icon bg-info text-white d-flex align-items-center justify-content-center me-3">
+                            <i class="bi bi-calendar-day fs-4"></i>
+                        </div>
+                        <div>
+                            <div class="text-muted text-uppercase credit-stat-label fw-semibold mb-1">Today</div>
+                            <div class="fw-bold credit-stat-value text-info">Tsh {{ number_format($dailyCredit ?? 0, 2) }}</div>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div class="col-md-4">
-                <div class="card border-primary h-100 text-center">
-                    <div class="card-header bg-primary text-white">This Month</div>
-                    <div class="card-body">
-                        <h5>Tsh {{ number_format($monthlyCredit ?? 0, 2) }}</h5>
+            <div class="col-lg-4 col-md-6 d-flex">
+                <div class="card credit-stat-card w-100">
+                    <div class="card-body d-flex align-items-center">
+                        <div class="credit-stat-icon bg-primary text-white d-flex align-items-center justify-content-center me-3">
+                            <i class="bi bi-calendar3 fs-4"></i>
+                        </div>
+                        <div>
+                            <div class="text-muted text-uppercase credit-stat-label fw-semibold mb-1">This Month</div>
+                            <div class="fw-bold credit-stat-value text-primary">Tsh {{ number_format($monthlyCredit ?? 0, 2) }}</div>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div class="col-md-4">
-                <div class="card border-dark h-100 text-center">
-                    <div class="card-header bg-dark text-white">Total Credit</div>
-                    <div class="card-body">
-                        <h5>Tsh {{ number_format($totalCredit ?? 0, 2) }}</h5>
+            <div class="col-lg-4 col-md-6 d-flex">
+                <div class="card credit-stat-card w-100">
+                    <div class="card-body d-flex align-items-center">
+                        <div class="credit-stat-icon bg-dark text-white d-flex align-items-center justify-content-center me-3">
+                            <i class="bi bi-wallet2 fs-4"></i>
+                        </div>
+                        <div>
+                            <div class="text-muted text-uppercase credit-stat-label fw-semibold mb-1">Total Credit</div>
+                            <div class="fw-bold credit-stat-value">Tsh {{ number_format($totalCredit ?? 0, 2) }}</div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
         {{-- =================== CREDIT PURCHASES TABLE =================== --}}
-        <div class="card shadow-sm">
-            <div class="card-header bg-white text-center">
-                <h5 class="mb-0">All Credit Purchases</h5>
+        <div class="card credit-table-card">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+                <h5 class="mb-0"><i class="bi bi-list-ul me-2"></i>All Credit Purchases</h5>
             </div>
             <div class="card-body p-0">
-                <table class="table table-bordered table-sm mb-0 text-center">
+                <div class="table-responsive">
+                <table class="table table-hover mb-0 align-middle">
                     <thead class="table-light">
                         <tr>
                             <th>#</th>
@@ -59,15 +129,15 @@ use Carbon\Carbon;
                             <th>Total Amount</th>
                             <th>Remaining Credit</th>
                             <th>Purchase Date</th>
-                            <th>Actions</th>
+                            <th class="text-end">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                     @forelse($creditByDate as $date => $data)
                         {{-- Date Header --}}
-                        <tr class="table-secondary">
-                            <td colspan="8" class="text-start">
-                                <strong>{{ $date }}</strong>
+                        <tr class="credit-date-row">
+                            <td colspan="8">
+                                <i class="bi bi-calendar-event me-2"></i>{{ $date }}
                             </td>
                         </tr>
 
@@ -79,42 +149,47 @@ use Carbon\Carbon;
                                 <td>{{ $invoice->supplier->name ?? '-' }}</td>
                                 <td>{{ $invoice->shop->name ?? '-' }}</td>
                                 <td>{{ number_format($invoice->total_amount, 2) }}</td>
-                                <td class="text-danger">{{ number_format($invoice->remaining_amount, 2) }}</td>
-                                <td>{{ \Carbon\Carbon::parse($invoice->purchased_at)->format('Y-m-d') }}</td>
                                 <td>
-                                    <button class="btn btn-sm btn-info view-history" 
+                                    <span class="badge bg-danger-subtle text-danger remaining-credit-badge">
+                                        {{ number_format($invoice->remaining_amount, 2) }}
+                                    </span>
+                                </td>
+                                <td>{{ \Carbon\Carbon::parse($invoice->purchased_at)->format('Y-m-d') }}</td>
+                                <td class="text-end">
+                                    <button class="btn btn-sm btn-outline-info view-history"
                                             data-url="{{ route('purchases.history', $invoice->id) }}">
-                                        History
+                                        <i class="bi bi-clock-history"></i> History
                                     </button>
 
-                                    <a href="{{ route('purchases.print', $invoice->id) }}" 
-                                    target="_blank" class="btn btn-sm btn-secondary">
-                                        Print
+                                    <a href="{{ route('purchases.print', $invoice->id) }}"
+                                    target="_blank" class="btn btn-sm btn-outline-secondary">
+                                        <i class="bi bi-printer"></i> Print
                                     </a>
                                 </td>
                             </tr>
                         @endforeach
-             
+
 
                     @empty
                         <tr>
-                            <td colspan="7">No credit purchases found</td>
+                            <td colspan="8" class="text-center text-muted py-4">No credit purchases found</td>
                         </tr>
                     @endforelse
                     </tbody>
                 </table>
+                </div>
             </div>
         </div>
 
         <!-- Deposit Modal -->
 <div class="modal fade" id="depositModal" tabindex="-1">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-dialog-centered">
         <form method="POST" action="{{ route('purchases.deposit') }}">
             @csrf
 
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Deposit Credit</h5>
+            <div class="modal-content border-0 shadow-lg rounded-4">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold"><i class="bi bi-cash-coin me-2 text-primary"></i>Deposit Credit</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
 
@@ -122,8 +197,8 @@ use Carbon\Carbon;
 
                     <!-- Supplier -->
                     <div class="mb-3">
-                        <label>Supplier</label>
-                        <select id="supplierSelect" class="form-control">
+                        <label class="form-label fw-semibold">Supplier</label>
+                        <select id="supplierSelect" class="form-select">
                             <option value="">-- All Suppliers --</option>
                             @foreach($suppliers as $supplier)
                                 <option value="{{ $supplier->id }}">
@@ -135,13 +210,13 @@ use Carbon\Carbon;
 
                     <!-- Select Purchase -->
                     <div class="mb-3">
-                        <label>Select Invoice</label>
-                        <select name="purchase_invoice_id" id="purchaseSelect" class="form-control" required>
+                        <label class="form-label fw-semibold">Select Invoice</label>
+                        <select name="purchase_invoice_id" id="purchaseSelect" class="form-select" required>
                         <option value="">-- Select Invoice --</option>
                         @foreach($creditByDate as $date => $data)
                             @foreach($data['items'] as $invoice)
                                 <option value="{{ $invoice->id }}" data-supplier="{{ $invoice->supplier_id }}">
-                                    {{ $invoice->invoice_number ?? 'No Invoice' }} 
+                                    {{ $invoice->invoice_number ?? 'No Invoice' }}
                                     - Remaining: {{ number_format($invoice->remaining_amount,2) }}
                                 </option>
                             @endforeach
@@ -151,14 +226,15 @@ use Carbon\Carbon;
 
                     <!-- Amount -->
                     <div class="mb-3">
-                        <label>Deposit Amount</label>
+                        <label class="form-label fw-semibold">Deposit Amount</label>
                         <input type="number" name="amount" class="form-control" required min="1">
                     </div>
 
                 </div>
 
-                <div class="modal-footer">
-                    <button class="btn btn-success">Save Deposit</button>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button class="btn btn-primary"><i class="bi bi-check2-circle me-1"></i>Save Deposit</button>
                 </div>
             </div>
         </form>
@@ -169,14 +245,14 @@ use Carbon\Carbon;
 </div>
 
 <div class="modal fade" id="historyModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Invoice Payment History</h5>
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold"><i class="bi bi-clock-history me-2 text-primary"></i>Invoice Payment History</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-          
+
             </div>
         </div>
     </div>

@@ -1,29 +1,16 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('sale_returns', function (Blueprint $table) {
-
-            $table->foreignId('processed_by')
-                  ->nullable()
-                  ->after('staff_id')
-                  ->constrained('users')
-                  ->nullOnDelete();
-        });
+        // processed_by column and foreign key already exist
     }
 
     public function down(): void
     {
-        Schema::table('sale_returns', function (Blueprint $table) {
-
-            $table->dropForeign(['processed_by']);
-            $table->dropColumn('processed_by');
-        });
+        // Nothing to rollback
     }
 };

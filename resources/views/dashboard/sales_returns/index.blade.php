@@ -1,6 +1,6 @@
-<div class="container-fluid mt-4 main-content">
+<div class="container-fluid mt-4">
 
-    <div class="card shadow-sm" style="max-width:1300px;margin:auto;">
+    <div class="card shadow-sm w-100">
         <div class="card-header bg-white d-flex justify-content-between">
             <h5>Sales Report for {{ $shop->name }}</h5>
         </div>

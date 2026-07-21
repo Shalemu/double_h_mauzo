@@ -101,11 +101,6 @@
     </ul>
 </aside>
 
-<!-- MAIN CONTENT WRAPPER -->
-<div class="main-content">
-    <!-- Your page content here -->
-</div>
-
 <style>
     /* TOGGLE BUTTON */
 .menu-toggle {
@@ -194,9 +189,13 @@
 
 /* MAIN CONTENT */
 .main-content {
-    margin-left: 80px;
-    padding: 20px;
-    margin-top: -100px; 
+    margin-left: 260px;
+    max-width: calc(100% - 260px);
+    padding: 20px 16px 40px;
+    padding-top: 140px;
+    min-height: calc(100vh - 140px);
+    box-sizing: border-box;
+    overflow-x: hidden;
     transition: all 0.3s ease;
 }
 
@@ -208,6 +207,7 @@
 
     .main-content {
         margin-left: 220px;
+        max-width: calc(100% - 220px);
     }
 }
 
@@ -228,6 +228,8 @@
 
     .main-content {
         margin-left: 0;
+        max-width: 100%;
+        padding-top: 160px;
     }
 
     .nav-item a {

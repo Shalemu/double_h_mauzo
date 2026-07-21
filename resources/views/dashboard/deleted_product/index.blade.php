@@ -1,6 +1,6 @@
-<div class="container-fluid mt-4 main-content">
+<div class="container-fluid mt-4">
 
-    <div class="card shadow-sm p-3" style="max-width: 1300px; margin: 0 auto; border-radius: 12px;">
+    <div class="card shadow-sm p-3 w-100" style="border-radius: 12px;">
         <div class="d-flex justify-content-between align-items-center mb-3">
             <h4 class="mb-0"><i class="bi bi-trash me-2"></i>Deleted Products (Trash)</h4>
             <span class="text-muted">Total: {{ $products->count() }} item(s)</span>
@@ -46,10 +46,6 @@
 </div>
 
 <style>
-    .main-content {
-        padding-bottom: 50px;
-    }
-
     .table thead th {
         font-size: 14px;
         letter-spacing: 0.5px;
