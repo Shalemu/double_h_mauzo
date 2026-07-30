@@ -277,7 +277,7 @@ public function detail($shopId, $date)
                         'quantity' => 0,
                         'revenue' => 0,
                         'staff' => $staffName,
-                        'sale_type' => $item->product->sale_type ?? '-',
+                        'sale_type' => $item->sale_type ?? 'retail',
                     ];
                 }
 

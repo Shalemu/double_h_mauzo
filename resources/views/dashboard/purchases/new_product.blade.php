@@ -55,18 +55,16 @@
             <input type="number" name="purchase_price" class="form-control" min="0" step="0.01" required>
         </div>
 
-        <!-- Selling Price -->
+        <!-- Retail Selling Price -->
         <div class="col-md-3">
-            <label>Selling Price</label>
+            <label>Retail Selling Price</label>
             <input type="number" name="selling_price" class="form-control" min="0" step="0.01">
         </div>
-                <div class="col-md-3">
-                    <label>Sale Type</label>
-            <select id="saleType" name="sale_type" class="form-select" required>
-                <option value="retail">Retail</option>
-                <option value="wholesale">Wholesale</option>
-                <option value="both">Both</option>
-            </select>
+
+        <!-- Wholesale Selling Price -->
+        <div class="col-md-3">
+            <label>Wholesale Selling Price</label>
+            <input type="number" name="wholesale_price" class="form-control" min="0" step="0.01">
         </div>
 
         <!-- Supplier -->

@@ -115,15 +115,15 @@
                         <th class="text-center">Available Quantity</th>
                         <th class="text-center">Unit</th>
                         <th class="text-end">Purchase Price</th>
-                        <th class="text-end">Sale Price</th>
+                        <th class="text-end">Retail Price</th>
+                        <th class="text-end">Wholesale Price</th>
                         <th class="text-center">Expire Date</th>
-                        <th class="text-center">Sale Type</th>
                         <th class="text-center">Action</th>
                     </tr>
                 </thead>
               <tbody>
     @foreach($products as $product)
-    <tr>
+    <tr data-id="{{ $product->id }}">
         <td>
             @if($product->image)
                 <img src="{{ asset('storage/' . $product->image) }}" alt="Product Image">
@@ -136,8 +136,8 @@
         <td class="text-center">{{ $product->unit ? $product->unit->name : '-' }}</td>
         <td class="text-end">{{ $product->purchase_price ? number_format($product->purchase_price) : '-' }}</td>
         <td class="text-end">{{ $product->selling_price ? number_format($product->selling_price) : '-' }}</td>
+        <td class="text-end">{{ $product->wholesale_price ? number_format($product->wholesale_price) : '-' }}</td>
         <td class="text-center">{{ $product->expire_date ? \Carbon\Carbon::parse($product->expire_date)->format('Y-m-d') : '-' }}</td>
-        <td class="text-center">{{ ucfirst($product->sale_type ?? '-') }}</td>
         <td class="text-center">
             <div class="btn-group">
                <button class="btn btn-primary btn-sm edit-product-btn" 
@@ -149,6 +149,7 @@
         data-quantity="{{ $product->quantity }}"
         data-purchase="{{ $product->purchase_price }}"
         data-selling="{{ $product->selling_price }}"
+        data-wholesale="{{ $product->wholesale_price }}"
         data-expire="{{ $product->expire_date }}"
         data-image="{{ $product->image ? asset('storage/'.$product->image) : '' }}">
     <i class="fa fa-edit"></i>
@@ -339,14 +340,12 @@
               <input type="number" class="form-control" id="selling_price" name="selling_price" min="0">
             </div>
 
+            <!-- Wholesale Selling Price -->
             <div class="col-md-6">
-            <label class="form-label">Sale Type <span class="text-danger">*</span></label>
-            <select class="form-select" name="sale_type" required>
-                <option value="retail">Retail (Reja Reja)</option>
-                <option value="wholesale">Wholesale (Jumla)</option>
-                <option value="both">Retail & Wholesale</option>
-            </select>
-          </div>
+              <label for="wholesale_price" class="form-label">Wholesale Selling Price (Tsh)</label>
+              <input type="number" class="form-control" id="wholesale_price" name="wholesale_price" min="0">
+            </div>
+
 
             <!-- Invoice Number -->
             <div class="col-md-6">
@@ -521,11 +520,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
             <!-- Selling Price -->
             <div class="col-md-6">
-              <label for="edit_selling_price" class="form-label">Selling Price</label>
+              <label for="edit_selling_price" class="form-label">Retail Selling Price</label>
               <input type="number" class="form-control" id="edit_selling_price" name="selling_price" min="0">
             </div>
 
-            
+            <!-- Wholesale Price -->
+            <div class="col-md-6">
+              <label for="edit_wholesale_price" class="form-label">Wholesale Selling Price</label>
+              <input type="number" class="form-control" id="edit_wholesale_price" name="wholesale_price" min="0">
+            </div>
 
             <!-- Expire Date -->
             <div class="col-md-6">
@@ -564,6 +567,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const quantity = this.dataset.quantity;
             const purchase = this.dataset.purchase;
             const selling = this.dataset.selling;
+            const wholesale = this.dataset.wholesale;
             const expire = this.dataset.expire;
             const image = this.dataset.image;
 
@@ -576,6 +580,7 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('edit_quantity').value = quantity;
             document.getElementById('edit_purchase_price').value = purchase;
             document.getElementById('edit_selling_price').value = selling;
+            document.getElementById('edit_wholesale_price').value = wholesale;
             document.getElementById('edit_expire_date').value = expire;
 
             const imgPreview = document.getElementById('edit_image_preview');
@@ -638,7 +643,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     row.querySelector('td:nth-child(4)').innerText = data.product.unit_name ?? '-';
                     row.querySelector('td:nth-child(5)').innerText = data.product.purchase_price ?? '-';
                     row.querySelector('td:nth-child(6)').innerText = data.product.selling_price ?? '-';
-                    row.querySelector('td:nth-child(7)').innerText = data.product.expire_date ?? '-';
+                    row.querySelector('td:nth-child(7)').innerText = data.product.wholesale_price ?? '-';
+                    row.querySelector('td:nth-child(8)').innerText = data.product.expire_date ?? '-';
                     if(data.product.image){
                         row.querySelector('td:nth-child(1) img').src = data.product.image;
                     }

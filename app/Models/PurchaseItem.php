@@ -15,7 +15,6 @@ class PurchaseItem extends Model
         'quantity',
         'purchase_price',
         'total',
-        'sale_type'
     ];
 
     public function invoice() {

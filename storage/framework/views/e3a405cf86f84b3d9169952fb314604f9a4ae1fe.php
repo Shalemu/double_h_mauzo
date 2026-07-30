@@ -97,6 +97,24 @@
 </script>
 <?php endif; ?>
 
+<?php if(session('import_errors')): ?>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Import finished with issues',
+            html: `<ul style="text-align:left; max-height:300px; overflow-y:auto; padding-left:1.2rem; margin:0;">
+                <?php $__currentLoopData = session('import_errors'); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $err): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                    <li><?php echo e($err); ?></li>
+                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+            </ul>`,
+            confirmButtonText: 'OK'
+        });
+    });
+</script>
+<?php endif; ?>
+
 <!-- Bootstrap Icons -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
 

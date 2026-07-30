@@ -153,7 +153,7 @@
 
         <!-- Search input -->
         <div class="mb-2" style="width: 200px;">
-            <input type="text" id="table-search" class="form-control form-control-sm" placeholder="Search product...">
+            <input type="text" id="summary-table-search" class="form-control form-control-sm" placeholder="Search product...">
         </div>
     </div>
 </div>
@@ -172,7 +172,6 @@
                 <th>Stock</th>
                 <th>Last Purchasing Price</th>
                 <th>Last Selling Price</th>
-                <th>Sale Type</th>
             </tr>
         </thead>
         <tbody>
@@ -182,7 +181,6 @@
                     <td><?php echo e($product->quantity); ?></td>
                     <td><?php echo e($product->purchase_price); ?></td>
                     <td><?php echo e($product->selling_price); ?></td>
-                    <td><?php echo e(ucfirst($product->sale_type ?? '-')); ?></td> 
                 </tr>
             <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                 <tr>
@@ -204,8 +202,7 @@
                             <th>Item</th>
                             <th>Expiry Date</th>
                             <th>Stock</th>
-                            <th>Sale Type</th>
-                        </tr>
+                                    </tr>
                     </thead>
              <tbody>
             <?php $__empty_1 = true; $__currentLoopData = $expiringProducts; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $product): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
@@ -213,7 +210,6 @@
                     <td><?php echo e($product->name); ?></td>
                     <td><?php echo e(\Carbon\Carbon::parse($product->expire_date)->format('Y-m-d')); ?></td>
                     <td><?php echo e($product->quantity); ?></td>
-                    <td><?php echo e(ucfirst($product->sale_type ?? '-')); ?></td> 
                 </tr>
             <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                 <tr>
@@ -233,8 +229,7 @@
                         <tr>
                             <th>Item</th>
                             <th>Stock</th>
-                            <th>Sale Type</th>
-                        </tr>
+                                    </tr>
                     </thead>
             <tbody>
 <?php $__empty_1 = true; $__currentLoopData = $products->where('quantity', 0); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $product): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
@@ -242,7 +237,6 @@
     <tr>
         <td><?php echo e($product->name); ?></td>
         <td><?php echo e($product->quantity); ?></td>
-        <td><?php echo e(ucfirst($product->sale_type ?? '-')); ?></td> 
     </tr>
 <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
     <tr>
@@ -267,8 +261,7 @@
                             <th>Item</th>
                             <th>Expiry Date</th>
                             <th>Stock</th>
-                            <th>Sale Type</th>
-                        </tr>
+                                    </tr>
                     </thead>
                 <tbody>
             <?php $__empty_1 = true; $__currentLoopData = $expiredProducts; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $product): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
@@ -276,7 +269,6 @@
                     <td><?php echo e($product->name); ?></td>
                     <td><?php echo e(\Carbon\Carbon::parse($product->expire_date)->format('Y-m-d')); ?></td>
                     <td><?php echo e($product->quantity); ?></td>
-                    <td><?php echo e(ucfirst($product->sale_type ?? '-')); ?></td> 
                 </tr>
             <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                 <tr>
@@ -297,8 +289,7 @@
                             <th>Item</th>
                             <th>Disposed Date</th>
                             <th>Quantity</th>
-                            <th>Sale Type</th>
-                        </tr>
+                                    </tr>
                     </thead>
                     <tbody>
             <?php $__empty_1 = true; $__currentLoopData = $disposedProducts; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $product): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
@@ -306,7 +297,6 @@
                     <td><?php echo e($product->name); ?></td>
                     <td><?php echo e(\Carbon\Carbon::parse($product->disposed_at)->format('Y-m-d') ?? 'N/A'); ?></td>
                     <td><?php echo e($product->quantity); ?></td>
-                    <td><?php echo e(ucfirst($product->sale_type ?? '-')); ?></td> 
                 </tr>
             <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                 <tr>

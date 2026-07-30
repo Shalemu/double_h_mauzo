@@ -94,12 +94,20 @@ class PurchasesController extends Controller
                     'quantity' => $item['quantity'],
                     'purchase_price' => $item['price'],
                     'total' => $item['quantity'] * $item['price'],
-                    'sale_type' => $item['sale_type'] ?? 'retail',
                 ]);
 
-                // Update product stock
+                // Update product stock and prices
                 $product->quantity += $item['quantity'];
                 $product->purchase_price = $item['price'];
+
+                if (isset($item['selling_price']) && $item['selling_price'] !== '' && $item['selling_price'] !== null) {
+                    $product->selling_price = $item['selling_price'];
+                }
+
+                if (isset($item['wholesale_price']) && $item['wholesale_price'] !== '' && $item['wholesale_price'] !== null) {
+                    $product->wholesale_price = $item['wholesale_price'];
+                }
+
                 $product->save();
             }
 
@@ -131,6 +139,7 @@ class PurchasesController extends Controller
             'quantity' => 'required|numeric|min:1',
             'purchase_price' => 'required|numeric|min:0',
             'selling_price' => 'nullable|numeric|min:0',
+            'wholesale_price' => 'nullable|numeric|min:0',
             'category_id' => 'nullable|exists:product_categories,id',
             'amount_paid' => 'nullable|numeric|min:0',
             'image' => 'nullable|image|max:2048',
@@ -149,6 +158,7 @@ class PurchasesController extends Controller
             'unit_id' => $request->unit_id,
             'purchase_price' => $request->purchase_price,
             'selling_price' => $request->selling_price ?? 0,
+            'wholesale_price' => $request->wholesale_price ?? 0,
             'quantity' => 0,
             'image' => $request->file('image') 
                 ? $request->file('image')->store('products', 'public') 
@@ -181,7 +191,6 @@ class PurchasesController extends Controller
                 'quantity' => $request->quantity,
                 'purchase_price' => $request->purchase_price,
                 'total' => $totalAmount,
-                'sale_type' => $request->sale_type ?? 'retail',
             ]);
 
             // Update product stock

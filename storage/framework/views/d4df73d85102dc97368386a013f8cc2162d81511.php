@@ -54,7 +54,8 @@ function initPurchaseForm() {
     const product = formContainer.querySelector('#product');
     const qty = formContainer.querySelector('#quantity');
     const buy = formContainer.querySelector('#purchase_price');
-    const sell = formContainer.querySelector('#selling_price');
+    const retail = formContainer.querySelector('#selling_price');
+    const wholesale = formContainer.querySelector('#wholesale_price');
     const table = formContainer.querySelector('#itemsTable tbody');
     const totalEl = formContainer.querySelector('#grandTotal');
     const itemsInput = formContainer.querySelector('#itemsInput');
@@ -63,7 +64,6 @@ function initPurchaseForm() {
     const paidInput = formContainer.querySelector('#amountPaid');
     const remainingEl = formContainer.querySelector('#remainingCredit');
     const remainingInput = formContainer.querySelector('#remainingCreditInput');
-    const saleType = formContainer.querySelector('#saleType');
     const addBtn = formContainer.querySelector('#addItemBtn');
 
     if (!product || !addBtn) return;
@@ -71,7 +71,8 @@ function initPurchaseForm() {
     product.addEventListener('change', () => {
         const opt = product.options[product.selectedIndex];
         buy.value = opt.getAttribute('data-buy') || '';
-        sell.value = opt.getAttribute('data-sell') || '';
+        retail.value = opt.getAttribute('data-retail') || '';
+        wholesale.value = opt.getAttribute('data-wholesale') || '';
     });
 
     addBtn.addEventListener('click', () => {
@@ -85,8 +86,8 @@ function initPurchaseForm() {
             name: product.options[product.selectedIndex].text,
             quantity: parseFloat(qty.value),
             price: parseFloat(buy.value),
-            selling_price: parseFloat(sell.value || 0),
-            sale_type: saleType.value
+            selling_price: retail.value !== '' ? parseFloat(retail.value) : null,
+            wholesale_price: wholesale.value !== '' ? parseFloat(wholesale.value) : null
         });
 
         renderItems();
@@ -94,7 +95,8 @@ function initPurchaseForm() {
         product.value = '';
         qty.value = '';
         buy.value = '';
-        sell.value = '';
+        retail.value = '';
+        wholesale.value = '';
     });
 
     function renderItems() {
@@ -110,6 +112,8 @@ function initPurchaseForm() {
                     <td>${i.name}</td>
                     <td>${i.quantity}</td>
                     <td>${i.price}</td>
+                    <td>${i.selling_price ?? '-'}</td>
+                    <td>${i.wholesale_price ?? '-'}</td>
                     <td>${rowTotal}</td>
                     <td>
                         <button type="button" class="btn btn-danger btn-sm remove-item" data-index="${index}">X</button>
@@ -226,10 +230,9 @@ function initNewProductForm() {
         const qty = parseFloat(quantity.value);
         const price = parseFloat(purchasePrice.value);
         const supplier = form.querySelector('select[name="supplier_id"]').value;
-        const saleType = form.querySelector('#saleType').value;
         const payment = paymentType.value;
 
-        if (!shopId || !name || !qty || !price || !supplier || !payment || !saleType) {
+        if (!shopId || !name || !qty || !price || !supplier || !payment) {
             Swal.fire('Validation Error', 'Please fill all required fields', 'warning');
             return;
         }

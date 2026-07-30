@@ -95,8 +95,8 @@ public function store(Request $request)
         'name' => 'required|string|max:255',
         'unit_id' => 'required|integer',
         'selling_price' => 'nullable|numeric|min:0',
+        'wholesale_price' => 'nullable|numeric|min:0',
         'barcode' => 'nullable|string',
-        'sale_type' => 'required|in:retail,wholesale,both',
         'expire_date' => 'nullable|date',
         'image' => 'nullable|image|max:2048',
     ]);
@@ -113,11 +113,11 @@ public function store(Request $request)
         'min_quantity',
         'purchase_price',
         'selling_price',
+        'wholesale_price',
         'invoice_number',
         'expire_date',
         'size',
         'color',
-        'sale_type'
     ]);
 
     $admin = Auth::user();
@@ -175,6 +175,7 @@ public function update(Request $request, $id)
         'min_quantity' => 'nullable|integer|min:0',
         'purchase_price' => 'nullable|numeric|min:0',
         'selling_price' => 'nullable|numeric|min:0',
+        'wholesale_price' => 'nullable|numeric|min:0',
         'invoice_number' => 'nullable|string',
         'barcode' => 'nullable|string',
         'expire_date' => 'nullable|date',
@@ -193,8 +194,21 @@ public function update(Request $request, $id)
     }
 
     $product->update($data);
+    $product->load('unit');
 
-    return response()->json(['success' => 'Product updated successfully']);
+    return response()->json([
+        'success' => 'Product updated successfully',
+        'product' => [
+            'name' => $product->name,
+            'quantity' => $product->quantity,
+            'unit_name' => $product->unit->name ?? '-',
+            'purchase_price' => $product->purchase_price ? number_format($product->purchase_price) : '-',
+            'selling_price' => $product->selling_price ? number_format($product->selling_price) : '-',
+            'wholesale_price' => $product->wholesale_price ? number_format($product->wholesale_price) : '-',
+            'expire_date' => $product->expire_date ? \Carbon\Carbon::parse($product->expire_date)->format('Y-m-d') : '-',
+            'image' => $product->image ? asset('storage/' . $product->image) : null,
+        ],
+    ]);
 }
 
     /**
@@ -231,7 +245,14 @@ public function exportExcel()
             'excel_file' => 'required|file|mimes:xlsx,xls',
         ]);
 
-        Excel::import(new ProductsImport, $request->file('excel_file'));
+        $import = new ProductsImport;
+        Excel::import($import, $request->file('excel_file'));
+
+        if (!empty($import->errors)) {
+            return redirect()->back()
+                ->with('import_errors', $import->errors)
+                ->with('warning', 'Import finished with ' . count($import->errors) . ' issue(s). See details below.');
+        }
 
         return redirect()->back()->with('success', 'Products imported successfully!');
     }
@@ -279,16 +300,6 @@ public function filterByStatus($status)
     return response()->json($products);
 }
 
-public function filterBySaleType(Request $request)
-{
-    $type = $request->query('type', 'both'); // retail, wholesale, or both
-
-    $products = Products::when($type !== 'both', function($q) use ($type) {
-        $q->where('sale_type', $type);
-    })->get();
-
-    return response()->json($products);
-}
 
 
    public function runningOut()
@@ -371,12 +382,12 @@ public function finished()
         'min_quantity' => $product->min_quantity,
         'purchase_price' => $product->purchase_price,
         'selling_price' => $product->selling_price,
+        'wholesale_price' => $product->wholesale_price,
         'invoice_number' => $product->invoice_number,
         'barcode' => $product->barcode,
         'expire_date' => $product->expire_date,
         'size' => $product->size,
         'color' => $product->color,
-        'sale_type' => $product->sale_type,
         'image' => $product->image,
         'admin_id' => $product->admin_id,
     ]);
@@ -409,12 +420,12 @@ public function restore($id)
         'min_quantity' => $trashed->min_quantity,
         'purchase_price' => $trashed->purchase_price,
         'selling_price' => $trashed->selling_price,
+        'wholesale_price' => $trashed->wholesale_price,
         'invoice_number' => $trashed->invoice_number,
         'barcode' => $trashed->barcode,
         'expire_date' => $trashed->expire_date,
         'size' => $trashed->size,
         'color' => $trashed->color,
-        'sale_type' => $trashed->sale_type,
         'image' => $trashed->image,
         'admin_id' => $trashed->admin_id,
     ]);

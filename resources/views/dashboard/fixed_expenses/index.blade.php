@@ -25,7 +25,7 @@
                 <div class="col-12 d-flex justify-content-end">
                     <input
                         type="text"
-                        id="table-search"
+                        id="fixed-expenses-table-search"
                         class="form-control form-control-sm"
                         placeholder="Search title..."
                         style="width:250px;">

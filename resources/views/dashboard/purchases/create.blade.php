@@ -52,14 +52,15 @@
 
             <!-- Item Input -->
             <div class="row g-2">
-    <div class="col-md-3">
+    <div class="col-md-2">
         <select id="product" class="form-select">
                         <option value="">Select Product</option>
                         @foreach($products as $product)
-                        <option 
+                        <option
                             value="{{ $product->id }}"
                             data-buy="{{ $product->purchase_price }}"
-                            data-sell="{{ $product->selling_price }}"
+                            data-retail="{{ $product->selling_price }}"
+                            data-wholesale="{{ $product->wholesale_price }}"
                         >
                             {{ $product->name }}
                         </option>
@@ -73,16 +74,12 @@
             <input type="number" id="purchase_price" class="form-control" placeholder="Buy Price">
         </div>
         <div class="col-md-2">
-            <input type="number" id="selling_price" class="form-control" placeholder="Sell Price">
+            <input type="number" id="selling_price" class="form-control" placeholder="Retail Price">
         </div>
         <div class="col-md-2">
-            <select id="saleType" class="form-select">
-                <option value="retail">Retail</option>
-                <option value="wholesale">Wholesale</option>
-                <option value="both">Both</option>
-            </select>
+            <input type="number" id="wholesale_price" class="form-control" placeholder="Wholesale Price">
         </div>
-        <div class="col-md-1">
+        <div class="col-md-2">
             <button type="button" id="addItemBtn" class="btn btn-primary w-100">Add</button>
         </div>
     </div>
@@ -95,6 +92,8 @@
                             <th>Product</th>
                             <th>Qty</th>
                             <th>Buy</th>
+                            <th>Retail</th>
+                            <th>Wholesale</th>
                             <th>Total</th>
                             <th>Action</th>
                         </tr>

@@ -57,7 +57,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @forelse($customers as $index => $customer)
+                        @foreach($customers as $index => $customer)
                         <tr>
                             <td>{{ $index + 1 }}</td>
                            <td>
@@ -74,11 +74,7 @@
                                 <button class="btn btn-sm btn-danger">Delete</button>
                             </td>
                         </tr>
-                        @empty
-                        <tr>
-                            <td colspan="6">No customers found.</td>
-                        </tr>
-                        @endforelse
+                        @endforeach
                     </tbody>
                 </table>
             </div>
@@ -134,7 +130,10 @@ document.addEventListener('DOMContentLoaded', function() {
         lengthChange: false,
         pageLength: 10,
         autoWidth: false,
-        dom: 'rtip'
+        dom: 'rtip',
+        language: {
+            emptyTable: 'No customers found.'
+        }
     });
 
     $('#customerSearch').on('keyup', function() {

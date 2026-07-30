@@ -17,7 +17,7 @@
             <!-- SEARCH -->
             <div class="row mb-3">
                 <div class="col-12 d-flex justify-content-end">
-                    <input type="text" id="table-search" class="form-control form-control-sm" placeholder="Search date..." style="width: 250px;">
+                    <input type="text" id="expenses-table-search" class="form-control form-control-sm" placeholder="Search date..." style="width: 250px;">
                 </div>
             </div>
 
@@ -100,7 +100,7 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Table search
-    const searchInput = document.getElementById('table-search');
+    const searchInput = document.getElementById('expenses-table-search');
     const table = document.getElementById('expenses-table');
     const rows = table.querySelectorAll('tbody tr');
 

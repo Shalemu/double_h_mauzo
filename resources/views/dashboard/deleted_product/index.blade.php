@@ -13,7 +13,6 @@
                         <th>Name</th>
                         <th>Quantity</th>
                         <th>Unit</th>
-                        <th>Sale Type</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -23,7 +22,6 @@
                         <td class="text-start">{{ $product->name }}</td>
                         <td>{{ $product->quantity }}</td>
                         <td>{{ $product->unit ? $product->unit->name : '-' }}</td>
-                        <td>{{ ucfirst($product->sale_type ?? '-') }}</td>
                         <td>
                             <button class="btn btn-sm btn-success btn-restore me-1" data-id="{{ $product->id }}">
                                 <i class="bi bi-arrow-counterclockwise"></i> Restore
@@ -35,7 +33,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="5" class="text-center text-muted">No deleted products found.</td>
+                        <td colspan="4" class="text-center text-muted">No deleted products found.</td>
                     </tr>
                 @endforelse
                 </tbody>

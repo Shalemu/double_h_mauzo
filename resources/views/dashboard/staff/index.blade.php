@@ -83,11 +83,6 @@
         <label class="btn btn-outline-success flex-fill py-2" for="wholesale">
             <i class="fa fa-cubes me-1"></i> Wholesale
         </label>
-
-        <input type="radio" class="btn-check" name="sale-type" id="both" value="both">
-        <label class="btn btn-outline-dark flex-fill py-2" for="both">
-            <i class="fa fa-exchange me-1"></i> Both
-        </label>
     </div><br>
 
                         <input type="text" id="product-search" class="form-control form-control-sm mb-3" placeholder="Search by name, ID or barcode...">
@@ -99,10 +94,11 @@
                                      data-id="{{ $product->id }}"
                                      data-name="{{ strtolower($product->name) }}"
                                      data-barcode="{{ $product->barcode }}"
+                                     data-retail-price="{{ $product->selling_price ?? 0 }}"
+                                     data-wholesale-price="{{ $product->wholesale_price ?? 0 }}"
                                      data-price="{{ $product->selling_price ?? 0 }}"
-                                     data-stock="{{ $product->quantity ?? 0 }}"
-                                     data-sale-type="{{ $product->sale_type ?? 'retail' }}">
-                                     
+                                     data-stock="{{ $product->quantity ?? 0 }}">
+
                                     <div class="card-body py-2">
                                         <div class="row align-items-center">
                                             <div class="col-2">
@@ -110,7 +106,7 @@
                                             </div>
                                             <div class="col-4">
                                                 <strong>{{ $product->name }}</strong><br>
-                                                <small class="text-muted">Tsh {{ number_format($product->selling_price ?? 0) }}</small><br>
+                                                <small class="text-muted product-price-label">Tsh {{ number_format($product->selling_price ?? 0) }}</small><br>
                                                 <small class="text-muted">Stock: {{ $product->quantity ?? 0 }} | Barcode: {{ $product->barcode ?? 'N/A' }}</small>
                                             </div>
                                             <div class="col-3 d-flex align-items-center">
@@ -403,24 +399,31 @@ $(document).ready(function() {
     const itemsPerPage = 5;
     let currentPage = 1;
 
+    // Show retail or wholesale price on every product card, based on the selected tab.
+    // The product itself never changes - only which price is displayed/used for the cart.
+    function applySaleTypePricing() {
+        const selectedType = $('input[name="sale-type"]:checked').val() || 'retail';
+
+        $('.product-card').each(function() {
+            const card = $(this);
+            const price = selectedType === 'wholesale'
+                ? parseFloat(card.data('wholesale-price')) || 0
+                : parseFloat(card.data('retail-price')) || 0;
+
+            card.attr('data-price', price);
+            card.find('.product-price-label').text('Tsh ' + price.toLocaleString());
+        });
+    }
+
     function updateProducts() {
         const query = $('#product-search').val().toLowerCase();
-        const selectedType = $('input[name="sale-type"]:checked').val();
-         $('input[name="sale-type"]').on('change', function(){
-            currentPage = 1;
-            updateProducts();
-        });
 
         // Filter products
         const filtered = $('.product-card').filter(function() {
             const name = $(this).data('name') || '';
             const barcode = $(this).data('barcode') || '';
-            const type = $(this).data('sale-type') || '';
 
-            const matchesQuery = name.toLowerCase().includes(query) || barcode.includes(query);
-            const matchesType = !selectedType || selectedType === type;
-
-            return matchesQuery && matchesType;
+            return name.toLowerCase().includes(query) || barcode.includes(query);
         });
 
         $('.product-card').hide();
@@ -461,12 +464,18 @@ $(document).ready(function() {
     }
 
     // Initial display
+    applySaleTypePricing();
     updateProducts();
 
     // Search/filter
     $('#product-search, #sale-type-filter').on('keyup change', function() {
         currentPage = 1;
         updateProducts();
+    });
+
+    // Switching between Retail / Wholesale updates the displayed price for every product
+    $('input[name="sale-type"]').on('change', function() {
+        applySaleTypePricing();
     });
 
     // Pagination click
@@ -570,7 +579,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const addBtn = card.querySelector('.add-to-cart');
         const productId = card.dataset.id;
         const productName = card.dataset.name;
-        const price = parseFloat(card.dataset.price);
 
         function availableStock() { return stockMap[productId] || 0; }
 
@@ -596,6 +604,8 @@ document.addEventListener('DOMContentLoaded', () => {
         addBtn.addEventListener('click', () => {
             const qty = parseInt(qtyInput.value) || 0;
             const discount = parseFloat(discountInput.value) || 0;
+            const price = parseFloat(card.dataset.price) || 0;
+            const saleType = $('input[name="sale-type"]:checked').val() || 'retail';
 
             if (qty <= 0) {
                 Swal.fire({ icon: 'warning', title: 'Invalid Quantity', text: 'Quantity must be at least 1', confirmButtonColor: '#3085d6' });
@@ -614,8 +624,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 cart[productId].qty = newQty;
                 cart[productId].discount += discount;
+                cart[productId].price = price;
+                cart[productId].sale_type = saleType;
             } else {
-                cart[productId] = { name: productName, qty, price, discount };
+                cart[productId] = { name: productName, qty, price, discount, sale_type: saleType };
             }
 
             stockMap[productId] -= qty;
@@ -733,7 +745,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 product_id: parseInt(productId),
                 qty: item.qty,
                 price: item.price,
-                discount: item.discount
+                discount: item.discount,
+                sale_type: item.sale_type || 'retail'
             })),
             customer_id: customerSelect?.value || null,
             payment_method: paymentMethod,

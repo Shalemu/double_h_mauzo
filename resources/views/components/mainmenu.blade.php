@@ -99,6 +99,24 @@
 </script>
 @endif
 
+@if(session('import_errors'))
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Import finished with issues',
+            html: `<ul style="text-align:left; max-height:300px; overflow-y:auto; padding-left:1.2rem; margin:0;">
+                @foreach(session('import_errors') as $err)
+                    <li>{{ $err }}</li>
+                @endforeach
+            </ul>`,
+            confirmButtonText: 'OK'
+        });
+    });
+</script>
+@endif
+
 <!-- Bootstrap Icons -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
 

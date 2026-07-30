@@ -1,6 +1,8 @@
 <!-- META -->
 <link rel="icon" href="/dist/modules/core/common/img/favicon.ico">
-<link href="https://fonts.googleapis.com/css?family=PT+Sans:400,400i,700,700i" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
 <!-- ============================= -->
 <!-- CORE: Bootstrap 5 -->
@@ -102,3 +104,19 @@
 <script src="{!! asset('/dist/modules/menu-left/common/menu-left.cleanui.js') !!}"></script>
 <script src="{!! asset('/dist/modules/menu-right/common/menu-right.cleanui.js') !!}">
 </script>
+
+<!-- ============================= -->
+<!-- SITEWIDE TYPOGRAPHY (loaded after all vendor CSS so it wins the cascade) -->
+<!-- ============================= -->
+<style>
+    :root {
+        --bs-font-sans-serif: 'Poppins', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        --bs-body-font-family: var(--bs-font-sans-serif);
+    }
+    body {
+        font-family: 'Poppins', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    h1, h2, h3, h4, h5, h6 {
+        font-weight: 600;
+    }
+</style>

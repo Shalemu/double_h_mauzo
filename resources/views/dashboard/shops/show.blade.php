@@ -146,7 +146,7 @@
 
         <!-- Search input -->
         <div class="mb-2" style="width: 200px;">
-            <input type="text" id="table-search" class="form-control form-control-sm" placeholder="Search product...">
+            <input type="text" id="summary-table-search" class="form-control form-control-sm" placeholder="Search product...">
         </div>
     </div>
 </div>
@@ -165,7 +165,6 @@
                 <th>Stock</th>
                 <th>Last Purchasing Price</th>
                 <th>Last Selling Price</th>
-                <th>Sale Type</th>
             </tr>
         </thead>
         <tbody>
@@ -175,7 +174,6 @@
                     <td>{{ $product->quantity }}</td>
                     <td>{{ $product->purchase_price }}</td>
                     <td>{{ $product->selling_price }}</td>
-                    <td>{{ ucfirst($product->sale_type ?? '-') }}</td> 
                 </tr>
             @empty
                 <tr>
@@ -197,8 +195,7 @@
                             <th>Item</th>
                             <th>Expiry Date</th>
                             <th>Stock</th>
-                            <th>Sale Type</th>
-                        </tr>
+                                    </tr>
                     </thead>
              <tbody>
             @forelse ($expiringProducts as $product)
@@ -206,7 +203,6 @@
                     <td>{{ $product->name }}</td>
                     <td>{{ \Carbon\Carbon::parse($product->expire_date)->format('Y-m-d') }}</td>
                     <td>{{ $product->quantity }}</td>
-                    <td>{{ ucfirst($product->sale_type ?? '-') }}</td> 
                 </tr>
             @empty
                 <tr>
@@ -226,8 +222,7 @@
                         <tr>
                             <th>Item</th>
                             <th>Stock</th>
-                            <th>Sale Type</th>
-                        </tr>
+                                    </tr>
                     </thead>
             <tbody>
 @forelse ($products->where('quantity', 0) as $product)
@@ -235,7 +230,6 @@
     <tr>
         <td>{{ $product->name }}</td>
         <td>{{ $product->quantity }}</td>
-        <td>{{ ucfirst($product->sale_type ?? '-') }}</td> 
     </tr>
 @empty
     <tr>
@@ -260,8 +254,7 @@
                             <th>Item</th>
                             <th>Expiry Date</th>
                             <th>Stock</th>
-                            <th>Sale Type</th>
-                        </tr>
+                                    </tr>
                     </thead>
                 <tbody>
             @forelse ($expiredProducts as $product)
@@ -269,7 +262,6 @@
                     <td>{{ $product->name }}</td>
                     <td>{{ \Carbon\Carbon::parse($product->expire_date)->format('Y-m-d') }}</td>
                     <td>{{ $product->quantity }}</td>
-                    <td>{{ ucfirst($product->sale_type ?? '-') }}</td> 
                 </tr>
             @empty
                 <tr>
@@ -290,8 +282,7 @@
                             <th>Item</th>
                             <th>Disposed Date</th>
                             <th>Quantity</th>
-                            <th>Sale Type</th>
-                        </tr>
+                                    </tr>
                     </thead>
                     <tbody>
             @forelse ($disposedProducts as $product)
@@ -299,7 +290,6 @@
                     <td>{{ $product->name }}</td>
                     <td>{{ \Carbon\Carbon::parse($product->disposed_at)->format('Y-m-d') ?? 'N/A' }}</td>
                     <td>{{ $product->quantity }}</td>
-                    <td>{{ ucfirst($product->sale_type ?? '-') }}</td> 
                 </tr>
             @empty
                 <tr>

@@ -22,12 +22,12 @@ class ProductTrash extends Model
         'min_quantity',
         'purchase_price',
         'selling_price',
+        'wholesale_price',
         'invoice_number',
         'barcode',
         'expire_date',
         'size',
         'color',
-        'sale_type',
         'image',
         'admin_id'
     ];

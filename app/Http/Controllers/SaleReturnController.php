@@ -31,7 +31,7 @@ class SaleReturnController extends Controller
                     'product' => $item->product,
                     'quantity' => $item->quantity,
                     'revenue' => $item->price * $item->quantity,
-                    'sale_type' => $item->product->sale_type ?? 'retail',
+                    'sale_type' => $item->sale_type ?? 'retail',
                     'date' => $item->created_at,
                 ];
             });
@@ -142,6 +142,11 @@ public function store(Request $request)
     // =========================
     // AGGREGATE ITEMS
     // =========================
+    // Unlike the read-only sales report, returns need one row per actual sale
+    // item (not merged by product+staff) - otherwise the "Return" button ends
+    // up pointing at only one of several transactions while the displayed
+    // quantity shows the combined total, letting the return be rejected or
+    // applied to the wrong transaction.
     private function aggregateItems($sales)
     {
         $rows = [];
@@ -150,26 +155,22 @@ public function store(Request $request)
             $staffName = $sale->staff->full_name ?? 'Unknown';
 
             foreach ($sale->items as $item) {
-
-                $key = $item->product_id . '|' . $staffName;
-
-                if (!isset($rows[$key])) {
-                    $rows[$key] = [
-                        'sale_id' => $item->id, // SALE ITEM ID (IMPORTANT)
-                        'product_id' => $item->product_id,
-                        'product' => $item->product->name,
-                        'quantity' => 0,
-                        'revenue' => 0,
-                        'staff' => $staffName,
-                        'sale_type' => $item->product->sale_type ?? 'retail',
-                    ];
+                if ($item->quantity <= 0) {
+                    continue; // fully returned already, nothing left to return
                 }
 
-                $rows[$key]['quantity'] += $item->quantity;
-                $rows[$key]['revenue'] += $item->price * $item->quantity;
+                $rows[] = [
+                    'sale_id' => $item->id, // SALE ITEM ID (IMPORTANT)
+                    'product_id' => $item->product_id,
+                    'product' => $item->product->name,
+                    'quantity' => $item->quantity,
+                    'revenue' => $item->price * $item->quantity,
+                    'staff' => $staffName,
+                    'sale_type' => $item->sale_type ?? 'retail',
+                ];
             }
         }
 
-        return array_values($rows);
+        return $rows;
     }
 }

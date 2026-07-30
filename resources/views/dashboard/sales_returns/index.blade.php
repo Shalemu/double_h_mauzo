@@ -1,8 +1,11 @@
 <div class="container-fluid mt-4">
 
     <div class="card shadow-sm w-100">
-        <div class="card-header bg-white d-flex justify-content-between">
-            <h5>Sales Report for {{ $shop->name }}</h5>
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <div>
+                <h5 class="mb-0">Sale Returns for {{ $shop->name }}</h5>
+                <small class="text-muted">Select a date below to view its sold items and process a return.</small>
+            </div>
         </div>
 
         <div class="card-body">
@@ -12,7 +15,7 @@
                         <tr>
                             <th>S/N</th>
                             <th>Date</th>
-                            <th>Total</th>
+                            <th>Total Sold</th>
                         </tr>
                     </thead>
 

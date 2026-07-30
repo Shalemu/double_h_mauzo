@@ -18,7 +18,7 @@
 
             <!-- SEARCH -->
             <div class="d-flex justify-content-end mb-3">
-                <input type="text" id="table-search" class="form-control form-control-sm"
+                <input type="text" id="purchases-table-search" class="form-control form-control-sm"
                        placeholder="Search date..." style="width:250px;">
             </div>
 
@@ -80,7 +80,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const newProductContainer = document.getElementById('newProductContainer');
 
     // SEARCH
-    document.getElementById('table-search').addEventListener('input', function () {
+    document.getElementById('purchases-table-search').addEventListener('input', function () {
         let q = this.value.toLowerCase();
         document.querySelectorAll('#purchases-table tbody tr').forEach(row => {
             row.style.display = row.cells[1].innerText.toLowerCase().includes(q) ? '' : 'none';

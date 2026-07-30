@@ -6,7 +6,8 @@
             <th>Product</th>
             <th>Supplier</th>
             <th>Qty</th>
-            <th>Sale Type</th>
+            <th>Retail Price</th>
+            <th>Wholesale Price</th>
             <th>Price</th>
             <th>Total</th>
         </tr>
@@ -26,8 +27,11 @@
             {{-- Quantity --}}
             <td>{{ $p->quantity ?? 0 }}</td>
 
-            {{-- Sale type --}}
-            <td>{{ ucfirst($p->sale_type ?? '-') }}</td>
+            {{-- Current retail selling price --}}
+            <td>{{ $p->product?->selling_price ? number_format($p->product->selling_price, 2) : '-' }}</td>
+
+            {{-- Current wholesale selling price --}}
+            <td>{{ $p->product?->wholesale_price ? number_format($p->product->wholesale_price, 2) : '-' }}</td>
 
             {{-- Price --}}
             <td>{{ number_format($p->purchase_price ?? 0, 2) }}</td>

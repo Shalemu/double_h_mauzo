@@ -41,11 +41,11 @@
                 <th>Min Quantity</th>
                 <th>Purchase Price</th>
                 <th>Selling Price</th>
+                <th>Wholesale Price</th>
                 <th>Barcode</th>
                 <th>Expire Date</th>
                 <th>Size</th>
                 <th>Color</th>
-                <th>Sale Type</th>
             </tr>
         </thead>
         <tbody>
@@ -59,11 +59,11 @@
                 <td>{{ $product->min_quantity ?? 0 }}</td>
                 <td>{{ $product->purchase_price ?? 0 }}</td>
                 <td>{{ $product->selling_price ?? 0 }}</td>
+                <td>{{ $product->wholesale_price ?? 0 }}</td>
                 <td>{{ $product->barcode ?? '-' }}</td>
                 <td>{{ $product->expire_date ?? '-' }}</td>
                 <td>{{ $product->size ?? '-' }}</td>
                 <td>{{ $product->color ?? '-' }}</td>
-                <td>{{ $product->sale_type ?? '-' }}</td>
             </tr>
             @endforeach
         </tbody>

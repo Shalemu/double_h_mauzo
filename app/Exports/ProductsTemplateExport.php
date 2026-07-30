@@ -10,22 +10,24 @@ class ProductsTemplateExport implements FromArray, WithHeadings
     public function array(): array
     {
         return [
-            // Example row for user guidance
+            // Example row for user guidance.
+            // Unit must match an existing unit's name or short_name (e.g. "piece" / "pc") — it is
+            // the unit the item is counted/sold in, not the bottle/pack size. Put the size there instead.
             [
-                'Product 1',
-                'Brand',
-                'Category',
-                'Subcategory',
-                'Piece',
+                'Coconut Body Oil',
+                'Palmers',
+                '',
+                '',
+                'piece',
                 10,
                 2,
-                1000,
-                1200,
+                3000,
+                4000,
+                3500,
                 '123456789',
                 '2026-12-31',
-                'Medium',
-                'Red',
-                'retail' // sale_type example
+                '450ml',
+                '',
             ],
         ];
     }
@@ -42,11 +44,11 @@ class ProductsTemplateExport implements FromArray, WithHeadings
             'Min Quantity',
             'Purchase Price',
             'Selling Price',
+            'Wholesale Price',
             'Barcode',
             'Expire Date',
             'Size',
             'Color',
-            'Sale Type'
         ];
     }
 }

@@ -84,7 +84,10 @@
                             <td>
                                 <button class="btn btn-sm btn-info view-receipt"
                                         data-product="{{ $row['product'] }}"
-                                        data-staff="{{ $row['staff'] }}">
+                                        data-staff="{{ $row['staff'] }}"
+                                        data-quantity="{{ $row['quantity'] }}"
+                                        data-total="{{ number_format($row['revenue'], 2) }}"
+                                        data-sale-type="{{ ucfirst($row['sale_type'] ?? 'Retail') }}">
                                     View
                                 </button>
                             </td>

@@ -27,7 +27,7 @@
 
                     <!-- Search input -->
                     <div class="mb-2" style="width: 250px;">
-                        <input type="text" id="table-search" class="form-control form-control-sm" placeholder="Search sale...">
+                        <input type="text" id="sales-table-search" class="form-control form-control-sm" placeholder="Search sale...">
                     </div>
                 </div>
             </div>
@@ -73,7 +73,7 @@
 <!-- Optional: Table Search JS -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const searchInput = document.getElementById('table-search');
+    const searchInput = document.getElementById('sales-table-search');
     const table = document.getElementById('sales-table');
     const rows = table.querySelectorAll('tbody tr');
 
@@ -94,7 +94,28 @@ document.querySelectorAll('.view-date').forEach(link => {
             .then(res => res.text())
             .then(html => {
                 document.getElementById('sale-section').innerHTML = html;
+                attachSaleTypeFilter();
             });
+    });
+});
+
+// "View" button - the detail table is loaded via AJAX, so listen via delegation
+document.addEventListener('click', function(e) {
+    const viewBtn = e.target.closest('.view-receipt');
+    if (!viewBtn) return;
+
+    Swal.fire({
+        title: viewBtn.dataset.product,
+        html: `
+            <div style="text-align:left">
+                <p><strong>Sold by:</strong> ${viewBtn.dataset.staff}</p>
+                <p><strong>Quantity Sold:</strong> ${viewBtn.dataset.quantity}</p>
+                <p><strong>Sale Type:</strong> ${viewBtn.dataset.saleType}</p>
+                <p><strong>Total:</strong> Tsh ${viewBtn.dataset.total}</p>
+            </div>
+        `,
+        icon: 'info',
+        confirmButtonText: 'Close'
     });
 });
 
@@ -104,7 +125,7 @@ function attachSaleTypeFilter() {
         radios.forEach(radio => {
             radio.addEventListener('change', function() {
                 const selectedType = this.value;
-                const table = document.getElementById('sales-detail-table');
+                const table = document.getElementById('sales-table');
                 if (!table) return;
 
                 const tableRows = table.querySelectorAll('tbody tr[data-sale-type]');
