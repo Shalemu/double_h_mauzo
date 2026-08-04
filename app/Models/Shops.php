@@ -147,7 +147,7 @@ class Shops extends Model
     // Total wages
     public function getTotalWagesAttribute()
     {
-        return $this->staff->sum('wage');
+        return $this->staff->sum('wages');
     }
 
     // Total employees

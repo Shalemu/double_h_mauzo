@@ -15,7 +15,7 @@
             </a>
             <ul class="dropdown-menu shadow-sm">
                 <li><a class="dropdown-item" href="{{ isset($shop) ? route('dashboard.shop.show', $shop->id) : route('dashboard.shop') }}">
-                    <i class="icmn-store"></i> My Shop</a></li>
+                    <i class="icmn-office"></i> My Shop</a></li>
                 <li><a class="dropdown-item" href="{{ url('sale-point') }}"><i class="icmn-location"></i> Sale Point</a></li>
                 <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#categoryModal"><i class="icmn-list"></i> Product Categories</a></li>
                 <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#unitModal"><i class="icmn-meter"></i> Units</a></li>
@@ -30,7 +30,7 @@
                 <span class="cat__menu-text">Invoice & Order</span>
             </a>
             <ul class="dropdown-menu shadow-sm">
-                <li><a class="dropdown-item" href="{{ url('quotation') }}"><i class="icmn-file-plus"></i> Quotation</a></li>
+                <li><a class="dropdown-item" href="{{ url('quotation') }}"><i class="icmn-quotes-left"></i> Quotation</a></li>
                 <li><a class="dropdown-item" href="{{ url('purchase-order') }}"><i class="icmn-cart"></i> Purchase Order</a></li>
                 <li><a class="dropdown-item" href="{{ url('suppliers') }}"><i class="icmn-truck"></i> Supplier</a></li>
                 <li><a class="dropdown-item" href="{{ url('customers') }}"><i class="icmn-users"></i> Customer</a></li>
@@ -58,11 +58,11 @@
                 <span class="cat__menu-text">Reports</span>
             </a>
             <ul class="dropdown-menu shadow-sm">
-                <li><a class="dropdown-item" href="{{ url('report/sales') }}"><i class="icmn-stats-growth"></i> Sale Report</a></li>
+                <li><a class="dropdown-item" href="{{ url('report/sales') }}"><i class="icmn-stats-dots"></i> Sale Report</a></li>
                 <li><a class="dropdown-item" href="{{ url('report/purchase') }}"><i class="icmn-cart"></i> Purchase Report</a></li>
                 <li><a class="dropdown-item" href="{{ url('report/invoice') }}"><i class="icmn-file-text"></i> Invoice Report</a></li>
-                <li><a class="dropdown-item" href="{{ url('report/profit') }}"><i class="icmn-coins"></i> Profit Report</a></li>
-                <li><a class="dropdown-item" href="{{ url('report/stock') }}"><i class="icmn-box"></i> Stock Report</a></li>
+                <li><a class="dropdown-item" href="{{ url('report/profit') }}"><i class="icmn-coin-dollar"></i> Profit Report</a></li>
+                <li><a class="dropdown-item" href="{{ url('report/stock') }}"><i class="icmn-box-add"></i> Stock Report</a></li>
                 <li><a class="dropdown-item" href="{{ url('stock-list') }}"><i class="icmn-list"></i> Stock List</a></li>
             </ul>
         </div>
@@ -103,10 +103,7 @@ document.getElementById('logoutBtn').addEventListener('click', function() {
 
 
 
-
-
-
-<br><br><br>
+<div style="height: 20px;"></div>
 
 <!-- UNIT MODAL -->
 <div class="modal fade" id="unitModal" tabindex="-1">
@@ -191,7 +188,7 @@ document.getElementById('logoutBtn').addEventListener('click', function() {
     height: 100px;
     background: #ffffff;
     box-shadow: 0 6px 24px rgba(0, 0, 0, 0.08);
-    z-index: 1100;
+    z-index: 1030;
     margin-top: 60px;
 }
 

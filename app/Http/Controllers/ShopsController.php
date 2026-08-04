@@ -29,7 +29,7 @@ class ShopsController extends Controller
 
             // Employees & wages
             $shop->total_employees = $shop->staff->count();
-            $shop->total_wages = $shop->staff->sum('wage');
+            $shop->total_wages = $shop->staff->sum('wages');
 
             // Profit = total sales - total expenses - wages
             $totalSales = $shop->sales->sum('total');
@@ -97,7 +97,7 @@ class ShopsController extends Controller
         $disposedProducts = $products->filter(fn($p) => $p->disposed == 1);
 
         // Wages
-        $totalWages = $shop->total_wages ?? $shop->staff->sum('wage');
+        $totalWages = $shop->total_wages ?? $shop->staff->sum('wages');
         $daysInMonth = now()->daysInMonth;
         $dailyWages = $totalWages / $daysInMonth;
 
@@ -181,7 +181,7 @@ class ShopsController extends Controller
             ->groupBy(fn($purchase) => Carbon::parse($purchase->purchased_at)->format('Y-m-d'))
             ->map(fn($purchases, $date) => [
                 'date' => $date,
-                'total_amount' => $purchases->sum(fn($p) => $p->quantity * $p->purchase_price), // total
+                'total_amount' => $purchases->sum('total_amount'), // total
                 'total_paid'   => $purchases->sum('amount_paid'), // total paid
                 'remaining'    => $purchases->sum('remaining_amount'), // remaining credit
                 'items'        => $purchases,

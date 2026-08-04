@@ -108,6 +108,17 @@ public function store(Request $request)
         // ======================
         $saleItem->decrement('quantity', $request->quantity);
 
+        // ======================
+        // REDUCE SALE TOTAL
+        // ======================
+        // Sale::total is a frozen snapshot taken at checkout, not derived from
+        // items live - reports read this column directly, so it must be
+        // adjusted here or returns never show up in sales totals. Floor at 0
+        // so a bill_discount that no longer has anything to apply to (e.g. a
+        // full return) can't push the total negative.
+        $sale = $saleItem->sale;
+        $sale->update(['total' => max(0, $sale->total - $request->amount)]);
+
         DB::commit();
 
         return response()->json([

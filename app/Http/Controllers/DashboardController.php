@@ -93,6 +93,20 @@ class DashboardController extends Controller
             $totalCredit = $credits->sum('remaining_credit');
         }
 
+        // -----------------------------
+        // Product inventory summary
+        // -----------------------------
+        $totalProducts     = Products::count();
+        $outOfStockProducts = Products::where('quantity', '<=', 0)->count();
+        $runningOutProducts = Products::whereColumn('quantity', '<=', 'min_quantity')
+            ->where('quantity', '>', 0)
+            ->count();
+        $expiredProducts   = Products::whereNotNull('expire_date')
+            ->where('expire_date', '<', Carbon::today())
+            ->count();
+        $disposedProducts  = Products::onlyTrashed()->count();
+        $remainingProducts = $totalProducts - $outOfStockProducts;
+
         return view('dashboard.admin.index', compact(
             'shops',
             'totalPurchases',
@@ -103,7 +117,13 @@ class DashboardController extends Controller
             'credits',
             'dailyCredit',
             'monthlyCredit',
-            'totalCredit'
+            'totalCredit',
+            'totalProducts',
+            'remainingProducts',
+            'expiredProducts',
+            'disposedProducts',
+            'runningOutProducts',
+            'outOfStockProducts'
         ));
     }
 

@@ -70,8 +70,8 @@
             </a>
         </li>
 
-        <li class="nav-item {{ request()->is('purchases-return*') ? 'active' : '' }}">
-            <a href="{{ url('purchases-return') }}">
+        <li class="nav-item">
+            <a href="#" data-content="purchases-return-section">
                 <i class="bi bi-arrow-return-left"></i>
                 <span>Purchases Return</span>
             </a>

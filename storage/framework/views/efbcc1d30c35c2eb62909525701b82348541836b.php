@@ -92,7 +92,7 @@
 
                 
                 <div class="modal fade" id="orderModal" tabindex="-1">
-                    <div class="modal-dialog modal-lg">
+                    <div class="modal-dialog modal-lg modal-dialog-centered">
                         <div class="modal-content">
                             <div class="modal-header">
                                 <h5 class="modal-title">Order Details</h5>
@@ -121,7 +121,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
             // Format staff name
             const staffName = order.staff?.full_name ?? 'N/A';
-            const totalAmount = Number(order.total_amount ?? order.items.reduce((sum, i) => sum + i.total, 0));
+            const itemsTotal = order.items.reduce((sum, i) => sum + Number(i.total), 0);
+            const totalAmount = Number(order.total_amount) || itemsTotal;
 
             // Build HTML
             let html = `

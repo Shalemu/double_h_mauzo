@@ -17,8 +17,8 @@
 
     <div class="card-body">
 
-        <form method="POST" action="{{ route('purchases.store') }}">
-            @csrf
+        <form method="POST" action="<?php echo e(route('purchases.store')); ?>">
+            <?php echo csrf_field(); ?>
 
             <!-- Shop & Supplier -->
             <div class="row g-3">
@@ -26,9 +26,9 @@
                     <label>Shop</label>
                     <select name="shop_id" class="form-select" required>
                         <option value="">Select Shop</option>
-                        @foreach($shops as $shop)
-                        <option value="{{ $shop->id }}">{{ $shop->name }}</option>
-                        @endforeach
+                        <?php $__currentLoopData = $shops; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $shop): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                        <option value="<?php echo e($shop->id); ?>"><?php echo e($shop->name); ?></option>
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     </select>
                 </div>
 
@@ -36,9 +36,9 @@
                     <label>Supplier</label>
                     <select name="supplier_id" class="form-select" required>
                         <option value="">Select Supplier</option>
-                        @foreach($suppliers as $supplier)
-                        <option value="{{ $supplier->id }}">{{ $supplier->name }}</option>
-                        @endforeach
+                        <?php $__currentLoopData = $suppliers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $supplier): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                        <option value="<?php echo e($supplier->id); ?>"><?php echo e($supplier->name); ?></option>
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     </select>
                 </div>
                 <div class="col-md-6 mt-2">
@@ -55,16 +55,17 @@
     <div class="col-md-2">
         <select id="product" class="form-select">
                         <option value="">Select Product</option>
-                        @foreach($products as $product)
+                        <?php $__currentLoopData = $products; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $product): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                         <option
-                            value="{{ $product->id }}"
-                            data-buy="{{ $product->purchase_price }}"
-                            data-retail="{{ $product->selling_price }}"
-                            data-wholesale="{{ $product->wholesale_price }}"
+                            value="<?php echo e($product->id); ?>"
+                            data-buy="<?php echo e($product->purchase_price); ?>"
+                            data-retail="<?php echo e($product->selling_price); ?>"
+                            data-wholesale="<?php echo e($product->wholesale_price); ?>"
                         >
-                            {{ $product->name }}
+                            <?php echo e($product->name); ?>
+
                         </option>
-                        @endforeach
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     </select>
     </div>
     <div class="col-md-2">
@@ -147,8 +148,8 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
 
-           <form id="supplierForm" method="POST" action="{{ route('suppliers.store') }}">
-                @csrf
+           <form id="supplierForm" method="POST" action="<?php echo e(route('suppliers.store')); ?>">
+                <?php echo csrf_field(); ?>
 
                 <div class="modal-body">
                     <div class="row g-3">
@@ -200,7 +201,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         let formData = new FormData(this);
 
-        fetch("{{ route('suppliers.store') }}", {
+        fetch("<?php echo e(route('suppliers.store')); ?>", {
             method: "POST",
             headers: {
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
@@ -237,4 +238,4 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 });
-</script>
+</script><?php /**PATH D:\PROJECTS\d\double_h_mauzo\resources\views/dashboard/purchases/create.blade.php ENDPATH**/ ?>

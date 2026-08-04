@@ -37,11 +37,11 @@
         }
 
         .login-card {
-            max-width: 420px;
+            max-width: 560px;
             width: 100%;
             background: #ffffff;
             border-radius: 20px;
-            padding: 48px 40px;
+            padding: 28px 48px;
             box-shadow:
                 0 30px 70px rgba(0, 0, 0, 0.10),
                 0 10px 25px rgba(0, 0, 0, 0.06),
@@ -55,10 +55,10 @@
         }
 
         .login-logo {
-            width: 68px;
-            height: 68px;
+            width: 52px;
+            height: 52px;
             border-radius: 50%;
-            margin: 0 auto 22px;
+            margin: 0 auto 12px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -84,12 +84,12 @@
             text-align: center;
             color: #9a9a9a;
             font-size: 13.5px;
-            margin-bottom: 30px;
+            margin-bottom: 16px;
         }
 
         .form-group {
             position: relative;
-            margin-bottom: 18px;
+            margin-bottom: 12px;
         }
 
         .form-group label {
@@ -105,7 +105,7 @@
         .form-group i.field-icon {
             position: absolute;
             left: 15px;
-            top: 39px;
+            top: 34px;
             color: #c2c2c2;
             font-size: 16px;
         }
@@ -113,7 +113,7 @@
         .form-group .toggle-password {
             position: absolute;
             right: 15px;
-            top: 39px;
+            top: 34px;
             color: #c2c2c2;
             cursor: pointer;
             font-size: 16px;
@@ -121,7 +121,7 @@
 
         .form-control {
             width: 100%;
-            height: 46px;
+            height: 40px;
             padding: 0 42px;
             border: 1.5px solid #ececec;
             border-radius: 10px;
@@ -143,7 +143,7 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 24px;
+            margin-bottom: 16px;
             font-size: 13px;
         }
 
@@ -173,7 +173,7 @@
 
         .btn-login {
             width: 100%;
-            height: 48px;
+            height: 42px;
             border: none;
             border-radius: 10px;
             background: #1f1f1f;
@@ -199,7 +199,7 @@
 
         .register-hint {
             text-align: center;
-            margin-top: 24px;
+            margin-top: 14px;
             font-size: 13.5px;
             color: #9a9a9a;
         }
@@ -225,8 +225,8 @@
             padding-left: 18px;
         }
 
-        @media (max-width: 480px) {
-            .login-card { padding: 36px 26px; border-radius: 16px; }
+        @media (max-width: 600px) {
+            .login-card { padding: 24px 26px; border-radius: 16px; }
         }
     </style>
 </head>

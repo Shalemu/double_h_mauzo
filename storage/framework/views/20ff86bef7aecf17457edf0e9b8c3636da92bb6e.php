@@ -116,6 +116,13 @@
             ], \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
         </div>
 
+        <div id="purchases-return-section" class="dashboard-section">
+            <?php echo $__env->make('dashboard.purchase_returns.index', [
+                'shop' => $shop,
+                'purchasesByDate' => $purchasesByDate ?? collect()
+            ], \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
+        </div>
+
         <!-- =================== SALES RETURN =================== -->
         <div id="sales-return-section" class="dashboard-section">
             <?php echo $__env->make('dashboard.sales_returns.index', [
@@ -154,26 +161,36 @@
         document.addEventListener('DOMContentLoaded', function() {
             const menuItems = document.querySelectorAll('.nav-item a');
             const sections = document.querySelectorAll('.dashboard-section');
+            const storageKey = 'dashboard-active-section';
+
+            function activateSection(target) {
+                if (!target || !document.getElementById(target)) return false;
+
+                menuItems.forEach(i => i.parentElement.classList.remove('active'));
+                sections.forEach(sec => sec.style.display = 'none');
+
+                document.getElementById(target).style.display = 'block';
+
+                const matchingItem = Array.from(menuItems).find(i => i.getAttribute('data-content') === target);
+                if (matchingItem) matchingItem.parentElement.classList.add('active');
+
+                return true;
+            }
 
             menuItems.forEach(item => {
                 item.addEventListener('click', function(e) {
                     e.preventDefault();
 
-                    // Remove active from all menu items
-                    menuItems.forEach(i => i.parentElement.classList.remove('active'));
-                    item.parentElement.classList.add('active');
-
-                    // Hide all sections
-                    sections.forEach(sec => sec.style.display = 'none');
-
-                    // Show the selected section
                     const target = item.getAttribute('data-content');
-                    if(target) {
-                        const section = document.getElementById(target);
-                        if(section) section.style.display = 'block';
+                    if (activateSection(target)) {
+                        localStorage.setItem(storageKey, target);
                     }
                 });
             });
+
+            // Restore whichever section was open before the page was refreshed
+            const savedTarget = localStorage.getItem(storageKey);
+            if (savedTarget) activateSection(savedTarget);
         });
     </script>
 </body>

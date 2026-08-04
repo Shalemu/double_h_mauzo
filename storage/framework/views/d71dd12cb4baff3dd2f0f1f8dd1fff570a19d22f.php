@@ -1,10 +1,8 @@
 <?php $__env->startSection('title', 'Dashboard'); ?>
-<?php echo $__env->make('main', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
+
+<?php $__env->startSection('content'); ?>
+
 <?php echo $__env->make('components/breadcrumb', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
-<?php echo $__env->make('components/mainmenu', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
-
-
-<meta name="csrf-token" content="<?php echo e(csrf_token()); ?>">
 
 <style>
     .premium-stat-card {
@@ -30,11 +28,67 @@
     .premium-stat-value {
         font-size: 1.35rem;
     }
+
+    /* Inventory Summary card */
+    .premium-panel {
+        background: #fff;
+        border-radius: 1rem;
+        border: 1px solid rgba(0,0,0,.06);
+        box-shadow: 0 .25rem 1rem rgba(0,0,0,.04);
+    }
+    .premium-panel-header {
+        padding: 18px 20px;
+        border-bottom: 1px solid rgba(0,0,0,.06);
+        font-weight: 700;
+        font-size: .95rem;
+        color: #2d2d2d;
+    }
+    .premium-panel-header i { color: #1e88e5; margin-right: 8px; }
+    .premium-panel-body { padding: 20px; }
+
+    .mini-tile {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 14px 16px;
+        border-radius: .85rem;
+        background: #f8f9fb;
+        border: 1px solid rgba(0,0,0,.05);
+        height: 100%;
+        transition: all .18s ease;
+    }
+    .mini-tile:hover {
+        background: #fff;
+        box-shadow: 0 .5rem 1.25rem rgba(0,0,0,.06);
+        transform: translateY(-2px);
+    }
+    .mini-tile-icon {
+        width: 44px;
+        height: 44px;
+        flex: 0 0 44px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+        color: #fff;
+    }
+    .mini-tile-value {
+        font-size: 1.25rem;
+        font-weight: 700;
+        line-height: 1.1;
+        color: #2d2d2d;
+    }
+    .mini-tile-label {
+        font-size: .72rem;
+        text-transform: uppercase;
+        letter-spacing: .03em;
+        color: #8a8f98;
+        font-weight: 600;
+    }
 </style>
 
 <div class="cat__content">
-    <br><br>
-
 
 <div class="row mb-4">
     <div class="col-12 d-flex flex-wrap" style="gap: 12px; padding-left: 50px;">
@@ -53,9 +107,9 @@
         <button type="button" class="btn btn-outline-secondary">
             <i class="bi bi-geo-alt"></i> Salepoints
         </button>
-        <button type="button" class="btn btn-outline-info text-dark">
+        <a href="<?php echo e(route('customers.index')); ?>" class="btn btn-outline-info text-dark">
             <i class="bi bi-people"></i> My Customers
-        </button>
+        </a>
         <button type="button" class="btn btn-outline-warning text-dark">
             <i class="bi bi-person-badge"></i> My Employees
         </button>
@@ -136,43 +190,69 @@
     <div class="container-fluid">
         <div class="row g-4" style="padding-left:30px; padding-right:30px;">
 
-            <!-- Left: Product Metrics -->
-            <div class="col-xl-5"> <!-- Increased width -->
-                <div class="cat__core__widget p-3 h-100" style="background:#fff;">
-                    <strong>Total Products:</strong>
-                    <p class="text-muted">All products available in the shop</p>
-                    <div class="progress mb-3" style="height: 10px">
-                        <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary" role="progressbar" style="width: 100%"></div>
+            <!-- Left: Inventory Summary -->
+            <div class="col-xl-5">
+                <div class="premium-panel h-100">
+                    <div class="premium-panel-header">
+                        <i class="bi bi-clipboard-data"></i> Inventory Summary
                     </div>
-
-                    <strong>Remaining Products:</strong>
-                    <p class="text-muted">Products still available for sale</p>
-                    <div class="progress mb-3" style="height: 10px">
-                        <div class="progress-bar progress-bar-striped progress-bar-animated bg-success" role="progressbar" style="width: 75%"></div>
-                    </div>
-
-                    <strong>Expired Products:</strong>
-                    <p class="text-muted">Products that passed expiration date</p>
-                    <div class="progress mb-3" style="height: 10px">
-                        <div class="progress-bar progress-bar-striped progress-bar-animated bg-danger" role="progressbar" style="width: 10%"></div>
-                    </div>
-
-                    <strong>Disposed Products:</strong>
-                    <p class="text-muted">Products removed from inventory</p>
-                    <div class="progress mb-3" style="height: 10px">
-                        <div class="progress-bar progress-bar-striped progress-bar-animated bg-warning" role="progressbar" style="width: 5%"></div>
-                    </div>
-
-                    <strong>Running Out Products:</strong>
-                    <p class="text-muted">Products with low stock</p>
-                    <div class="progress mb-3" style="height: 10px">
-                        <div class="progress-bar progress-bar-striped progress-bar-animated bg-info" role="progressbar" style="width: 20%"></div>
-                    </div>
-
-                    <strong>Out of Stock Products:</strong>
-                    <p class="text-muted">Products not available for sale</p>
-                    <div class="progress mb-3" style="height: 10px">
-                        <div class="progress-bar progress-bar-striped progress-bar-animated bg-dark" role="progressbar" style="width: 5%"></div>
+                    <div class="premium-panel-body">
+                        <div class="row g-3">
+                            <div class="col-6">
+                                <div class="mini-tile">
+                                    <div class="mini-tile-icon bg-primary"><i class="bi bi-box-seam"></i></div>
+                                    <div>
+                                        <div class="mini-tile-value"><?php echo e(number_format($totalProducts)); ?></div>
+                                        <div class="mini-tile-label">Total Products</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="mini-tile">
+                                    <div class="mini-tile-icon bg-success"><i class="bi bi-check-circle"></i></div>
+                                    <div>
+                                        <div class="mini-tile-value"><?php echo e(number_format($remainingProducts)); ?></div>
+                                        <div class="mini-tile-label">Remaining</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="mini-tile">
+                                    <div class="mini-tile-icon bg-danger"><i class="bi bi-calendar-x"></i></div>
+                                    <div>
+                                        <div class="mini-tile-value"><?php echo e(number_format($expiredProducts)); ?></div>
+                                        <div class="mini-tile-label">Expired</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="mini-tile">
+                                    <div class="mini-tile-icon bg-warning"><i class="bi bi-trash"></i></div>
+                                    <div>
+                                        <div class="mini-tile-value"><?php echo e(number_format($disposedProducts)); ?></div>
+                                        <div class="mini-tile-label">Disposed</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="mini-tile">
+                                    <div class="mini-tile-icon bg-info"><i class="bi bi-exclamation-triangle"></i></div>
+                                    <div>
+                                        <div class="mini-tile-value"><?php echo e(number_format($runningOutProducts)); ?></div>
+                                        <div class="mini-tile-label">Running Out</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="mini-tile">
+                                    <div class="mini-tile-icon bg-dark"><i class="bi bi-x-circle"></i></div>
+                                    <div>
+                                        <div class="mini-tile-value"><?php echo e(number_format($outOfStockProducts)); ?></div>
+                                        <div class="mini-tile-label">Out of Stock</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -184,10 +264,10 @@
         <ul class="nav nav-tabs mb-3" id="shopTab" role="tablist">
             <?php $__currentLoopData = $shops; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $shop): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                 <li class="nav-item" role="presentation">
-                    <a class="nav-link <?php echo e($index == 0 ? 'active' : ''); ?>" 
-                       id="shop<?php echo e($shop->id); ?>-tab" 
-                       data-bs-toggle="tab" 
-                       href="#shop<?php echo e($shop->id); ?>" 
+                    <a class="nav-link <?php echo e($index == 0 ? 'active' : ''); ?>"
+                       id="shop<?php echo e($shop->id); ?>-tab"
+                       data-bs-toggle="tab"
+                       href="#shop<?php echo e($shop->id); ?>"
                        role="tab"><?php echo e($shop->name); ?></a>
                 </li>
             <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
@@ -196,7 +276,7 @@
         <!-- Tab Content -->
         <div class="tab-content">
             <?php $__currentLoopData = $shops; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $shop): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                <div class="tab-pane fade <?php echo e($index == 0 ? 'show active' : ''); ?>" 
+                <div class="tab-pane fade <?php echo e($index == 0 ? 'show active' : ''); ?>"
                      id="shop<?php echo e($shop->id); ?>" role="tabpanel">
                     <table class="table table-bordered text-center">
                         <thead class="table-warning">
@@ -305,4 +385,7 @@
 </script>
 <!-- END: page scripts -->
 <!-- <?php echo $__env->make('components/footer', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?> -->
-<?php /**PATH D:\PROJECTS\d\double_h_mauzo\resources\views/dashboard/admin/index.blade.php ENDPATH**/ ?>
+
+<?php $__env->stopSection(); ?>
+
+<?php echo $__env->make('main', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?><?php /**PATH D:\PROJECTS\d\double_h_mauzo\resources\views/dashboard/admin/index.blade.php ENDPATH**/ ?>

@@ -17,7 +17,9 @@
             left:0;
             width:100%;
             height:100%;
-            background: rgba(255,255,255,0.85);
+            background: rgba(247,249,252,0.8);
+            -webkit-backdrop-filter: blur(4px);
+            backdrop-filter: blur(4px);
             display:none;
             justify-content:center;
             align-items:center;
@@ -26,28 +28,81 @@
 
         .loader-content{
             text-align:center;
-            font-weight:600;
-            color:#333;
+            background:#fff;
+            padding: 32px 46px;
+            border-radius: 18px;
+            box-shadow: 0 1.5rem 3.5rem rgba(15,23,42,.14);
+            border: 1px solid rgba(15,23,42,.04);
+            animation: loader-pop .25s ease;
         }
 
-        .spinner{
-            width:60px;
-            height:60px;
-            border:6px solid #e3e3e3;
-            border-top:6px solid #007bff;
-            border-radius:50%;
-            animation:spin 1s linear infinite;
-            margin:auto;
+        .loader-content p{
+            margin: 16px 0 0;
+            font-weight: 600;
+            font-size: .85rem;
+            letter-spacing: .05em;
+            text-transform: uppercase;
+            color:#64748b;
         }
 
-        @keyframes spin{
-            0%{transform:rotate(0deg);}
+        .pro-spinner{
+            width:54px;
+            height:54px;
+            display:block;
+            margin: 0 auto;
+            transform-origin: 50% 50%;
+            animation: pro-spin 1s cubic-bezier(.55,.15,.45,.85) infinite;
+        }
+        .pro-spinner-track{
+            stroke:#e7ecf3;
+        }
+        .pro-spinner-arc{
+            stroke:#1e88e5;
+            stroke-linecap:round;
+            stroke-dasharray: 72 200;
+        }
+
+        @keyframes pro-spin{
             100%{transform:rotate(360deg);}
+        }
+        @keyframes loader-pop{
+            from{opacity:0; transform:scale(.92);}
+            to{opacity:1; transform:scale(1);}
         }
     </style>
 </head>
 
 <body>
+
+{{-- GLOBAL LOADER --}}
+<div id="global-loader">
+    <div class="loader-content">
+        <svg class="pro-spinner" viewBox="0 0 40 40">
+            <circle class="pro-spinner-track" cx="20" cy="20" r="17" fill="none" stroke-width="4"></circle>
+            <circle class="pro-spinner-arc" cx="20" cy="20" r="17" fill="none" stroke-width="4"></circle>
+        </svg>
+        <p>Loading...</p>
+    </div>
+</div>
+<script>
+(function () {
+    var loader = document.getElementById('global-loader');
+    if (!loader) return;
+
+    // Show it while this page is still loading
+    loader.style.display = 'flex';
+
+    // Hide the loader once this page has fully finished loading
+    window.addEventListener('load', function () {
+        loader.style.display = 'none';
+    });
+
+    // Show it the instant the user navigates to another page
+    window.addEventListener('beforeunload', function () {
+        loader.style.display = 'flex';
+    });
+})();
+</script>
 
 {{-- Top Menu --}}
 @include('components.mainmenu')
@@ -56,14 +111,6 @@
 <main class="container-fluid" style="margin-top:70px;">
     @yield('content')
 </main>
-
-{{-- GLOBAL LOADER --}}
-<!-- <div id="global-loader">
-    <div class="loader-content">
-        <div class="spinner"></div>
-        <p>Loading...</p>
-    </div>
-</div> -->
 
 {{-- Scripts --}}
 @stack('scripts')

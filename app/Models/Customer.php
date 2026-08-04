@@ -17,4 +17,9 @@ class Customer extends Model
     {
         return $this->hasMany(\App\Models\Sale::class);
     }
+
+    public function shop()
+    {
+        return $this->belongsTo(\App\Models\Shops::class, 'shop_id');
+    }
 }

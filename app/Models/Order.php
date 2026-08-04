@@ -16,6 +16,7 @@ class Order extends Model
         'staff_id',
         'shop_id',
         'status', // e.g., pending, approved, rejected
+        'total_amount',
     ];
 
     // Optional: default status for new orders

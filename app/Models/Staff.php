@@ -24,6 +24,8 @@ class Staff extends Authenticatable
 
     protected $hidden = ['password'];
 
+    protected $appends = ['full_name'];
+
     // Relationships
     public function role()
     {

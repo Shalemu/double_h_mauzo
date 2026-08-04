@@ -19,6 +19,41 @@ class CustomerController extends Controller
         return view('dashboard.staff.index', compact('customers'));
     }
 
+    // Admin: view all customers across every shop, with credit/debt tracking
+    public function adminIndex()
+    {
+        $customers = Customer::with('shop')
+            ->withSum('sales as total_purchases', 'total')
+            ->withSum('sales as total_paid', 'received_amount')
+            ->withSum('sales as total_debt', 'remaining_amount')
+            ->latest()
+            ->get();
+
+        return view('dashboard.admin.customers.index', compact('customers'));
+    }
+
+    // Admin: customer detail and purchase/debt history (any shop)
+    public function adminShow(Customer $customer)
+    {
+        $customer->load('shop');
+
+        $sales = Sale::where('customer_id', $customer->id)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        $totalPurchases = $sales->sum('total');
+        $totalPaid      = $sales->sum('received_amount');
+        $totalDebt      = $sales->sum('remaining_amount');
+
+        return view('dashboard.admin.customers.show', compact(
+            'customer',
+            'sales',
+            'totalPurchases',
+            'totalPaid',
+            'totalDebt'
+        ));
+    }
+
     public function manage()
     {
         $staff = Auth::guard('staff')->user();

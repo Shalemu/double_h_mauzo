@@ -38,8 +38,11 @@ use App\Http\Controllers\FixedExpensesController;
 use App\Http\Controllers\PurchasesController;
 use App\Http\Controllers\SupplierController;
 
-// Sale return 
+// Sale return
 use App\Http\Controllers\SaleReturnController;
+
+// Purchase return
+use App\Http\Controllers\PurchaseReturnController;
 
 use App\Http\Controllers\PurchaseInvoiceController;
 
@@ -243,6 +246,13 @@ Route::middleware(['web', 'auth'])->group(function () {
    Route::post('sales-returns', [SaleReturnController::class, 'store'])
     ->name('sales-returns.store');
 
+// ================= PURCHASE RETURNS =================
+
+    Route::get('purchase_returns/{shop}/date/{date}', [PurchaseReturnController::class, 'detail'])->name('admin.purchase_returns.detail');
+
+    Route::post('purchase-returns', [PurchaseReturnController::class, 'store'])
+    ->name('purchase-returns.store');
+
     Route::get('sales/{shopId}/{date}/export-excel', [SaleController::class, 'exportExcel'])->name('sales.export.excel');
     Route::get('sales/{shopId}/{date}/export-pdf', [SaleController::class, 'exportPdf'])->name('sales.export.pdf');
 
@@ -290,6 +300,17 @@ Route::prefix('purchases')->name('purchases.')->group(function () {
         Route::get('/', [SupplierController::class, 'index'])->name('index');
         Route::get('/create', [SupplierController::class, 'create'])->name('create');
         Route::post('/', [SupplierController::class, 'store'])->name('store');
+    });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Customers (Admin view — all shops, credit/debt tracking)
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('customers')->name('customers.')->group(function () {
+        Route::get('/', [CustomerController::class, 'adminIndex'])->name('index');
+        Route::get('/{customer}', [CustomerController::class, 'adminShow'])->name('show');
+        Route::post('/{customer}/record-payment', [CustomerController::class, 'recordPayment'])->name('recordPayment');
     });
 
     // credit
