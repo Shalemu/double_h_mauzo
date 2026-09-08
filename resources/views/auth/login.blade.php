@@ -18,7 +18,7 @@
         html, body {
             margin: 0;
             padding: 0;
-            min-height: 100vh;
+            height: 100%;
         }
 
         body {
@@ -27,25 +27,108 @@
             color: #4a4a4a;
         }
 
-        .login-wrapper {
+        .login-row {
+            display: flex;
             min-height: 100vh;
+            width: 100%;
+        }
+
+        /* Left brand panel — fixed width, full row height */
+        .login-brand {
+            width: 42%;
+            min-width: 380px;
+            background: linear-gradient(160deg, #1f1f1f 0%, #2c2c2c 55%, #3a3a3a 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 60px 40px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .login-brand::before {
+            content: '';
+            position: absolute;
+            width: 480px;
+            height: 480px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.04);
+            top: -180px;
+            right: -160px;
+        }
+
+        .login-brand::after {
+            content: '';
+            position: absolute;
+            width: 320px;
+            height: 320px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.035);
+            bottom: -140px;
+            left: -120px;
+        }
+
+        .login-brand-logo {
+            width: 88px;
+            height: 88px;
+            border-radius: 50%;
+            background: #fff;
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 40px 20px;
+            padding: 14px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
+            position: relative;
+            z-index: 1;
+        }
+
+        .login-brand-logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .login-brand h1 {
+            color: #fff;
+            font-size: 26px;
+            font-weight: 600;
+            margin: 28px 0 10px;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .login-brand p {
+            color: rgba(255, 255, 255, 0.55);
+            font-size: 14px;
+            text-align: center;
+            max-width: 320px;
+            line-height: 1.6;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Right form panel — fills remaining row width */
+        .login-panel {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             background: #ffffff;
+            padding: 40px 20px;
         }
 
         .login-card {
-            max-width: 560px;
+            max-width: 400px;
             width: 100%;
             background: #ffffff;
-            border-radius: 20px;
-            padding: 28px 48px;
+            border-radius: 18px;
+            padding: 36px 40px;
             box-shadow:
                 0 30px 70px rgba(0, 0, 0, 0.10),
                 0 10px 25px rgba(0, 0, 0, 0.06),
-                0 0 0 1px rgba(0, 0, 0, 0.03);
+                0 0 0 1px rgba(0, 0, 0, 0.04);
             animation: card-in 0.5s ease both;
         }
 
@@ -54,42 +137,22 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        .login-logo {
-            width: 52px;
-            height: 52px;
-            border-radius: 50%;
-            margin: 0 auto 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
-            padding: 8px;
-        }
-
-        .login-logo img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-        }
-
         .login-card h2 {
-            text-align: center;
-            font-size: 22px;
+            font-size: 24px;
             font-weight: 600;
             color: #262626;
             margin: 0 0 4px;
         }
 
         .login-card .sub {
-            text-align: center;
             color: #9a9a9a;
             font-size: 13.5px;
-            margin-bottom: 16px;
+            margin-bottom: 28px;
         }
 
         .form-group {
             position: relative;
-            margin-bottom: 12px;
+            margin-bottom: 18px;
         }
 
         .form-group label {
@@ -104,16 +167,16 @@
 
         .form-group i.field-icon {
             position: absolute;
-            left: 15px;
-            top: 34px;
+            left: 16px;
+            top: 39px;
             color: #c2c2c2;
             font-size: 16px;
         }
 
         .form-group .toggle-password {
             position: absolute;
-            right: 15px;
-            top: 34px;
+            right: 16px;
+            top: 39px;
             color: #c2c2c2;
             cursor: pointer;
             font-size: 16px;
@@ -121,8 +184,8 @@
 
         .form-control {
             width: 100%;
-            height: 40px;
-            padding: 0 42px;
+            height: 48px;
+            padding: 0 44px;
             border: 1.5px solid #ececec;
             border-radius: 10px;
             background: #fafafa;
@@ -134,9 +197,9 @@
 
         .form-control:focus {
             outline: none;
-            border-color: #262626;
+            border-color: #a02128;
             background: #fff;
-            box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 0 0 4px rgba(160, 33, 40, 0.08);
         }
 
         .form-options {
@@ -156,13 +219,13 @@
         }
 
         .form-options input[type="checkbox"] {
-            accent-color: #262626;
+            accent-color: #a02128;
             width: 15px;
             height: 15px;
         }
 
         .form-options a {
-            color: #262626;
+            color: #a02128;
             text-decoration: none;
             font-weight: 500;
         }
@@ -173,10 +236,10 @@
 
         .btn-login {
             width: 100%;
-            height: 42px;
+            height: 48px;
             border: none;
             border-radius: 10px;
-            background: #1f1f1f;
+            background: #a02128;
             color: #fff;
             font-family: 'Poppins', sans-serif;
             font-weight: 600;
@@ -184,13 +247,13 @@
             font-size: 14px;
             cursor: pointer;
             transition: 0.25s;
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+            box-shadow: 0 10px 20px rgba(160, 33, 40, 0.3);
         }
 
         .btn-login:hover {
-            background: #000;
+            background: #841a20;
             transform: translateY(-1px);
-            box-shadow: 0 14px 26px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 14px 26px rgba(160, 33, 40, 0.38);
         }
 
         .btn-login:active {
@@ -205,7 +268,7 @@
         }
 
         .register-hint a {
-            color: #262626;
+            color: #a02128;
             font-weight: 600;
             text-decoration: none;
         }
@@ -225,19 +288,30 @@
             padding-left: 18px;
         }
 
+        @media (max-width: 900px) {
+            .login-brand { display: none; }
+            .login-panel { padding: 40px 20px; }
+        }
+
         @media (max-width: 600px) {
-            .login-card { padding: 24px 26px; border-radius: 16px; }
+            .login-card { padding: 28px 24px; border-radius: 14px; }
         }
     </style>
 </head>
 <body>
 
-<div class="login-wrapper">
-    <div class="login-card">
+<div class="login-row">
 
-        <div class="login-logo">
+    <div class="login-brand">
+        <div class="login-brand-logo">
             <img src="{{ asset('assets/img/logo.png') }}" alt="Double H Cosmetics">
         </div>
+        <h1>Double H Cosmetics</h1>
+        <p>Manage inventory, sales and purchases from one admin panel built for your team.</p>
+    </div>
+
+    <div class="login-panel">
+    <div class="login-card">
 
         <h2>Welcome Back</h2>
         <p class="sub">Sign in to Double H Cosmetics Admin Panel</p>
@@ -304,6 +378,8 @@
         </form>
 
     </div>
+    </div>
+
 </div>
 
 <script>

@@ -10,96 +10,65 @@
     @include('components.header')
 
     <style>
-        /* GLOBAL LOADER */
+        /* GLOBAL PAGE-LOAD PROGRESS BAR */
         #global-loader{
             position: fixed;
             top:0;
             left:0;
             width:100%;
-            height:100%;
-            background: rgba(247,249,252,0.8);
-            -webkit-backdrop-filter: blur(4px);
-            backdrop-filter: blur(4px);
-            display:none;
-            justify-content:center;
-            align-items:center;
+            height:3px;
             z-index:99999;
+            background: transparent;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity .2s ease;
         }
-
-        .loader-content{
-            text-align:center;
-            background:#fff;
-            padding: 32px 46px;
-            border-radius: 18px;
-            box-shadow: 0 1.5rem 3.5rem rgba(15,23,42,.14);
-            border: 1px solid rgba(15,23,42,.04);
-            animation: loader-pop .25s ease;
+        #global-loader.is-active{
+            opacity: 1;
         }
-
-        .loader-content p{
-            margin: 16px 0 0;
-            font-weight: 600;
-            font-size: .85rem;
-            letter-spacing: .05em;
-            text-transform: uppercase;
-            color:#64748b;
+        #global-loader .bar{
+            height:100%;
+            width:0%;
+            background: linear-gradient(90deg, #a02128, #d4454c);
+            box-shadow: 0 0 10px rgba(160,33,40,.6);
+            transition: width .4s ease;
         }
-
-        .pro-spinner{
-            width:54px;
-            height:54px;
-            display:block;
-            margin: 0 auto;
-            transform-origin: 50% 50%;
-            animation: pro-spin 1s cubic-bezier(.55,.15,.45,.85) infinite;
+        #global-loader.is-active .bar{
+            width: 78%;
+            transition: width 3.5s cubic-bezier(.1,.6,.2,1);
         }
-        .pro-spinner-track{
-            stroke:#e7ecf3;
-        }
-        .pro-spinner-arc{
-            stroke:#1e88e5;
-            stroke-linecap:round;
-            stroke-dasharray: 72 200;
-        }
-
-        @keyframes pro-spin{
-            100%{transform:rotate(360deg);}
-        }
-        @keyframes loader-pop{
-            from{opacity:0; transform:scale(.92);}
-            to{opacity:1; transform:scale(1);}
+        #global-loader.is-done .bar{
+            width: 100%;
+            transition: width .2s ease;
         }
     </style>
 </head>
 
 <body>
 
-{{-- GLOBAL LOADER --}}
-<div id="global-loader">
-    <div class="loader-content">
-        <svg class="pro-spinner" viewBox="0 0 40 40">
-            <circle class="pro-spinner-track" cx="20" cy="20" r="17" fill="none" stroke-width="4"></circle>
-            <circle class="pro-spinner-arc" cx="20" cy="20" r="17" fill="none" stroke-width="4"></circle>
-        </svg>
-        <p>Loading...</p>
-    </div>
-</div>
+{{-- GLOBAL PAGE-LOAD PROGRESS BAR --}}
+<div id="global-loader"><div class="bar"></div></div>
 <script>
 (function () {
     var loader = document.getElementById('global-loader');
     if (!loader) return;
 
-    // Show it while this page is still loading
-    loader.style.display = 'flex';
+    // Start the bar creeping toward ~78% right away
+    loader.classList.add('is-active');
 
-    // Hide the loader once this page has fully finished loading
+    // On full load, snap it to 100% then fade out
     window.addEventListener('load', function () {
-        loader.style.display = 'none';
+        loader.classList.remove('is-active');
+        loader.classList.add('is-done');
+        setTimeout(function () {
+            loader.classList.remove('is-done');
+        }, 250);
     });
 
-    // Show it the instant the user navigates to another page
+    // Restart the bar the instant the user navigates away
     window.addEventListener('beforeunload', function () {
-        loader.style.display = 'flex';
+        loader.classList.remove('is-done');
+        loader.classList.add('is-active');
     });
 })();
 </script>

@@ -90,8 +90,8 @@
 
 <div class="cat__content">
 
-<div class="row mb-4">
-    <div class="col-12 d-flex flex-wrap" style="gap: 12px; padding-left: 50px;">
+<div class="row mb-4" align-items-center" style="padding-left:30px; padding-right:30px; margin-top: 40px;">
+    <div class="col-12 d-flex flex-wrap justify-content-center" style="gap: 12px;">
         <button type="button" class="btn btn-outline-danger">
             <i class="bi bi-cart-plus"></i> Sales
         </button>
@@ -116,75 +116,7 @@
     </div>
 </div>
 
-    <!-- Use container-fluid to reduce side gap -->
-   <div class="container-fluid">
-    <div class="row g-4" style="padding-left: 30px; padding-right: 30px;">
-
-        <!-- Gross Profit -->
-        <div class="col-lg-3 col-md-6 d-flex">
-            <div class="card premium-stat-card border-success w-100 shadow-sm">
-                <div class="card-body d-flex align-items-center">
-                    <div class="premium-stat-icon bg-success text-white d-flex align-items-center justify-content-center me-3">
-                        <i class="bi bi-graph-up-arrow fs-4"></i>
-                    </div>
-                    <div>
-                        <div class="text-muted text-uppercase premium-stat-label fw-semibold mb-1">Gross Profit (All Shops)</div>
-                        <div class="fw-bold premium-stat-value text-success">Tz: <?php echo e(number_format($grossProfit, 2)); ?></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Total Expenses -->
-        <div class="col-lg-3 col-md-6 d-flex">
-            <div class="card premium-stat-card border-primary w-100 shadow-sm">
-                <div class="card-body d-flex align-items-center">
-                    <div class="premium-stat-icon bg-primary text-white d-flex align-items-center justify-content-center me-3">
-                        <i class="bi bi-cash-stack fs-4"></i>
-                    </div>
-                    <div>
-                        <div class="text-muted text-uppercase premium-stat-label fw-semibold mb-1">Total Expenses (All Shops)</div>
-                        <div class="fw-bold premium-stat-value text-primary">Tz: <?php echo e(number_format($totalExpenses, 2)); ?></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Net Profit -->
-        <div class="col-lg-3 col-md-6 d-flex">
-            <div class="card premium-stat-card border-danger w-100 shadow-sm">
-                <div class="card-body d-flex align-items-center">
-                    <div class="premium-stat-icon bg-danger text-white d-flex align-items-center justify-content-center me-3">
-                        <i class="bi bi-piggy-bank fs-4"></i>
-                    </div>
-                    <div>
-                        <div class="text-muted text-uppercase premium-stat-label fw-semibold mb-1">Net Profit</div>
-                        <div class="fw-bold premium-stat-value text-danger">Tz: <?php echo e(number_format($netProfit, 2)); ?></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Sales -->
-        <div class="col-lg-3 col-md-6 d-flex">
-            <div class="card premium-stat-card border-warning w-100 shadow-sm">
-                <div class="card-body d-flex align-items-center">
-                    <div class="premium-stat-icon bg-warning text-white d-flex align-items-center justify-content-center me-3">
-                        <i class="bi bi-tags fs-4"></i>
-                    </div>
-                    <div>
-                        <div class="text-muted text-uppercase premium-stat-label fw-semibold mb-1">Sales (All Shops)</div>
-                        <div class="fw-bold premium-stat-value text-warning-emphasis">Tz: <?php echo e(number_format($totalSales, 2)); ?></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-    </div>
-</div>
-
-</div>
-
+   
 
 <div class="cat__content">
     <div class="container-fluid">

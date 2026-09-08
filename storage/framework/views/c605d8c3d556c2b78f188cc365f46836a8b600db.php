@@ -47,6 +47,9 @@
             <ul class="dropdown-menu shadow-sm">
                 <li><a class="dropdown-item" href="<?php echo e(route('staff.manage.index')); ?>"><i class="icmn-user"></i> My Staff</a></li>
                 <li><a class="dropdown-item" href="<?php echo e(route('dashboard.role')); ?>"><i class="icmn-lock"></i> Role & Permission</a></li>
+                <?php if(Auth::check() && Auth::user()->super_user): ?>
+                    <li><a class="dropdown-item" href="<?php echo e(route('users.manage.index')); ?>"><i class="icmn-shield"></i> Manage Users & Roles</a></li>
+                <?php endif; ?>
             </ul>
         </div>
 
@@ -188,6 +191,7 @@ document.getElementById('logoutBtn').addEventListener('click', function() {
     height: 100px;
     background: #ffffff;
     box-shadow: 0 6px 24px rgba(0, 0, 0, 0.08);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
     z-index: 1030;
     margin-top: 60px;
 }
@@ -195,13 +199,14 @@ document.getElementById('logoutBtn').addEventListener('click', function() {
 .cat__top-bar__menu {
     gap: 6px;
     padding-left: 30px;
+    height: 100%;
 }
 
 .cat__menu-item {
     position: relative;
     display: flex;
-    align-items: center;
-    margin-top: 20px;
+    align-items: stretch;
+    height: 100%;
 }
 
 .cat__menu-item > a,
@@ -272,7 +277,7 @@ document.getElementById('logoutBtn').addEventListener('click', function() {
 }
 
 .dropdown-menu {
-    border-radius: 14px;
+    border-radius: 6px;
     padding: 10px;
     border: none;
     box-shadow: 0 20px 50px rgba(0,0,0,0.15);
@@ -342,11 +347,11 @@ document.getElementById('logoutBtn').addEventListener('click', function() {
     min-width: 260px;
     padding: 10px 0;
     border: none;
-    border-radius: 12px; 
+    border-radius: 6px;
     background: #fff;
     box-shadow: 0 20px 50px rgba(0,0,0,0.15);
     transform-origin: top;
-    margin-top: 10px;
+    margin-top: 0;
 }
 
 /* Dropdown items */

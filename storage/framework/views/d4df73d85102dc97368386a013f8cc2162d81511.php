@@ -3,12 +3,19 @@ document.addEventListener("DOMContentLoaded", function(){
 
     function showLoader(){
         const loader = document.getElementById('global-loader');
-        if(loader) loader.style.display = 'flex';
+        if(loader){
+            loader.classList.remove('is-done');
+            loader.classList.add('is-active');
+        }
     }
 
     function hideLoader(){
         const loader = document.getElementById('global-loader');
-        if(loader) loader.style.display = 'none';
+        if(loader){
+            loader.classList.remove('is-active');
+            loader.classList.add('is-done');
+            setTimeout(() => loader.classList.remove('is-done'), 250);
+        }
     }
 
     /* SHOW SPINNER ON PAGE NAVIGATION */

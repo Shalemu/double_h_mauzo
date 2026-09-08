@@ -21,6 +21,7 @@ use App\Http\Controllers\UnitController;
 // Management Controllers
 use App\Http\Controllers\StaffController;
 use App\Http\Controllers\RoleController;
+use App\Http\Controllers\SuperAdminController;
 
 // Transactions & Cart
 use App\Http\Controllers\TransactionController;
@@ -196,6 +197,22 @@ Route::middleware(['web', 'auth'])->group(function () {
             Route::get('/{id}/edit', [StaffController::class, 'edit'])->name('edit');
             Route::put('/{id}', [StaffController::class, 'update'])->name('update');
             Route::delete('/{id}', [StaffController::class, 'destroy'])->name('destroy');
+        });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Super Admin: User Approval & Role Management
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('dashboard/admin/users')
+        ->middleware('superadmin')
+        ->name('users.manage.')
+        ->group(function () {
+            Route::get('/', [SuperAdminController::class, 'index'])->name('index');
+            Route::put('/{user}/approve', [SuperAdminController::class, 'approve'])->name('approve');
+            Route::delete('/{user}/reject', [SuperAdminController::class, 'reject'])->name('reject');
+            Route::put('/{user}/role', [SuperAdminController::class, 'updateRole'])->name('role');
+            Route::put('/{user}/super-user', [SuperAdminController::class, 'toggleSuperUser'])->name('superUser');
         });
 
     /*

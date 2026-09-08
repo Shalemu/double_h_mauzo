@@ -50,8 +50,8 @@ class LoginController extends Controller
             $user = Auth::guard('web')->user();
             Log::info("Admin login success", ['user_id' => $user->id, 'role_id' => $user->role_id]);
 
-            // Only allow admin/sub-admin roles
-            if (in_array($user->role_id, [1, 2])) {
+            // Only allow admin/sub-admin roles, or a Super Admin regardless of role_id
+            if (in_array($user->role_id, [1, 2]) || $user->super_user) {
                 return redirect()->route('dashboard.admin');
             }
 
