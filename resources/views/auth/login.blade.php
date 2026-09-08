@@ -123,7 +123,7 @@
             max-width: 400px;
             width: 100%;
             background: #ffffff;
-            border-radius: 18px;
+            border-radius: 10px;
             padding: 36px 40px;
             box-shadow:
                 0 30px 70px rgba(0, 0, 0, 0.10),
@@ -138,16 +138,26 @@
         }
 
         .login-card h2 {
-            font-size: 24px;
-            font-weight: 600;
-            color: #262626;
-            margin: 0 0 4px;
+            font-size: 26px;
+            font-weight: 700;
+            letter-spacing: 0.2px;
+            color: #1f1f1f;
+            margin: 0 0 16px;
+            text-align: center;
+            position: relative;
+            padding-bottom: 16px;
         }
 
-        .login-card .sub {
-            color: #9a9a9a;
-            font-size: 13.5px;
-            margin-bottom: 28px;
+        .login-card h2::after {
+            content: '';
+            position: absolute;
+            left: 50%;
+            bottom: 0;
+            transform: translateX(-50%);
+            width: 44px;
+            height: 3px;
+            border-radius: 3px;
+            background: linear-gradient(90deg, #a02128, #d4626a);
         }
 
         .form-group {
@@ -288,13 +298,19 @@
             padding-left: 18px;
         }
 
+        .alert-premium-success {
+            background: #f0f9f0;
+            border-left-color: #2e7d32;
+            color: #2e7d32;
+        }
+
         @media (max-width: 900px) {
             .login-brand { display: none; }
             .login-panel { padding: 40px 20px; }
         }
 
         @media (max-width: 600px) {
-            .login-card { padding: 28px 24px; border-radius: 14px; }
+            .login-card { padding: 28px 24px; border-radius: 8px; }
         }
     </style>
 </head>
@@ -314,7 +330,6 @@
     <div class="login-card">
 
         <h2>Welcome Back</h2>
-        <p class="sub">Sign in to Double H Cosmetics Admin Panel</p>
 
         @if(Auth::check())
             <script>window.location = "/main/dashboard";</script>
@@ -322,6 +337,10 @@
 
         @if($message = Session::get('error'))
             <div class="alert-premium">{{ $message }}</div>
+        @endif
+
+        @if($message = Session::get('success'))
+            <div class="alert-premium alert-premium-success">{{ $message }}</div>
         @endif
 
         @if (count($errors) > 0)
