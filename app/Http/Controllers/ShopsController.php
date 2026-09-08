@@ -24,9 +24,6 @@ class ShopsController extends Controller
 
         // Calculate summary for each shop
         $shops->each(function ($shop) {
-            // Stock value = total value of products in inventory
-            $shop->calculated_capital = $shop->products->sum(fn($p) => $p->quantity * $p->purchase_price);
-
             // Employees & wages
             $shop->total_employees = $shop->staff->count();
             $shop->total_wages = $shop->staff->sum('wages');

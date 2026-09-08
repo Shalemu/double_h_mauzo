@@ -135,7 +135,7 @@ $totalCapital = 0;
                                         </td>
                                         <td>{{ $shop->total_employees }}</td>
                                         <td>{{ number_format($shop->total_wages) }}</td>
-                                        <td>{{ number_format($shop->calculated_capital, 2) }}</td>
+                                        <td>{{ number_format($shop->stock_value, 2) }}</td>
                                         <td>{{ number_format($shop->realCapital, 2) }}</td>
                                         <td>{{ $shop->location }}</td>
                                         <td>
@@ -224,7 +224,7 @@ $totalCapital = 0;
                                     </tr>
 
                                     @php
-                                        $totalStock += $shop->calculated_capital;
+                                        $totalStock += $shop->stock_value;
                                         $totalCapital += $shop->realCapital;
                                     @endphp
                                 @empty
