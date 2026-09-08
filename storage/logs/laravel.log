@@ -129,3 +129,12 @@
 [2026-09-08 06:20:59] local.INFO: Staff login attempt failed for shadrackmussa97@gmail.com  
 [2026-09-08 06:21:12] local.INFO: Login attempt {"login":"shadrackmussa97@gmail.com","password_length":14} 
 [2026-09-08 06:21:12] local.INFO: Admin login success {"user_id":1,"role_id":1} 
+[2026-09-08 07:03:49] local.INFO: Login attempt {"login":"shadrackmussa9@gmail.com","password_length":6} 
+[2026-09-08 07:03:49] local.INFO: Admin login success {"user_id":4,"role_id":0} 
+[2026-09-08 07:03:49] local.WARNING: Admin login failed due to role mismatch {"role_id":0} 
+[2026-09-08 07:03:49] local.INFO: Staff login attempt failed for shadrackmussa9@gmail.com  
+[2026-09-08 07:03:58] local.INFO: Login attempt {"login":"shadrackmussa9@gmail.com","password_length":14} 
+[2026-09-08 07:03:58] local.INFO: Admin login attempt failed for shadrackmussa9@gmail.com  
+[2026-09-08 07:03:58] local.INFO: Staff login attempt failed for shadrackmussa9@gmail.com  
+[2026-09-08 07:04:09] local.INFO: Login attempt {"login":"shadrackmussa97@gmail.com","password_length":14} 
+[2026-09-08 07:04:09] local.INFO: Admin login success {"user_id":1,"role_id":1} 

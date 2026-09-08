@@ -318,10 +318,6 @@
             </div>
         @endif
 
-        @if($message = Session::get('success'))
-            <div class="alert-premium alert-premium-success">{{ $message }}</div>
-        @endif
-
         <form method="POST" action="{{ route('register') }}">
             {{ csrf_field() }}
 

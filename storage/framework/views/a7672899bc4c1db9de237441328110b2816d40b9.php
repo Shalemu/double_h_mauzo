@@ -55,16 +55,23 @@ $totalCapital = 0;
                         </div>
                     </div>
 
+                    <?php if(session('success')): ?>
+                        <div class="alert alert-success rounded-3">
+                            <?php echo e(session('success')); ?>
+
+                        </div>
+                    <?php endif; ?>
+
+                    <?php if(session('error')): ?>
+                        <div class="alert alert-danger rounded-3">
+                            <?php echo e(session('error')); ?>
+
+                        </div>
+                    <?php endif; ?>
+
                     <!-- Add Shop Form -->
                     <div id="addShopForm" class="border rounded-3 p-4 mb-4 bg-light"
-                         <?php if(!(session('success') || $errors->any())): ?> style="display:none;" <?php endif; ?>>
-
-                        <?php if(session('success')): ?>
-                            <div class="alert alert-success rounded-3">
-                                <?php echo e(session('success')); ?>
-
-                            </div>
-                        <?php endif; ?>
+                         <?php if(!$errors->any()): ?> style="display:none;" <?php endif; ?>>
 
                         <?php if($errors->any()): ?>
                             <div class="alert alert-danger rounded-3">
@@ -114,6 +121,7 @@ $totalCapital = 0;
                                     <th>Stock Value (TZS)</th>
                                     <th>Real Capital (TZS)</th>
                                     <th>Location</th>
+                                    <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -133,6 +141,89 @@ $totalCapital = 0;
                                         <td><?php echo e(number_format($shop->calculated_capital, 2)); ?></td>
                                         <td><?php echo e(number_format($shop->realCapital, 2)); ?></td>
                                         <td><?php echo e($shop->location); ?></td>
+                                        <td>
+                                            <div class="d-flex justify-content-center gap-2">
+                                                <button type="button" class="btn btn-sm btn-outline-primary"
+                                                        data-bs-toggle="modal" data-bs-target="#editShopModal<?php echo e($shop->id); ?>">
+                                                    <i class="bi bi-pencil"></i> Edit
+                                                </button>
+
+                                                <button type="button" class="btn btn-sm btn-outline-danger"
+                                                        data-bs-toggle="modal" data-bs-target="#deleteShopModal<?php echo e($shop->id); ?>">
+                                                    <i class="bi bi-trash"></i> Delete
+                                                </button>
+                                            </div>
+
+                                            <!-- Edit Shop Modal -->
+                                            <div class="modal fade" id="editShopModal<?php echo e($shop->id); ?>" tabindex="-1" aria-hidden="true">
+                                                <div class="modal-dialog">
+                                                    <div class="modal-content">
+                                                        <form method="POST" action="<?php echo e(route('shops.update', $shop->id)); ?>">
+                                                            <?php echo csrf_field(); ?>
+                                                            <?php echo method_field('PUT'); ?>
+                                                            <div class="modal-header">
+                                                                <h5 class="modal-title">Edit Shop</h5>
+                                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                            </div>
+                                                            <div class="modal-body text-start">
+                                                                <div class="mb-3">
+                                                                    <label class="form-label">Shop Name</label>
+                                                                    <input type="text" name="name" class="form-control"
+                                                                           value="<?php echo e($shop->name); ?>" required>
+                                                                </div>
+                                                                <div class="mb-3">
+                                                                    <label class="form-label">Location</label>
+                                                                    <input type="text" name="location" class="form-control"
+                                                                           value="<?php echo e($shop->location); ?>" required>
+                                                                </div>
+                                                                <div class="mb-3">
+                                                                    <label class="form-label">Capital</label>
+                                                                    <input type="number" name="capital" class="form-control"
+                                                                           value="<?php echo e($shop->capital); ?>">
+                                                                </div>
+                                                            </div>
+                                                            <div class="modal-footer">
+                                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                                <button type="submit" class="btn btn-primary">Save Changes</button>
+                                                            </div>
+                                                        </form>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Delete Shop Modal -->
+                                            <div class="modal fade" id="deleteShopModal<?php echo e($shop->id); ?>" tabindex="-1" aria-hidden="true">
+                                                <div class="modal-dialog">
+                                                    <div class="modal-content">
+                                                        <form method="POST" action="<?php echo e(route('shops.destroy', $shop->id)); ?>">
+                                                            <?php echo csrf_field(); ?>
+                                                            <?php echo method_field('DELETE'); ?>
+                                                            <div class="modal-header">
+                                                                <h5 class="modal-title text-danger">
+                                                                    <i class="bi bi-exclamation-triangle-fill"></i> Delete Shop
+                                                                </h5>
+                                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                            </div>
+                                                            <div class="modal-body text-start">
+                                                                <p class="mb-2">
+                                                                    Delete <strong>"<?php echo e($shop->name); ?>"</strong>?
+                                                                </p>
+                                                                <p class="text-muted mb-0">
+                                                                    This will permanently delete this shop and all of its products,
+                                                                    staff, sales, expenses and other related data. This cannot be undone.
+                                                                </p>
+                                                            </div>
+                                                            <div class="modal-footer">
+                                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                                <button type="submit" class="btn btn-danger">
+                                                                    <i class="bi bi-trash"></i> Delete Shop
+                                                                </button>
+                                                            </div>
+                                                        </form>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </td>
                                     </tr>
 
                                     <?php
@@ -141,7 +232,7 @@ $totalCapital = 0;
                                     ?>
                                 <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                                     <tr>
-                                        <td colspan="6">No shops found.</td>
+                                        <td colspan="7">No shops found.</td>
                                     </tr>
                                 <?php endif; ?>
 
@@ -149,6 +240,7 @@ $totalCapital = 0;
                                     <td colspan="3">Total</td>
                                     <td><?php echo e(number_format($totalStock, 2)); ?></td>
                                     <td><?php echo e(number_format($totalCapital, 2)); ?></td>
+                                    <td></td>
                                     <td></td>
                                 </tr>
                             </tbody>

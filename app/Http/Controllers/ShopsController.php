@@ -71,6 +71,46 @@ class ShopsController extends Controller
     }
 
     /**
+     * Update a shop's details
+     */
+    public function update(Request $request, Shops $shop)
+    {
+        $request->validate([
+            'name'     => 'required|string|max:255',
+            'location' => 'required|string|max:255',
+            'capital'  => 'nullable|numeric|min:0',
+        ]);
+
+        $shop->update([
+            'name'     => $request->name,
+            'location' => $request->location,
+            'capital'  => $request->capital ?? 0,
+        ]);
+
+        return redirect()->route('dashboard.shop')
+            ->with('success', "Shop \"{$shop->name}\" updated successfully!");
+    }
+
+    /**
+     * Delete a shop and its related data (products, staff, sales, etc.
+     * cascade via the database foreign keys).
+     */
+    public function destroy(Shops $shop)
+    {
+        $shopName = $shop->name;
+
+        try {
+            $shop->delete();
+        } catch (\Illuminate\Database\QueryException $e) {
+            return redirect()->route('dashboard.shop')
+                ->with('error', "Could not delete \"$shopName\": it still has related records that must be removed first.");
+        }
+
+        return redirect()->route('dashboard.shop')
+            ->with('success', "Shop \"$shopName\" and all its data have been deleted.");
+    }
+
+    /**
      * Show a single shop dashboard
      */
     public function show(Shops $shop)

@@ -223,6 +223,10 @@ Route::middleware(['web', 'auth'])->group(function () {
     Route::get('/dashboard/shop', [ShopsController::class, 'index'])->name('dashboard.shop');
     Route::post('/shops', [ShopsController::class, 'store'])->name('shops.store');
     Route::get('/dashboard/shop/{shop}', [ShopsController::class, 'show'])->name('dashboard.shop.show');
+    Route::put('/shops/{shop}', [ShopsController::class, 'update'])
+        ->middleware('admin')->name('shops.update');
+    Route::delete('/shops/{shop}', [ShopsController::class, 'destroy'])
+        ->middleware('admin')->name('shops.destroy');
 
     /*
     |--------------------------------------------------------------------------
