@@ -59,4 +59,9 @@ class Products extends Model
     return $this->hasMany(Purchases::class);
 }
 
+    public function shop()
+    {
+        return $this->belongsTo(Shops::class, 'shop_id');
+    }
+
 }

@@ -99,12 +99,13 @@ class Shops extends Model
     |--------------------------------------------------------------------------
     */
 
-    // Stock value (capital in products)
+    // Stock value (capital in products) — aggregated in SQL so a shop with
+    // tens of thousands of products doesn't hydrate every row into memory.
     public function getStockValueAttribute()
     {
-        return $this->products->sum(fn($product) =>
-            ($product->purchase_price ?? 0) * ($product->quantity ?? 0)
-        );
+        return (float) $this->products()
+            ->selectRaw('SUM(quantity * purchase_price) as total')
+            ->value('total');
     }
 
     // Calculated capital = initial capital + sales - expenses - purchases

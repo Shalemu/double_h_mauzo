@@ -10,6 +10,7 @@ use App\Models\Supplier;
 use App\Models\Order;
 use App\Models\Feedback;
 use App\Models\ProductTrash;
+use App\Models\Products;
 
 class ShopsController extends Controller
 {
@@ -18,7 +19,11 @@ class ShopsController extends Controller
      */
     public function index()
     {
-        $shops = Shops::with(['staff', 'products', 'sales', 'expenses', 'fixedExpenses', 'invoices'])
+        // Note: products/sales/invoices are intentionally NOT eager-loaded
+        // here — a single shop can hold tens of thousands of products, and
+        // loading every row into PHP just to sum() them was crashing the
+        // page. Everything below is aggregated in SQL instead.
+        $shops = Shops::with(['staff', 'expenses', 'fixedExpenses'])
             ->orderBy('name')
             ->get();
 
@@ -29,7 +34,7 @@ class ShopsController extends Controller
             $shop->total_wages = $shop->staff->sum('wages');
 
             // Profit = total sales - total expenses - wages
-            $totalSales = $shop->sales->sum('total');
+            $totalSales = $shop->sales()->sum('sales.total');
             $totalExpenses = $shop->expenses->sum('amount') + $shop->fixedExpenses->sum('amount') + $shop->total_wages;
             $shop->profit = $totalSales - $totalExpenses;
 
@@ -37,7 +42,7 @@ class ShopsController extends Controller
             $shop->realCapital = ($shop->capital ?? 0) + $shop->profit;
 
             // Total credit (all-time)
-            $shop->total_credit = $shop->invoices->where('payment_type', 'credit')->sum('remaining_credit');
+            $shop->total_credit = $shop->invoices()->where('payment_type', 'credit')->sum('remaining_credit');
         });
 
         return view('dashboard.shops.shop', compact('shops'));
@@ -112,26 +117,40 @@ class ShopsController extends Controller
      */
     public function show(Shops $shop)
     {
-        $shop->load(['staff', 'products', 'expenses', 'fixedExpenses', 'sales.items.product', 'purchases']);
+        // Note: 'products' is intentionally NOT eager-loaded here — a shop
+        // can hold tens of thousands of products, and loading/filtering the
+        // full collection in PHP was crashing this page. Everything below
+        // is queried/aggregated in SQL, scoped to this shop, and the
+        // display lists are capped — full inventory management belongs on
+        // the dedicated Manage Products page.
+        $shop->load(['staff', 'expenses', 'fixedExpenses', 'sales.items.product', 'purchases']);
 
-        $products = $shop->products;
+        $productsQuery = Products::where('shop_id', $shop->id);
+        $displayLimit = 300;
+
+        $products = (clone $productsQuery)->latest()->limit($displayLimit)->get();
 
         $suppliers = Supplier::all();
 
         $today = Carbon::today();
-       
+
         $monthStart = Carbon::now()->startOfMonth()->startOfDay();
         $monthEnd = Carbon::now()->endOfMonth()->endOfDay();
 
-        // Product filters
-        $finishedProducts = $products->where('quantity', 0);
-        $runningOutProducts = $products->where('quantity', '>', 0)
-            ->filter(fn($p) => $p->quantity <= $p->min_quantity);
-        $expiringProducts = $products->filter(fn($p) =>
-            $p->expire_date && Carbon::parse($p->expire_date)->between($today, $today->copy()->addDays(7))
-        );
-        $expiredProducts = $products->filter(fn($p) => $p->expire_date && Carbon::parse($p->expire_date)->lt($today));
-        $disposedProducts = $products->filter(fn($p) => $p->disposed == 1);
+        // Product filters (capped for display; counts remain exact via SQL)
+        $finishedProducts = (clone $productsQuery)->where('quantity', 0)->limit($displayLimit)->get();
+        $runningOutProducts = (clone $productsQuery)->where('quantity', '>', 0)
+            ->whereColumn('quantity', '<=', 'min_quantity')
+            ->limit($displayLimit)->get();
+        $expiringProducts = (clone $productsQuery)->whereNotNull('expire_date')
+            ->whereBetween('expire_date', [$today, $today->copy()->addDays(7)])
+            ->limit($displayLimit)->get();
+        $expiredProducts = (clone $productsQuery)->whereNotNull('expire_date')
+            ->where('expire_date', '<', $today)
+            ->limit($displayLimit)->get();
+        // Note: products has no "disposed" column — this was always an
+        // empty collection before too, kept as-is to match prior behavior.
+        $disposedProducts = collect();
 
         // Wages
         $totalWages = $shop->total_wages ?? $shop->staff->sum('wages');
@@ -154,7 +173,7 @@ class ShopsController extends Controller
         $totalProfit = $totalSales - $totalExpenses;
 
         // STOCK & CAPITAL
-        $stockValue = $products->sum(fn($p) => $p->quantity * $p->purchase_price);
+        $stockValue = (float) ((clone $productsQuery)->selectRaw('SUM(quantity * purchase_price) as total')->value('total'));
         $currentCapital = $stockValue;
         $realCapital = ($shop->capital ?? 0) + $totalProfit;
 

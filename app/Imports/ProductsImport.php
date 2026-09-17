@@ -19,6 +19,15 @@ class ProductsImport implements ToModel, WithHeadingRow
     // Row 1 is the heading row, so data starts at row 2.
     protected int $rowNumber = 1;
 
+    protected ?int $shopId;
+
+    public function __construct(?int $shopId = null)
+    {
+        // A super admin picks the target shop explicitly; a regular admin
+        // falls back to the single shop they own.
+        $this->shopId = $shopId ?? (Auth::user()->shop->id ?? null);
+    }
+
     public function model(array $row)
     {
         $this->rowNumber++;
@@ -37,7 +46,7 @@ class ProductsImport implements ToModel, WithHeadingRow
             return null;
         }
 
-        $shopId = Auth::user()->shop->id ?? null; // admin shop id
+        $shopId = $this->shopId;
 
         $unit = Unit::whereRaw('LOWER(name) = ?', [strtolower($unitValue)])
             ->orWhereRaw('LOWER(short_name) = ?', [strtolower($unitValue)])

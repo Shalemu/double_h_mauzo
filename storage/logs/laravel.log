@@ -138,3 +138,11 @@
 [2026-09-08 07:03:58] local.INFO: Staff login attempt failed for shadrackmussa9@gmail.com  
 [2026-09-08 07:04:09] local.INFO: Login attempt {"login":"shadrackmussa97@gmail.com","password_length":14} 
 [2026-09-08 07:04:09] local.INFO: Admin login success {"user_id":1,"role_id":1} 
+[2026-09-17 17:43:22] local.INFO: Login attempt {"login":"shadrackmussa97@gmail.com","password_length":14} 
+[2026-09-17 17:43:23] local.INFO: Admin login success {"user_id":4,"role_id":1} 
+[2026-09-17 18:25:15] local.ERROR: Allowed memory size of 134217728 bytes exhausted (tried to allocate 20480 bytes) {"userId":4,"exception":"[object] (Symfony\\Component\\ErrorHandler\\Error\\FatalError(code: 0): Allowed memory size of 134217728 bytes exhausted (tried to allocate 20480 bytes) at D:\\PROJECTS\\d\\double_h_mauzo\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Eloquent\\Concerns\\HasAttributes.php:684)
+[stacktrace]
+#0 {main}
+"} 
+[2026-09-17 18:39:45] local.INFO: Login attempt {"login":"cosmeticsdoubleh@gmail.com","password_length":7} 
+[2026-09-17 18:39:45] local.INFO: Admin login success {"user_id":10,"role_id":1} 

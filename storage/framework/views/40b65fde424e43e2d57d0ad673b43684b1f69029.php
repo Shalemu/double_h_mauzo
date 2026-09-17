@@ -1,5 +1,5 @@
-@section('title', 'Manage Product')
-@php
+<?php $__env->startSection('title', 'Manage Product'); ?>
+<?php
     $products             = $products             ?? collect();
     $categories           = $categories           ?? collect();
     $units                = $units                ?? collect();
@@ -7,7 +7,7 @@
     $isAdminTier         = $isAdminTier          ?? false;
     $productsTotal        = $productsTotal        ?? null;
     $productsDisplayLimit = $productsDisplayLimit ?? null;
-@endphp
+?>
 
 <div>
 
@@ -46,28 +46,28 @@
         }
     </style>
 
-    @if(session('success'))
-        <div class="alert alert-success">{{ session('success') }}</div>
-    @endif
+    <?php if(session('success')): ?>
+        <div class="alert alert-success"><?php echo e(session('success')); ?></div>
+    <?php endif; ?>
 
-    @if(session('error'))
-        <div class="alert alert-danger">{{ session('error') }}</div>
-    @endif
+    <?php if(session('error')): ?>
+        <div class="alert alert-danger"><?php echo e(session('error')); ?></div>
+    <?php endif; ?>
 
     <!-- PAGE HEADER -->
     <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3" style="margin-top: 20px;">
         <h3 class="mb-0"><i class="bi bi-box-seam me-2 text-primary"></i>Manage Products</h3>
         <div class="d-flex gap-2 flex-wrap">
-            <a href="{{ url()->previous() }}" class="btn btn-outline-secondary">
+            <a href="<?php echo e(url()->previous()); ?>" class="btn btn-outline-secondary">
                 <i class="bi bi-arrow-left"></i> Back
             </a>
             <button type="button" class="btn btn-outline-warning" data-bs-toggle="modal" data-bs-target="#uploadExcelModal">
               <i class="bi bi-file-earmark-excel"></i> Upload Excel
             </button>
-            <a href="{{ route('products.export.excel') }}" class="btn btn-outline-success">
+            <a href="<?php echo e(route('products.export.excel')); ?>" class="btn btn-outline-success">
                 <i class="bi bi-file-earmark-spreadsheet"></i> Export Excel
             </a>
-            <a href="{{ route('products.export.pdf') }}" class="btn btn-outline-danger">
+            <a href="<?php echo e(route('products.export.pdf')); ?>" class="btn btn-outline-danger">
                 <i class="bi bi-file-earmark-pdf"></i> Export PDF
             </a>
             <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addProductModal">
@@ -79,27 +79,27 @@
     <!-- Upload Excel Modal -->
 <div class="modal fade" id="uploadExcelModal" tabindex="-1" aria-labelledby="uploadExcelModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
-    <form action="{{ route('products.import.excel') }}" method="POST" enctype="multipart/form-data">
-        @csrf
+    <form action="<?php echo e(route('products.import.excel')); ?>" method="POST" enctype="multipart/form-data">
+        <?php echo csrf_field(); ?>
         <div class="modal-content border-0 shadow-lg rounded-4">
             <div class="modal-header border-0 pb-0">
                 <h5 class="modal-title fw-bold" id="uploadExcelModalLabel"><i class="bi bi-file-earmark-excel me-2 text-success"></i>Upload Products Excel</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <p class="text-muted">You can <a href="{{ route('products.download.template') }}">download the sample Excel format</a> to fill in product data.</p>
+                <p class="text-muted">You can <a href="<?php echo e(route('products.download.template')); ?>">download the sample Excel format</a> to fill in product data.</p>
 
-                @if($isAdminTier)
+                <?php if($isAdminTier): ?>
                 <div class="mb-3">
                     <label for="import_shop_id" class="form-label fw-semibold">Import into shop <span class="text-danger">*</span></label>
                     <select name="shop_id" id="import_shop_id" class="form-select" required>
                         <option value="">Select Shop</option>
-                        @foreach($shops as $shop)
-                            <option value="{{ $shop->id }}">{{ $shop->name }}</option>
-                        @endforeach
+                        <?php $__currentLoopData = $shops; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $shop): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <option value="<?php echo e($shop->id); ?>"><?php echo e($shop->name); ?></option>
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     </select>
                 </div>
-                @endif
+                <?php endif; ?>
 
                 <div class="mb-3">
                     <label for="excel_file" class="form-label fw-semibold">Choose Excel file</label>
@@ -120,20 +120,20 @@
 
 
 
-    @if($isAdminTier)
+    <?php if($isAdminTier): ?>
     <!-- Bulk Shop Assignment -->
-    <form id="bulkAssignForm" action="{{ route('products.bulkAssignShop') }}" method="POST"
+    <form id="bulkAssignForm" action="<?php echo e(route('products.bulkAssignShop')); ?>" method="POST"
           class="border rounded-3 p-3 mb-3 bg-light d-flex flex-wrap align-items-end gap-2">
-        @csrf
+        <?php echo csrf_field(); ?>
         <input type="hidden" name="assign_all_unassigned" id="assign_all_unassigned" value="0">
 
         <div>
             <label class="form-label fw-semibold mb-1">Assign to shop</label>
             <select name="shop_id" id="bulk_shop_id" class="form-select" required style="min-width: 220px;">
                 <option value="">Select Shop</option>
-                @foreach($shops as $shop)
-                    <option value="{{ $shop->id }}">{{ $shop->name }}</option>
-                @endforeach
+                <?php $__currentLoopData = $shops; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $shop): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                    <option value="<?php echo e($shop->id); ?>"><?php echo e($shop->name); ?></option>
+                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
             </select>
         </div>
 
@@ -145,21 +145,21 @@
             <i class="bi bi-exclamation-triangle"></i> Assign ALL Unassigned Products
         </button>
     </form>
-    @endif
+    <?php endif; ?>
 
     <!-- START: ecommerce/product-list -->
     <section class="card products-page-card w-100">
         <!-- Card Header -->
         <div class="card-header d-flex justify-content-between align-items-center">
             <span class="fw-bold"><i class="bi bi-list-ul me-2"></i>Product List</span>
-            @if($productsTotal !== null && $productsTotal > $products->count())
+            <?php if($productsTotal !== null && $productsTotal > $products->count()): ?>
                 <span class="text-muted small">
-                    Showing latest {{ $products->count() }} of {{ number_format($productsTotal) }} item(s) —
+                    Showing latest <?php echo e($products->count()); ?> of <?php echo e(number_format($productsTotal)); ?> item(s) —
                     use search/export or the bulk-assign tool above for the full set.
                 </span>
-            @else
-                <span class="text-muted small">{{ $products->count() }} item(s)</span>
-            @endif
+            <?php else: ?>
+                <span class="text-muted small"><?php echo e($products->count()); ?> item(s)</span>
+            <?php endif; ?>
         </div>
 
         <!-- Card Body -->
@@ -169,14 +169,14 @@
            <table class="table table-bordered table-hover align-middle mb-0" id="productTable" style="width: 100%;">
                 <thead>
                     <tr>
-                        @if($isAdminTier)
+                        <?php if($isAdminTier): ?>
                         <th><input type="checkbox" id="selectAllProducts"></th>
-                        @endif
+                        <?php endif; ?>
                         <th>Img</th>
                         <th>Name</th>
-                        @if($isAdminTier)
+                        <?php if($isAdminTier): ?>
                         <th>Shop</th>
-                        @endif
+                        <?php endif; ?>
                         <th class="text-center">Available Quantity</th>
                         <th class="text-center">Unit</th>
                         <th class="text-end">Purchase Price</th>
@@ -187,49 +187,50 @@
                     </tr>
                 </thead>
               <tbody>
-    @foreach($products as $product)
-    <tr data-id="{{ $product->id }}">
-        @if($isAdminTier)
-        <td><input type="checkbox" class="product-checkbox" value="{{ $product->id }}"></td>
-        @endif
+    <?php $__currentLoopData = $products; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $product): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+    <tr data-id="<?php echo e($product->id); ?>">
+        <?php if($isAdminTier): ?>
+        <td><input type="checkbox" class="product-checkbox" value="<?php echo e($product->id); ?>"></td>
+        <?php endif; ?>
         <td>
-            @if($product->image)
-                <img src="{{ asset('storage/' . $product->image) }}" alt="Product Image">
-            @else
+            <?php if($product->image): ?>
+                <img src="<?php echo e(asset('storage/' . $product->image)); ?>" alt="Product Image">
+            <?php else: ?>
                 <img src="https://via.placeholder.com/50" alt="No Image">
-            @endif
+            <?php endif; ?>
         </td>
-        <td class="fw-semibold">{{ $product->name }}</td>
-        @if($isAdminTier)
+        <td class="fw-semibold"><?php echo e($product->name); ?></td>
+        <?php if($isAdminTier): ?>
         <td>
-            @if($product->shop)
-                {{ $product->shop->name }}
-            @else
+            <?php if($product->shop): ?>
+                <?php echo e($product->shop->name); ?>
+
+            <?php else: ?>
                 <span class="badge bg-warning text-dark">Unassigned</span>
-            @endif
+            <?php endif; ?>
         </td>
-        @endif
-        <td class="text-center">{{ $product->quantity ?? 0 }}</td>
-        <td class="text-center">{{ $product->unit ? $product->unit->name : '-' }}</td>
-        <td class="text-end">{{ $product->purchase_price ? number_format($product->purchase_price) : '-' }}</td>
-        <td class="text-end">{{ $product->selling_price ? number_format($product->selling_price) : '-' }}</td>
-        <td class="text-end">{{ $product->wholesale_price ? number_format($product->wholesale_price) : '-' }}</td>
-        <td class="text-center">{{ $product->expire_date ? \Carbon\Carbon::parse($product->expire_date)->format('Y-m-d') : '-' }}</td>
+        <?php endif; ?>
+        <td class="text-center"><?php echo e($product->quantity ?? 0); ?></td>
+        <td class="text-center"><?php echo e($product->unit ? $product->unit->name : '-'); ?></td>
+        <td class="text-end"><?php echo e($product->purchase_price ? number_format($product->purchase_price) : '-'); ?></td>
+        <td class="text-end"><?php echo e($product->selling_price ? number_format($product->selling_price) : '-'); ?></td>
+        <td class="text-end"><?php echo e($product->wholesale_price ? number_format($product->wholesale_price) : '-'); ?></td>
+        <td class="text-center"><?php echo e($product->expire_date ? \Carbon\Carbon::parse($product->expire_date)->format('Y-m-d') : '-'); ?></td>
         <td class="text-center">
             <div class="btn-group">
                <button class="btn btn-primary btn-sm edit-product-btn"
-        data-id="{{ $product->id }}"
-        data-name="{{ $product->name }}"
-        data-brand="{{ $product->brand }}"
-        data-category="{{ $product->category_id }}"
-        data-shop="{{ $product->shop_id }}"
-        data-unit="{{ $product->unit_id }}"
-        data-quantity="{{ $product->quantity }}"
-        data-purchase="{{ $product->purchase_price }}"
-        data-selling="{{ $product->selling_price }}"
-        data-wholesale="{{ $product->wholesale_price }}"
-        data-expire="{{ $product->expire_date }}"
-        data-image="{{ $product->image ? asset('storage/'.$product->image) : '' }}">
+        data-id="<?php echo e($product->id); ?>"
+        data-name="<?php echo e($product->name); ?>"
+        data-brand="<?php echo e($product->brand); ?>"
+        data-category="<?php echo e($product->category_id); ?>"
+        data-shop="<?php echo e($product->shop_id); ?>"
+        data-unit="<?php echo e($product->unit_id); ?>"
+        data-quantity="<?php echo e($product->quantity); ?>"
+        data-purchase="<?php echo e($product->purchase_price); ?>"
+        data-selling="<?php echo e($product->selling_price); ?>"
+        data-wholesale="<?php echo e($product->wholesale_price); ?>"
+        data-expire="<?php echo e($product->expire_date); ?>"
+        data-image="<?php echo e($product->image ? asset('storage/'.$product->image) : ''); ?>">
     <i class="fa fa-edit"></i>
 </button>
 
@@ -240,17 +241,17 @@
                     <li><a class="dropdown-item" href="#"><i class="fa fa-adn"></i> Attributes</a></li>
                 </ul>
                
-                <form action="{{ route('products.destroy', $product->id) }}" method="POST" style="display:inline-block;">
-            @csrf
-            @method('DELETE')
-            <button type="button" class="btn btn-danger btn-sm btn-delete" data-id="{{ $product->id }}">
+                <form action="<?php echo e(route('products.destroy', $product->id)); ?>" method="POST" style="display:inline-block;">
+            <?php echo csrf_field(); ?>
+            <?php echo method_field('DELETE'); ?>
+            <button type="button" class="btn btn-danger btn-sm btn-delete" data-id="<?php echo e($product->id); ?>">
                 <i class="fa fa-trash"></i> Delete
             </button>
         </form>
             </div>
         </td>
     </tr>
-    @endforeach
+    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
 </tbody>
 
             </table>
@@ -274,7 +275,7 @@
         });
     });
 
-    @if($isAdminTier)
+    <?php if($isAdminTier): ?>
     document.addEventListener('DOMContentLoaded', function() {
         const selectAll = document.getElementById('selectAllProducts');
         const selectedCountEl = document.getElementById('selectedCount');
@@ -353,7 +354,7 @@
             });
         }
     });
-    @endif
+    <?php endif; ?>
 
 
     document.addEventListener('DOMContentLoaded', function() {
@@ -377,7 +378,7 @@
                     fetch(`/products/${productId}`, {
                         method: 'DELETE',
                         headers: {
-                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>',
                             'Accept': 'application/json',
                         }
                     })
@@ -419,8 +420,8 @@
 <div class="modal fade" id="addProductModal" tabindex="-1" aria-labelledby="addProductModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-lg modal-dialog-centered">
     <div class="modal-content border-0 shadow-lg rounded-4">
-      <form id="addProductForm" action="{{ route('products.store') }}" method="POST" enctype="multipart/form-data">
-    @csrf
+      <form id="addProductForm" action="<?php echo e(route('products.store')); ?>" method="POST" enctype="multipart/form-data">
+    <?php echo csrf_field(); ?>
 
         <div class="modal-header border-0 pb-0">
           <h5 class="modal-title fw-bold" id="addProductModalLabel"><i class="bi bi-plus-circle me-2 text-primary"></i>Add New Product</h5>
@@ -440,26 +441,27 @@
             <label class="form-label">Item Category</label>
             <select class="form-select" name="category_id">
               <option value="">Select Category</option>
-              @foreach($categories as $category)
-                  <option value="{{ $category->id }}">
-                      {{ $category->name }}
+              <?php $__currentLoopData = $categories; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $category): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                  <option value="<?php echo e($category->id); ?>">
+                      <?php echo e($category->name); ?>
+
                   </option>
-              @endforeach
+              <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
             </select>
           </div>
 
-            @if($isAdminTier)
+            <?php if($isAdminTier): ?>
             <!-- Shop -->
             <div class="col-md-6">
                 <label class="form-label">Shop <span class="text-danger">*</span></label>
                 <select class="form-select" name="shop_id" required>
                     <option value="">Select Shop</option>
-                    @foreach($shops as $shop)
-                        <option value="{{ $shop->id }}">{{ $shop->name }}</option>
-                    @endforeach
+                    <?php $__currentLoopData = $shops; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $shop): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                        <option value="<?php echo e($shop->id); ?>"><?php echo e($shop->name); ?></option>
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                 </select>
             </div>
-            @endif
+            <?php endif; ?>
 
             <!-- Size -->
             <div class="col-md-6">
@@ -490,11 +492,11 @@
           <label class="form-label">Unit <span class="text-danger">*</span></label>
           <select class="form-select" name="unit_id" required>
             <option value="">Select Unit</option>
-            @foreach($units as $unit)
-                <option value="{{ $unit->id }}">
-                    {{ $unit->name }} ({{ $unit->short_name }})
+            <?php $__currentLoopData = $units; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $unit): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                <option value="<?php echo e($unit->id); ?>">
+                    <?php echo e($unit->name); ?> (<?php echo e($unit->short_name); ?>)
                 </option>
-            @endforeach
+            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
           </select>
         </div>
 
@@ -591,7 +593,7 @@ document.addEventListener('DOMContentLoaded', function () {
         fetch(form.action, {
             method: 'POST',
             headers: {
-                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>'
             },
             body: formData
         })
@@ -634,8 +636,8 @@ document.addEventListener('DOMContentLoaded', function () {
 <div class="modal fade" id="editProductModal" tabindex="-1" aria-labelledby="editProductModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-lg modal-dialog-centered">
     <form id="editProductForm" method="POST" enctype="multipart/form-data">
-      @csrf
-      @method('PUT')
+      <?php echo csrf_field(); ?>
+      <?php echo method_field('PUT'); ?>
       <div class="modal-content border-0 shadow-lg rounded-4">
         <div class="modal-header border-0 pb-0">
           <h5 class="modal-title fw-bold" id="editProductModalLabel"><i class="bi bi-pencil-square me-2 text-primary"></i>Edit Product</h5>
@@ -660,33 +662,33 @@ document.addEventListener('DOMContentLoaded', function () {
               <label class="form-label">Category</label>
               <select class="form-select" id="edit_category_id" name="category_id">
                 <option value="">Select Category</option>
-                @foreach($categories as $category)
-                  <option value="{{ $category->id }}">{{ $category->name }}</option>
-                @endforeach
+                <?php $__currentLoopData = $categories; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $category): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                  <option value="<?php echo e($category->id); ?>"><?php echo e($category->name); ?></option>
+                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
               </select>
             </div>
 
-            @if($isAdminTier)
+            <?php if($isAdminTier): ?>
             <!-- Shop -->
             <div class="col-md-6">
               <label class="form-label">Shop <span class="text-danger">*</span></label>
               <select class="form-select" id="edit_shop_id" name="shop_id" required>
                 <option value="">Select Shop</option>
-                @foreach($shops as $shop)
-                  <option value="{{ $shop->id }}">{{ $shop->name }}</option>
-                @endforeach
+                <?php $__currentLoopData = $shops; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $shop): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                  <option value="<?php echo e($shop->id); ?>"><?php echo e($shop->name); ?></option>
+                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
               </select>
             </div>
-            @endif
+            <?php endif; ?>
 
             <!-- Unit -->
             <div class="col-md-6">
               <label class="form-label">Unit <span class="text-danger">*</span></label>
               <select class="form-select" id="edit_unit_id" name="unit_id" required>
                 <option value="">Select Unit</option>
-                @foreach($units as $unit)
-                  <option value="{{ $unit->id }}">{{ $unit->name }} ({{ $unit->short_name }})</option>
-                @endforeach
+                <?php $__currentLoopData = $units; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $unit): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                  <option value="<?php echo e($unit->id); ?>"><?php echo e($unit->name); ?> (<?php echo e($unit->short_name); ?>)</option>
+                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
               </select>
             </div>
 
@@ -860,3 +862,4 @@ document.addEventListener('DOMContentLoaded', function() {
     margin-right: 5px;
 }
 </style>
+<?php /**PATH D:\PROJECTS\d\double_h_mauzo\resources\views/dashboard/products/index.blade.php ENDPATH**/ ?>

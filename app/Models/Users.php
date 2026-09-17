@@ -62,6 +62,16 @@ class Users extends Authenticatable
         return $this->hasOne(\App\Models\Shops::class, 'admin_id');
     }
 
+    /**
+     * Admin-tier accounts (role_id 1 "Super Admin", role_id 2 "Admin", or
+     * the super_user flag) aren't tied to a single owned shop — they can
+     * see and manage every shop.
+     */
+    public function isAdminTier(): bool
+    {
+        return in_array($this->role_id, [1, 2]) || (bool) $this->super_user;
+    }
+
     public function expenses()
 {
     return $this->morphMany(Expenses::class, 'created_by');

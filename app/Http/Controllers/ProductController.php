@@ -14,6 +14,7 @@ use App\Exports\ProductsTemplateExport;
 use App\Imports\ProductsImport;   
 use Carbon\Carbon;
 use App\Models\ProductTrash;
+use App\Models\Shops;
 
 
 
@@ -61,16 +62,75 @@ public function index()
 
     // Admin view
     $admin = Auth::user();
-    $products = Products::where('shop_id', $admin->shop->id)->get();
+    $isAdminTier = $admin->isAdminTier();
+    $productsTotal = null;
+    $productsDisplayLimit = 500;
+
+    if ($isAdminTier) {
+        // Admin-tier accounts aren't tied to one shop — see everything,
+        // including any product still missing a shop assignment. But
+        // loading every row (a shop can hold tens of thousands) crashes
+        // the page, so the list is capped for display; the bulk-assign
+        // tool still operates on the full table regardless of what's
+        // shown here.
+        $productsTotal = Products::count();
+        $products = Products::with('shop')->latest()->limit($productsDisplayLimit)->get();
+    } else {
+        $products = $admin->shop
+            ? Products::where('shop_id', $admin->shop->id)->get()
+            : collect();
+    }
+
     $categories = ProductCategory::whereNull('parent_id')->get();
     $units = Unit::all();
+    $shops = $isAdminTier ? Shops::orderBy('name')->get() : collect();
 
     return view('dashboard.products.index', compact(
         'products',
         'categories',
-        'units'
+        'units',
+        'shops',
+        'isAdminTier',
+        'productsTotal',
+        'productsDisplayLimit'
     ));
 }
+
+    /**
+     * Bulk-assign a shop to many products at once (admin-tier only) —
+     * either a chosen set of product IDs, or every currently unassigned
+     * product in one shot.
+     */
+    public function bulkAssignShop(Request $request)
+    {
+        $admin = Auth::user();
+
+        if (!$admin->isAdminTier()) {
+            abort(403, 'You are not authorized to perform this action.');
+        }
+
+        $request->validate([
+            'shop_id' => 'required|exists:shops,id',
+            'assign_all_unassigned' => 'nullable|boolean',
+            'product_ids' => 'nullable|array',
+            'product_ids.*' => 'integer|exists:products,id',
+        ]);
+
+        $shop = Shops::findOrFail($request->shop_id);
+
+        $query = $request->boolean('assign_all_unassigned')
+            ? Products::whereNull('shop_id')
+            : Products::whereIn('id', $request->product_ids ?? []);
+
+        $count = $query->count();
+        $query->update([
+            'shop_id' => $shop->id,
+            'admin_id' => $shop->admin_id,
+        ]);
+
+        return redirect()->route('products.index')
+            ->with('success', "Assigned {$count} product(s) to \"{$shop->name}\".");
+    }
 
 
 
@@ -122,17 +182,18 @@ public function store(Request $request)
 
     $admin = Auth::user();
 
-    if (!$admin->shop) {
-    return response()->json([
-        'error' => 'This user has no shop assigned'
-    ], 422);
-}
+    if ($admin->isAdminTier()) {
+        $request->validate(['shop_id' => 'required|exists:shops,id']);
+        $data['shop_id'] = $request->shop_id;
+    } elseif ($admin->shop) {
+        $data['shop_id'] = $admin->shop->id;
+    } else {
+        return response()->json([
+            'error' => 'This user has no shop assigned'
+        ], 422);
+    }
 
-$data['shop_id'] = $admin->shop->id;
-
-    //  IMPORTANT PART
     $data['admin_id'] = $admin->id;
-    $data['shop_id']  = $admin->shop->id; 
     $data['sync_status'] = 0;
 
     if ($request->hasFile('image')) {
@@ -182,6 +243,7 @@ public function update(Request $request, $id)
         'size' => 'nullable|string',
         'color' => 'nullable|string',
         'image' => 'nullable|image|max:2048',
+        'shop_id' => 'nullable|exists:shops,id',
     ]);
 
     $data = $request->all();
@@ -241,11 +303,15 @@ public function exportExcel()
  */
  public function importExcel(Request $request)
     {
-        $request->validate([
-            'excel_file' => 'required|file|mimes:xlsx,xls',
-        ]);
+        $admin = Auth::user();
 
-        $import = new ProductsImport;
+        $rules = ['excel_file' => 'required|file|mimes:xlsx,xls'];
+        if ($admin->isAdminTier()) {
+            $rules['shop_id'] = 'required|exists:shops,id';
+        }
+        $request->validate($rules);
+
+        $import = new ProductsImport($request->shop_id ? (int) $request->shop_id : null);
         Excel::import($import, $request->file('excel_file'));
 
         if (!empty($import->errors)) {
@@ -339,9 +405,13 @@ public function finished()
 {
     $admin = Auth::user();
 
-    $products = Products::where('shop_id', $admin->shop->id)
-                        ->where('quantity', 0)
-                        ->get();
+    $query = Products::where('quantity', 0);
+
+    if (!$admin->isAdminTier()) {
+        $query->where('shop_id', $admin->shop?->id);
+    }
+
+    $products = $query->get();
 
     return view('dashboard.products.finished', compact('products'));
 }

@@ -1,16 +1,16 @@
-@php
+<?php
 $shops = $shops ?? collect();
 $totalCapital = 0;
-@endphp
+?>
 
 
-@section('title', 'Dashboard')
-@include('main')
-@include('components/breadcrumb')
-@include('components/mainmenu')
+<?php $__env->startSection('title', 'Dashboard'); ?>
+<?php echo $__env->make('main', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
+<?php echo $__env->make('components/breadcrumb', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
+<?php echo $__env->make('components/mainmenu', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
 
 
-<meta name="csrf-token" content="{{ csrf_token() }}">
+<meta name="csrf-token" content="<?php echo e(csrf_token()); ?>">
 
 <div class="cat__content">
     <div class="container-fluid py-4">
@@ -45,7 +45,7 @@ $totalCapital = 0;
 
                         <!-- Right Section -->
                         <div class="d-flex align-items-center gap-2">
-                            <a href="{{ url()->previous() }}" class="btn btn-outline-secondary px-3">
+                            <a href="<?php echo e(url()->previous()); ?>" class="btn btn-outline-secondary px-3">
                                 <i class="bi bi-arrow-left"></i> Back
                             </a>
 
@@ -55,34 +55,36 @@ $totalCapital = 0;
                         </div>
                     </div>
 
-                    @if(session('success'))
+                    <?php if(session('success')): ?>
                         <div class="alert alert-success rounded-3">
-                            {{ session('success') }}
-                        </div>
-                    @endif
+                            <?php echo e(session('success')); ?>
 
-                    @if(session('error'))
-                        <div class="alert alert-danger rounded-3">
-                            {{ session('error') }}
                         </div>
-                    @endif
+                    <?php endif; ?>
+
+                    <?php if(session('error')): ?>
+                        <div class="alert alert-danger rounded-3">
+                            <?php echo e(session('error')); ?>
+
+                        </div>
+                    <?php endif; ?>
 
                     <!-- Add Shop Form -->
                     <div id="addShopForm" class="border rounded-3 p-4 mb-4 bg-light"
-                         @if(!$errors->any()) style="display:none;" @endif>
+                         <?php if(!$errors->any()): ?> style="display:none;" <?php endif; ?>>
 
-                        @if($errors->any())
+                        <?php if($errors->any()): ?>
                             <div class="alert alert-danger rounded-3">
                                 <ul class="mb-0">
-                                    @foreach($errors->all() as $error)
-                                        <li>{{ $error }}</li>
-                                    @endforeach
+                                    <?php $__currentLoopData = $errors->all(); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $error): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                        <li><?php echo e($error); ?></li>
+                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                 </ul>
                             </div>
-                        @endif
+                        <?php endif; ?>
 
-                        <form method="POST" action="{{ route('shops.store') }}">
-                            @csrf
+                        <form method="POST" action="<?php echo e(route('shops.store')); ?>">
+                            <?php echo csrf_field(); ?>
                             <div class="row g-3">
                                 <div class="col-md-4">
                                     <input type="text" name="name" class="form-control"
@@ -124,42 +126,43 @@ $totalCapital = 0;
                                 </tr>
                             </thead>
                             <tbody>
-                                @php $totalStock = 0; $totalCapital = 0; @endphp
+                                <?php $totalStock = 0; $totalCapital = 0; ?>
 
-                                @forelse($shops as $shop)
+                                <?php $__empty_1 = true; $__currentLoopData = $shops; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $shop): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
                                     <tr>
                                         <td>
-                                            <a href="{{ route('dashboard.shop.show', ['shop' => $shop->id]) }}"
+                                            <a href="<?php echo e(route('dashboard.shop.show', ['shop' => $shop->id])); ?>"
                                                class="text-decoration-none fw-semibold">
-                                                {{ $shop->name }}
+                                                <?php echo e($shop->name); ?>
+
                                             </a>
                                         </td>
-                                        <td>{{ $shop->total_employees }}</td>
-                                        <td>{{ number_format($shop->total_wages) }}</td>
-                                        <td>{{ number_format($shop->stock_value, 2) }}</td>
-                                        <td>{{ number_format($shop->capital, 2) }}</td>
-                                        <td>{{ number_format($shop->realCapital, 2) }}</td>
-                                        <td>{{ $shop->location }}</td>
+                                        <td><?php echo e($shop->total_employees); ?></td>
+                                        <td><?php echo e(number_format($shop->total_wages)); ?></td>
+                                        <td><?php echo e(number_format($shop->stock_value, 2)); ?></td>
+                                        <td><?php echo e(number_format($shop->capital, 2)); ?></td>
+                                        <td><?php echo e(number_format($shop->realCapital, 2)); ?></td>
+                                        <td><?php echo e($shop->location); ?></td>
                                         <td>
                                             <div class="d-flex justify-content-center gap-2">
                                                 <button type="button" class="btn btn-sm btn-outline-primary"
-                                                        data-bs-toggle="modal" data-bs-target="#editShopModal{{ $shop->id }}">
+                                                        data-bs-toggle="modal" data-bs-target="#editShopModal<?php echo e($shop->id); ?>">
                                                     <i class="bi bi-pencil"></i> Edit
                                                 </button>
 
                                                 <button type="button" class="btn btn-sm btn-outline-danger"
-                                                        data-bs-toggle="modal" data-bs-target="#deleteShopModal{{ $shop->id }}">
+                                                        data-bs-toggle="modal" data-bs-target="#deleteShopModal<?php echo e($shop->id); ?>">
                                                     <i class="bi bi-trash"></i> Delete
                                                 </button>
                                             </div>
 
                                             <!-- Edit Shop Modal -->
-                                            <div class="modal fade" id="editShopModal{{ $shop->id }}" tabindex="-1" aria-hidden="true">
+                                            <div class="modal fade" id="editShopModal<?php echo e($shop->id); ?>" tabindex="-1" aria-hidden="true">
                                                 <div class="modal-dialog">
                                                     <div class="modal-content">
-                                                        <form method="POST" action="{{ route('shops.update', $shop->id) }}">
-                                                            @csrf
-                                                            @method('PUT')
+                                                        <form method="POST" action="<?php echo e(route('shops.update', $shop->id)); ?>">
+                                                            <?php echo csrf_field(); ?>
+                                                            <?php echo method_field('PUT'); ?>
                                                             <div class="modal-header">
                                                                 <h5 class="modal-title">Edit Shop</h5>
                                                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -168,17 +171,17 @@ $totalCapital = 0;
                                                                 <div class="mb-3">
                                                                     <label class="form-label">Shop Name</label>
                                                                     <input type="text" name="name" class="form-control"
-                                                                           value="{{ $shop->name }}" required>
+                                                                           value="<?php echo e($shop->name); ?>" required>
                                                                 </div>
                                                                 <div class="mb-3">
                                                                     <label class="form-label">Location</label>
                                                                     <input type="text" name="location" class="form-control"
-                                                                           value="{{ $shop->location }}" required>
+                                                                           value="<?php echo e($shop->location); ?>" required>
                                                                 </div>
                                                                 <div class="mb-3">
                                                                     <label class="form-label">Capital</label>
                                                                     <input type="number" name="capital" class="form-control"
-                                                                           value="{{ $shop->capital }}">
+                                                                           value="<?php echo e($shop->capital); ?>">
                                                                 </div>
                                                             </div>
                                                             <div class="modal-footer">
@@ -191,12 +194,12 @@ $totalCapital = 0;
                                             </div>
 
                                             <!-- Delete Shop Modal -->
-                                            <div class="modal fade" id="deleteShopModal{{ $shop->id }}" tabindex="-1" aria-hidden="true">
+                                            <div class="modal fade" id="deleteShopModal<?php echo e($shop->id); ?>" tabindex="-1" aria-hidden="true">
                                                 <div class="modal-dialog">
                                                     <div class="modal-content">
-                                                        <form method="POST" action="{{ route('shops.destroy', $shop->id) }}">
-                                                            @csrf
-                                                            @method('DELETE')
+                                                        <form method="POST" action="<?php echo e(route('shops.destroy', $shop->id)); ?>">
+                                                            <?php echo csrf_field(); ?>
+                                                            <?php echo method_field('DELETE'); ?>
                                                             <div class="modal-header">
                                                                 <h5 class="modal-title text-danger">
                                                                     <i class="bi bi-exclamation-triangle-fill"></i> Delete Shop
@@ -205,7 +208,7 @@ $totalCapital = 0;
                                                             </div>
                                                             <div class="modal-body text-start">
                                                                 <p class="mb-2">
-                                                                    Delete <strong>"{{ $shop->name }}"</strong>?
+                                                                    Delete <strong>"<?php echo e($shop->name); ?>"</strong>?
                                                                 </p>
                                                                 <p class="text-muted mb-0">
                                                                     This will permanently delete this shop and all of its products,
@@ -225,21 +228,21 @@ $totalCapital = 0;
                                         </td>
                                     </tr>
 
-                                    @php
+                                    <?php
                                         $totalStock += $shop->stock_value;
                                         $totalCapital += $shop->realCapital;
-                                    @endphp
-                                @empty
+                                    ?>
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                                     <tr>
                                         <td colspan="8">No shops found.</td>
                                     </tr>
-                                @endforelse
+                                <?php endif; ?>
 
                                 <tr class="table-success fw-bold">
                                     <td colspan="3">Total</td>
-                                    <td>{{ number_format($totalStock, 2) }}</td>
+                                    <td><?php echo e(number_format($totalStock, 2)); ?></td>
                                     <td></td>
-                                    <td>{{ number_format($totalCapital, 2) }}</td>
+                                    <td><?php echo e(number_format($totalCapital, 2)); ?></td>
                                     <td></td>
                                     <td></td>
                                 </tr>
@@ -285,3 +288,4 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 </script>
+<?php /**PATH D:\PROJECTS\d\double_h_mauzo\resources\views/dashboard/shops/shop.blade.php ENDPATH**/ ?>

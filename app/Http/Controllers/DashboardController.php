@@ -18,17 +18,31 @@ class DashboardController extends Controller
      */
     public function index()
     {
-        $shops = Shops::with(['products', 'staff', 'expenses', 'fixedExpenses', 'sales'])->get();
+        $shops = Shops::with(['staff', 'expenses', 'fixedExpenses'])->get();
+
+        // Aggregate stock value & sales per shop in SQL instead of hydrating
+        // every product/sale row into PHP memory (a shop can have tens of
+        // thousands of products).
+        $purchasesByShop = Products::select('shop_id')
+            ->selectRaw('SUM(quantity * purchase_price) as total')
+            ->groupBy('shop_id')
+            ->pluck('total', 'shop_id');
+
+        $salesByShop = DB::table('sales')
+            ->join('staff', 'sales.staff_id', '=', 'staff.id')
+            ->select('staff.shop_id')
+            ->selectRaw('SUM(sales.total) as total')
+            ->groupBy('staff.shop_id')
+            ->pluck('total', 'shop_id');
 
         // -----------------------------
         // Shop calculations
         // -----------------------------
-        $shops->transform(function ($shop) {
+        $shops->transform(function ($shop) use ($purchasesByShop, $salesByShop) {
 
-            $shop->totalPurchases = $shop->products
-                ->sum(fn($p) => ($p->purchase_price ?? 0) * ($p->quantity ?? 0));
+            $shop->totalPurchases = (float) ($purchasesByShop[$shop->id] ?? 0);
 
-            $shop->totalSales = $shop->sales->sum('total');
+            $shop->totalSales = (float) ($salesByShop[$shop->id] ?? 0);
 
             $totalCOGS = DB::table('sale_items')
                 ->join('products', 'sale_items.product_id', '=', 'products.id')

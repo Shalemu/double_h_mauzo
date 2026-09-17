@@ -220,9 +220,12 @@ Route::middleware(['web', 'auth'])->group(function () {
     | Shops
     |--------------------------------------------------------------------------
     */
-    Route::get('/dashboard/shop', [ShopsController::class, 'index'])->name('dashboard.shop');
-    Route::post('/shops', [ShopsController::class, 'store'])->name('shops.store');
-    Route::get('/dashboard/shop/{shop}', [ShopsController::class, 'show'])->name('dashboard.shop.show');
+    Route::get('/dashboard/shop', [ShopsController::class, 'index'])
+        ->middleware('admin')->name('dashboard.shop');
+    Route::post('/shops', [ShopsController::class, 'store'])
+        ->middleware('admin')->name('shops.store');
+    Route::get('/dashboard/shop/{shop}', [ShopsController::class, 'show'])
+        ->middleware('admin')->name('dashboard.shop.show');
     Route::put('/shops/{shop}', [ShopsController::class, 'update'])
         ->middleware('admin')->name('shops.update');
     Route::delete('/shops/{shop}', [ShopsController::class, 'destroy'])
@@ -238,6 +241,8 @@ Route::middleware(['web', 'auth'])->group(function () {
     Route::resource('categories', ProductCategoryController::class);
     Route::resource('units', UnitController::class);
 
+    Route::post('products/bulk-assign-shop', [ProductController::class, 'bulkAssignShop'])
+        ->middleware('admin')->name('products.bulkAssignShop');
     Route::get('products/download-template', [ProductController::class, 'downloadTemplate'])->name('products.download.template');
     Route::post('products/import-excel', [ProductController::class, 'importExcel'])->name('products.import.excel');
     Route::get('products/running-out', [ProductController::class, 'runningOut'])->name('products.running-out');
@@ -386,9 +391,6 @@ Route::prefix('dashboard/admin')->name('admin.')->middleware('auth:web')->group(
 });
 
     //view feedback
-Route::get('/dashboard/shop/{shop}', [ShopsController::class, 'show'])
-    ->name('dashboard.shop.show');
-
 Route::patch('/admin/feedback/{feedback}/resolve', [FeedbackController::class, 'resolve'])
     ->name('admin.feedback.resolve')
     ->middleware('auth:web');
