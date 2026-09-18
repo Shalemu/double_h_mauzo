@@ -243,3 +243,50 @@
     }
 }
 </style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const toggleBtn = document.getElementById('menu-toggle');
+    const sidenav = document.getElementById('sidenav-main');
+    if (!toggleBtn || !sidenav) return;
+
+    // Create a backdrop so tapping outside the open sidebar closes it too.
+    const backdrop = document.createElement('div');
+    backdrop.className = 'sidenav-backdrop';
+    document.body.appendChild(backdrop);
+
+    function closeSidenav() {
+        sidenav.classList.remove('active');
+        backdrop.classList.remove('active');
+    }
+
+    toggleBtn.addEventListener('click', function () {
+        sidenav.classList.toggle('active');
+        backdrop.classList.toggle('active');
+    });
+
+    backdrop.addEventListener('click', closeSidenav);
+
+    // Close after tapping a nav link, so it doesn't stay open over the content.
+    sidenav.querySelectorAll('.nav-item a').forEach(function (link) {
+        link.addEventListener('click', closeSidenav);
+    });
+});
+</script>
+
+<style>
+.sidenav-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 999;
+}
+
+@media (max-width: 768px) {
+    .sidenav-backdrop.active {
+        display: block;
+    }
+}
+</style>
+</style>

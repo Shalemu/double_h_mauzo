@@ -1,14 +1,14 @@
-@php
+<?php
     $shops = $shops ?? collect();
      $staff = Auth::guard('staff')->user();
-@endphp
+?>
 
 <!-- APP HEADER -->
 <!-- STAFF HEADER -->
 <header class="app-header fixed-top bg-white shadow-sm">
     <nav class="cat__top-bar__menu d-flex align-items-center w-100 px-3 flex-wrap">
 
-        {{-- INVOICE & ORDER --}}
+        
         <div class="dropdown cat__menu-item">
             <a href="#" class="dropdown-toggle cat__menu-link d-flex align-items-center gap-2"
                data-bs-toggle="dropdown" aria-expanded="false">
@@ -16,16 +16,16 @@
                 <span class="cat__menu-text">Invoice & Order</span>
             </a>
             <ul class="dropdown-menu shadow-sm">
-                <li><a class="dropdown-item" href="{{ url('quotation') }}"><i class="icmn-file-plus"></i> Quotation</a></li>
-                <li><a class="dropdown-item" href="{{ url('purchase-order') }}"><i class="icmn-cart"></i> Purchase Order</a></li>
-                <li><a class="dropdown-item" href="{{ url('suppliers') }}"><i class="icmn-truck"></i> Supplier</a></li>
-                <li><a class="dropdown-item" href="{{ url('customers') }}"><i class="icmn-users"></i> Customer</a></li>
+                <li><a class="dropdown-item" href="<?php echo e(url('quotation')); ?>"><i class="icmn-file-plus"></i> Quotation</a></li>
+                <li><a class="dropdown-item" href="<?php echo e(url('purchase-order')); ?>"><i class="icmn-cart"></i> Purchase Order</a></li>
+                <li><a class="dropdown-item" href="<?php echo e(url('suppliers')); ?>"><i class="icmn-truck"></i> Supplier</a></li>
+                <li><a class="dropdown-item" href="<?php echo e(url('customers')); ?>"><i class="icmn-users"></i> Customer</a></li>
 
-                {{-- Optional Wholesale Sale --}}
-                @php $staff = Auth::guard('staff')->user(); @endphp
-                @if($staff && $staff->can_wholesale) {{-- Adjust logic for your staff permissions --}}
-                    <li><a class="dropdown-item" href="{{ url('wholesale') }}"><i class="icmn-basket"></i> Wholesale Sale</a></li>
-                @endif
+                
+                <?php $staff = Auth::guard('staff')->user(); ?>
+                <?php if($staff && $staff->can_wholesale): ?> 
+                    <li><a class="dropdown-item" href="<?php echo e(url('wholesale')); ?>"><i class="icmn-basket"></i> Wholesale Sale</a></li>
+                <?php endif; ?>
             </ul>
         </div>
         <div class="dropdown cat__menu-item">
@@ -38,10 +38,10 @@
         </div>
 
        <!-- LOGOUT -->
-@if(Auth::guard('staff')->check())
+<?php if(Auth::guard('staff')->check()): ?>
 <div class="cat__logout ms-auto">
-    <form id="logoutForm" action="{{ route('logout') }}" method="POST" style="display: none;">
-        @csrf
+    <form id="logoutForm" action="<?php echo e(route('logout')); ?>" method="POST" style="display: none;">
+        <?php echo csrf_field(); ?>
     </form>
 
     <button type="button" class="btn btn-outline-danger cat__logout-btn" id="logoutBtn" title="Logout">
@@ -75,7 +75,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             </form>
         </div>
-        @endif
+        <?php endif; ?>
 
     </nav>
 </header>
@@ -95,8 +95,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
 
-            <form action="{{ route('units.store') }}" method="POST">
-                @csrf
+            <form action="<?php echo e(route('units.store')); ?>" method="POST">
+                <?php echo csrf_field(); ?>
                 <div class="modal-body">
                     <div class="mb-3">
                         <label>Unit Name</label>
@@ -124,8 +124,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
 
-            <form action="{{ route('categories.store') }}" method="POST">
-                @csrf
+            <form action="<?php echo e(route('categories.store')); ?>" method="POST">
+                <?php echo csrf_field(); ?>
                 <div class="modal-body">
                     <div class="mb-3">
                         <label>Category Name</label>
@@ -137,17 +137,17 @@ document.addEventListener('DOMContentLoaded', function() {
                         <textarea name="description" class="form-control" rows="3"></textarea>
                     </div>
 
-                    @if(isset($parentCategories) && count($parentCategories))
+                    <?php if(isset($parentCategories) && count($parentCategories)): ?>
                         <div class="mb-3">
                             <label>Parent Category (optional)</label>
                             <select name="parent_id" class="form-control">
                                 <option value="">None</option>
-                                @foreach($parentCategories as $parent)
-                                    <option value="{{ $parent->id }}">{{ $parent->name }}</option>
-                                @endforeach
+                                <?php $__currentLoopData = $parentCategories; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $parent): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                    <option value="<?php echo e($parent->id); ?>"><?php echo e($parent->name); ?></option>
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                             </select>
                         </div>
-                    @endif
+                    <?php endif; ?>
                 </div>
 
                 <div class="modal-footer">
@@ -400,7 +400,7 @@ document.addEventListener('DOMContentLoaded', function() {
     white-space: nowrap;
 }
 /* Animation */
-@keyframes dropdownSmooth {
+@keyframes  dropdownSmooth {
     from {
         opacity: 0;
         transform: translateY(8px);
@@ -412,4 +412,4 @@ document.addEventListener('DOMContentLoaded', function() {
 }
 
 
-</style>
+</style><?php /**PATH D:\PROJECTS\d\double_h_mauzo\resources\views/components/staff_header.blade.php ENDPATH**/ ?>

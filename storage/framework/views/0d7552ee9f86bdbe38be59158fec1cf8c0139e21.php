@@ -1,18 +1,18 @@
-@section('title', 'Dashboard')
-@include('main')
-@include('components/staff_header')
-@include('components/mainmenu')
+<?php $__env->startSection('title', 'Dashboard'); ?>
+<?php echo $__env->make('main', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
+<?php echo $__env->make('components/staff_header', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
+<?php echo $__env->make('components/mainmenu', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
 
-@php
+<?php
     $products = $products ?? collect();
     $customers = $customers ?? collect();
     $shopId = auth('staff')->user()->shop_id;
     $productsTotal = $productsTotal ?? $products->count();
     $productsDisplayLimit = $productsDisplayLimit ?? null;
-@endphp
+?>
 
 
-<meta name="csrf-token" content="{{ csrf_token() }}">
+<meta name="csrf-token" content="<?php echo e(csrf_token()); ?>">
 
 
 <div class="cat__content">
@@ -32,25 +32,25 @@
 
 
 
-     <a href="{{ route('staff.expenses.index', auth('staff')->user()->shop_id) }}" class="btn btn-outline-warning">
+     <a href="<?php echo e(route('staff.expenses.index', auth('staff')->user()->shop_id)); ?>" class="btn btn-outline-warning">
         <i class="bi bi-cash-stack"></i> Expenses
     </a>
 
 
-      <a href="{{ route('staff.sales.index', auth('staff')->user()->shop_id) }}" class="btn btn-outline-primary">
+      <a href="<?php echo e(route('staff.sales.index', auth('staff')->user()->shop_id)); ?>" class="btn btn-outline-primary">
         <i class="bi bi-shop"></i> Sales
     </a>
 
-    <a href="{{ route('staff.products.index') }}" class="btn btn-outline-info">
+    <a href="<?php echo e(route('staff.products.index')); ?>" class="btn btn-outline-info">
         <i class="bi bi-box-seam "></i> Items
     </a>
-    <a href="{{ route('staff.customers.manage') }}" class="btn btn-outline-secondary">
+    <a href="<?php echo e(route('staff.customers.manage')); ?>" class="btn btn-outline-secondary">
     <i class="bi bi-people"></i> Customers
     </a>
-    <a href="{{ route('staff.orders.index') }}" class="btn btn-outline-success">
+    <a href="<?php echo e(route('staff.orders.index')); ?>" class="btn btn-outline-success">
         <i class="bi bi-cash-stack"></i> Orders
     </a>
-    <a href="{{ route('staff.report.issue.index') }}" class="btn btn-outline-danger">
+    <a href="<?php echo e(route('staff.report.issue.index')); ?>" class="btn btn-outline-danger">
         <i class="bi bi-exclamation-circle"></i> Report Issue
     </a>
 </div>
@@ -62,7 +62,7 @@
         <div class="card-header bg-white d-flex justify-content-between align-items-center">
             <div>
                 <h5 class="mb-0">My Cart</h5>
-                <small class="text-muted">{{ Auth::guard('staff')->user()->shop->name ?? 'My Shop' }}</small>
+                <small class="text-muted"><?php echo e(Auth::guard('staff')->user()->shop->name ?? 'My Shop'); ?></small>
             </div>
             <h4 class="mb-0 text-primary">Tsh <span id="grand-total">0.00</span></h4>
         </div>
@@ -89,35 +89,35 @@
 
                         <input type="text" id="product-search" class="form-control form-control-sm mb-3" placeholder="Search by name, ID or barcode...">
 
-                        @if($productsDisplayLimit !== null && $productsTotal > $products->count())
+                        <?php if($productsDisplayLimit !== null && $productsTotal > $products->count()): ?>
                             <div class="alert alert-warning py-1 px-2 small mb-2">
-                                Showing the {{ number_format($products->count()) }} most-stocked of {{ number_format($productsTotal) }} products.
+                                Showing the <?php echo e(number_format($products->count())); ?> most-stocked of <?php echo e(number_format($productsTotal)); ?> products.
                                 Use search above to find any item not listed here.
                             </div>
-                        @endif
+                        <?php endif; ?>
 
                         <h6 class="mb-3">Sales</h6>
 
-                        @if($products->count())
-                            @foreach($products as $product)
+                        <?php if($products->count()): ?>
+                            <?php $__currentLoopData = $products; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $product): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                 <div class="card mb-2 product-card"
-                                     data-id="{{ $product->id }}"
-                                     data-name="{{ strtolower($product->name) }}"
-                                     data-barcode="{{ $product->barcode }}"
-                                     data-retail-price="{{ $product->selling_price ?? 0 }}"
-                                     data-wholesale-price="{{ $product->wholesale_price ?? 0 }}"
-                                     data-price="{{ $product->selling_price ?? 0 }}"
-                                     data-stock="{{ $product->quantity ?? 0 }}">
+                                     data-id="<?php echo e($product->id); ?>"
+                                     data-name="<?php echo e(strtolower($product->name)); ?>"
+                                     data-barcode="<?php echo e($product->barcode); ?>"
+                                     data-retail-price="<?php echo e($product->selling_price ?? 0); ?>"
+                                     data-wholesale-price="<?php echo e($product->wholesale_price ?? 0); ?>"
+                                     data-price="<?php echo e($product->selling_price ?? 0); ?>"
+                                     data-stock="<?php echo e($product->quantity ?? 0); ?>">
 
                                     <div class="card-body py-2">
                                         <div class="row align-items-center gy-2">
                                             <div class="col-3 col-sm-2">
-                                                <img src="{{ $product->image ? asset('storage/'.$product->image) : asset('assets/img/product-placeholder.png') }}" class="img-fluid rounded">
+                                                <img src="<?php echo e($product->image ? asset('storage/'.$product->image) : asset('assets/img/product-placeholder.png')); ?>" class="img-fluid rounded">
                                             </div>
                                             <div class="col-9 col-sm-4">
-                                                <strong>{{ $product->name }}</strong><br>
-                                                <small class="text-muted product-price-label">Tsh {{ number_format($product->selling_price ?? 0) }}</small><br>
-                                                <small class="text-muted">Stock: {{ $product->quantity ?? 0 }} | Barcode: {{ $product->barcode ?? 'N/A' }}</small>
+                                                <strong><?php echo e($product->name); ?></strong><br>
+                                                <small class="text-muted product-price-label">Tsh <?php echo e(number_format($product->selling_price ?? 0)); ?></small><br>
+                                                <small class="text-muted">Stock: <?php echo e($product->quantity ?? 0); ?> | Barcode: <?php echo e($product->barcode ?? 'N/A'); ?></small>
                                             </div>
                                             <div class="col-12 col-sm-3 d-flex align-items-center">
                                                 <button class="btn btn-sm btn-outline-secondary qty-minus">−</button>
@@ -133,10 +133,10 @@
                                   
                                 </div>
                                 
-                            @endforeach
-                        @else
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                        <?php else: ?>
                             <div class="alert alert-warning text-center">No products available for this shop</div>
-                        @endif
+                        <?php endif; ?>
                              <div class="d-flex justify-content-end mt-2">
                                     <nav>
                                         <ul class="pagination pagination-sm mb-0" id="product-pagination">
@@ -197,11 +197,11 @@
                                 <div class="d-flex align-items-center">
                                     <select class="form-control form-control-sm me-2" id="customer-id" style="max-width: 85%;">
                                 <option value="">-- Select Customer --</option>
-                                @forelse($customers as $customer)
-                                    <option value="{{ $customer->id }}">{{ $customer->name }}</option>
-                                @empty
+                                <?php $__empty_1 = true; $__currentLoopData = $customers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $customer): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
+                                    <option value="<?php echo e($customer->id); ?>"><?php echo e($customer->name); ?></option>
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                                     <option value="">No customers yet</option>
-                                @endforelse
+                                <?php endif; ?>
                             </select>
 
                                     <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addCustomerModal">
@@ -224,7 +224,7 @@
 
                             <div class="form-group mb-3">
                                 <label class="font-weight-semibold">Sale Date</label>
-                                <input type="date" class="form-control form-control-sm" value="{{ now()->toDateString() }}" id="sale-date">
+                                <input type="date" class="form-control form-control-sm" value="<?php echo e(now()->toDateString()); ?>" id="sale-date">
                             </div>
 
                             <div class="form-group mb-3">
@@ -345,24 +345,24 @@
                 <h5 class="modal-title">Add Customer</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            @if($errors->any())
+            <?php if($errors->any()): ?>
                 <div class="alert alert-danger m-3">
-                    <ul class="mb-0">@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul>
+                    <ul class="mb-0"><?php $__currentLoopData = $errors->all(); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $error): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><li><?php echo e($error); ?></li><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?></ul>
                 </div>
-            @endif
-            @if(session('success'))
-                <div class="alert alert-success m-3">{{ session('success') }}</div>
-            @endif
-            <form action="{{ route('staff.customers.store') }}" method="POST">
-                @csrf
+            <?php endif; ?>
+            <?php if(session('success')): ?>
+                <div class="alert alert-success m-3"><?php echo e(session('success')); ?></div>
+            <?php endif; ?>
+            <form action="<?php echo e(route('staff.customers.store')); ?>" method="POST">
+                <?php echo csrf_field(); ?>
                 <div class="modal-body">
                     <div class="mb-3">
                         <label>Name</label>
-                        <input type="text" name="name" class="form-control" value="{{ old('name') }}" required>
+                        <input type="text" name="name" class="form-control" value="<?php echo e(old('name')); ?>" required>
                     </div>
                     <div class="mb-3">
                         <label>Phone</label>
-                        <input type="text" name="phone" class="form-control" value="{{ old('phone') }}">
+                        <input type="text" name="phone" class="form-control" value="<?php echo e(old('phone')); ?>">
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -374,7 +374,7 @@
     </div>
 </div>
 
-<div id="js-data" data-show-customer-modal="{{ $errors->any() || session('success') ? '1' : '0' }}"></div>
+<div id="js-data" data-show-customer-modal="<?php echo e($errors->any() || session('success') ? '1' : '0'); ?>"></div>
 
 <!-- SUCCESS MODAL -->
 <div class="modal fade" id="successModal" tabindex="-1">
@@ -798,7 +798,7 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         try {
-            const response = await fetch("{{ route('staff.sales.checkout', ['shop' => $shopId]) }}", {
+            const response = await fetch("<?php echo e(route('staff.sales.checkout', ['shop' => $shopId])); ?>", {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -845,7 +845,7 @@ document.addEventListener('DOMContentLoaded', () => {
     font-size: 40px;
 }
 
-@keyframes popIn {
+@keyframes  popIn {
     0% { transform: scale(0.5); opacity: 0; }
     100% { transform: scale(1); opacity: 1; }
 }
@@ -876,3 +876,4 @@ document.addEventListener('DOMContentLoaded', () => {
 }
 </style>
 
+<?php /**PATH D:\PROJECTS\d\double_h_mauzo\resources\views/dashboard/staff/index.blade.php ENDPATH**/ ?>

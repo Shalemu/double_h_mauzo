@@ -133,6 +133,26 @@
     justify-content: space-between;
     padding: 0 20px;
     z-index: 1000;
+    overflow-x: auto;
+}
+
+@media (max-width: 576px) {
+    .cat__header {
+        padding: 0 10px;
+        gap: 6px;
+    }
+
+    .cat__header__menu a span {
+        display: none;
+    }
+
+    .cat__header__menu a {
+        padding: 8px;
+    }
+
+    .cat__header__user .text-end {
+        display: none;
+    }
 }
 
 /* Menu */

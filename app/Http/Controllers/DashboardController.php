@@ -152,9 +152,20 @@ class DashboardController extends Controller
             abort(403, 'Unauthorized');
         }
 
-        $products = Products::where('shop_id', $staff->shop_id)->get();
+        // A shop can hold tens of thousands of products — rendering every
+        // one as a POS card crashed this page. Cap the list (most-stocked
+        // first, out-of-stock pushed to the end) and let the cashier's
+        // search box narrow down anything not in the initial set.
+        $productsDisplayLimit = 500;
+        $productsQuery = Products::where('shop_id', $staff->shop_id);
+        $productsTotal = (clone $productsQuery)->count();
+        $products = $productsQuery->orderByDesc('quantity')->orderBy('name')
+            ->limit($productsDisplayLimit)->get();
+
         $customers = Customer::where('shop_id', $staff->shop_id)->get();
 
-        return view('dashboard.staff.index', compact('products', 'customers'));
+        return view('dashboard.staff.index', compact(
+            'products', 'customers', 'productsTotal', 'productsDisplayLimit'
+        ));
     }
 }
