@@ -89,13 +89,6 @@
 
                         <input type="text" id="product-search" class="form-control form-control-sm mb-3" placeholder="Search by name, ID or barcode...">
 
-                        @if($productsDisplayLimit !== null && $productsTotal > $products->count())
-                            <div class="alert alert-warning py-1 px-2 small mb-2">
-                                Showing the {{ number_format($products->count()) }} most-stocked of {{ number_format($productsTotal) }} products.
-                                Use search above to find any item not listed here.
-                            </div>
-                        @endif
-
                         <h6 class="mb-3">Sales</h6>
 
                         @if($products->count())
