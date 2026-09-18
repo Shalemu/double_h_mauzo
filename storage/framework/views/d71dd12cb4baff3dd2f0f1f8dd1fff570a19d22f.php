@@ -1,10 +1,8 @@
-@extends('main')
+<?php $__env->startSection('title', 'Dashboard'); ?>
 
-@section('title', 'Dashboard')
+<?php $__env->startSection('content'); ?>
 
-@section('content')
-
-@include('components/breadcrumb')
+<?php echo $__env->make('components/breadcrumb', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
 
 <style>
     .premium-stat-card {
@@ -94,7 +92,7 @@
 
 <div class="row mb-4" align-items-center" style="padding-left:30px; padding-right:30px; margin-top: 40px;">
     <div class="col-12 d-flex flex-wrap justify-content-center" style="gap: 12px;">
-        <a href="{{ route('admin.pos.index') }}" class="btn btn-success">
+        <a href="<?php echo e(route('admin.pos.index')); ?>" class="btn btn-success">
             <i class="bi bi-cash-coin"></i> POS
         </a>
         <button type="button" class="btn btn-outline-danger">
@@ -112,7 +110,7 @@
         <button type="button" class="btn btn-outline-secondary">
             <i class="bi bi-geo-alt"></i> Salepoints
         </button>
-        <a href="{{ route('customers.index') }}" class="btn btn-outline-info text-dark">
+        <a href="<?php echo e(route('customers.index')); ?>" class="btn btn-outline-info text-dark">
             <i class="bi bi-people"></i> My Customers
         </a>
         <button type="button" class="btn btn-outline-warning text-dark">
@@ -139,7 +137,7 @@
                                 <div class="mini-tile">
                                     <div class="mini-tile-icon bg-primary"><i class="bi bi-box-seam"></i></div>
                                     <div>
-                                        <div class="mini-tile-value">{{ number_format($totalProducts) }}</div>
+                                        <div class="mini-tile-value"><?php echo e(number_format($totalProducts)); ?></div>
                                         <div class="mini-tile-label">Total Products</div>
                                     </div>
                                 </div>
@@ -148,7 +146,7 @@
                                 <div class="mini-tile">
                                     <div class="mini-tile-icon bg-success"><i class="bi bi-check-circle"></i></div>
                                     <div>
-                                        <div class="mini-tile-value">{{ number_format($remainingProducts) }}</div>
+                                        <div class="mini-tile-value"><?php echo e(number_format($remainingProducts)); ?></div>
                                         <div class="mini-tile-label">Remaining</div>
                                     </div>
                                 </div>
@@ -157,7 +155,7 @@
                                 <div class="mini-tile">
                                     <div class="mini-tile-icon bg-danger"><i class="bi bi-calendar-x"></i></div>
                                     <div>
-                                        <div class="mini-tile-value">{{ number_format($expiredProducts) }}</div>
+                                        <div class="mini-tile-value"><?php echo e(number_format($expiredProducts)); ?></div>
                                         <div class="mini-tile-label">Expired</div>
                                     </div>
                                 </div>
@@ -166,7 +164,7 @@
                                 <div class="mini-tile">
                                     <div class="mini-tile-icon bg-warning"><i class="bi bi-trash"></i></div>
                                     <div>
-                                        <div class="mini-tile-value">{{ number_format($disposedProducts) }}</div>
+                                        <div class="mini-tile-value"><?php echo e(number_format($disposedProducts)); ?></div>
                                         <div class="mini-tile-label">Disposed</div>
                                     </div>
                                 </div>
@@ -175,7 +173,7 @@
                                 <div class="mini-tile">
                                     <div class="mini-tile-icon bg-info"><i class="bi bi-exclamation-triangle"></i></div>
                                     <div>
-                                        <div class="mini-tile-value">{{ number_format($runningOutProducts) }}</div>
+                                        <div class="mini-tile-value"><?php echo e(number_format($runningOutProducts)); ?></div>
                                         <div class="mini-tile-label">Running Out</div>
                                     </div>
                                 </div>
@@ -184,7 +182,7 @@
                                 <div class="mini-tile">
                                     <div class="mini-tile-icon bg-dark"><i class="bi bi-x-circle"></i></div>
                                     <div>
-                                        <div class="mini-tile-value">{{ number_format($outOfStockProducts) }}</div>
+                                        <div class="mini-tile-value"><?php echo e(number_format($outOfStockProducts)); ?></div>
                                         <div class="mini-tile-label">Out of Stock</div>
                                     </div>
                                 </div>
@@ -199,22 +197,22 @@
     <div class="cat__core__widget p-3 h-100" style="background:#fff;">
         <!-- Shop Tabs -->
         <ul class="nav nav-tabs mb-3" id="shopTab" role="tablist">
-            @foreach($shops as $index => $shop)
+            <?php $__currentLoopData = $shops; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $shop): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                 <li class="nav-item" role="presentation">
-                    <a class="nav-link {{ $index == 0 ? 'active' : '' }}"
-                       id="shop{{ $shop->id }}-tab"
+                    <a class="nav-link <?php echo e($index == 0 ? 'active' : ''); ?>"
+                       id="shop<?php echo e($shop->id); ?>-tab"
                        data-bs-toggle="tab"
-                       href="#shop{{ $shop->id }}"
-                       role="tab">{{ $shop->name }}</a>
+                       href="#shop<?php echo e($shop->id); ?>"
+                       role="tab"><?php echo e($shop->name); ?></a>
                 </li>
-            @endforeach
+            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
         </ul>
 
         <!-- Tab Content -->
         <div class="tab-content">
-            @foreach($shops as $index => $shop)
-                <div class="tab-pane fade {{ $index == 0 ? 'show active' : '' }}"
-                     id="shop{{ $shop->id }}" role="tabpanel">
+            <?php $__currentLoopData = $shops; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $shop): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                <div class="tab-pane fade <?php echo e($index == 0 ? 'show active' : ''); ?>"
+                     id="shop<?php echo e($shop->id); ?>" role="tabpanel">
                     <table class="table table-bordered text-center">
                         <thead class="table-warning">
                             <tr>
@@ -223,15 +221,15 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr><td>Purchases</td><td>{{ number_format($shop->totalPurchases, 2) }}</td></tr>
-                            <tr><td>Sales</td><td>{{ number_format($shop->totalSales, 2) }}</td></tr>
-                            <tr><td>Gross Profit</td><td>{{ number_format($shop->grossProfit, 2) }}</td></tr>
-                            <tr><td>Total Expenses</td><td>{{ number_format($shop->totalExpenses, 2) }}</td></tr>
-                            <tr><td>Net Profit</td><td>{{ number_format($shop->netProfit, 2) }}</td></tr>
+                            <tr><td>Purchases</td><td><?php echo e(number_format($shop->totalPurchases, 2)); ?></td></tr>
+                            <tr><td>Sales</td><td><?php echo e(number_format($shop->totalSales, 2)); ?></td></tr>
+                            <tr><td>Gross Profit</td><td><?php echo e(number_format($shop->grossProfit, 2)); ?></td></tr>
+                            <tr><td>Total Expenses</td><td><?php echo e(number_format($shop->totalExpenses, 2)); ?></td></tr>
+                            <tr><td>Net Profit</td><td><?php echo e(number_format($shop->netProfit, 2)); ?></td></tr>
                         </tbody>
                     </table>
                 </div>
-            @endforeach
+            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
         </div>
     </div>
 </div>
@@ -321,6 +319,8 @@
     } );
 </script>
 <!-- END: page scripts -->
-<!-- @include('components/footer') -->
+<!-- <?php echo $__env->make('components/footer', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?> -->
 
-@endsection
+<?php $__env->stopSection(); ?>
+
+<?php echo $__env->make('main', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?><?php /**PATH D:\PROJECTS\d\double_h_mauzo\resources\views/dashboard/admin/index.blade.php ENDPATH**/ ?>

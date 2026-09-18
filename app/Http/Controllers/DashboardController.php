@@ -28,11 +28,13 @@ class DashboardController extends Controller
             ->groupBy('shop_id')
             ->pluck('total', 'shop_id');
 
+        // Sales can be rung up by staff or, since admins can sell too,
+        // directly by an admin — group by sales.shop_id (not via staff) so
+        // admin-made sales aren't silently excluded.
         $salesByShop = DB::table('sales')
-            ->join('staff', 'sales.staff_id', '=', 'staff.id')
-            ->select('staff.shop_id')
-            ->selectRaw('SUM(sales.total) as total')
-            ->groupBy('staff.shop_id')
+            ->select('shop_id')
+            ->selectRaw('SUM(total) as total')
+            ->groupBy('shop_id')
             ->pluck('total', 'shop_id');
 
         // -----------------------------
@@ -47,8 +49,7 @@ class DashboardController extends Controller
             $totalCOGS = DB::table('sale_items')
                 ->join('products', 'sale_items.product_id', '=', 'products.id')
                 ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
-                ->join('staff', 'sales.staff_id', '=', 'staff.id')
-                ->where('staff.shop_id', $shop->id)
+                ->where('sales.shop_id', $shop->id)
                 ->sum(DB::raw('products.purchase_price * sale_items.quantity'));
 
             $shop->grossProfit = $shop->totalSales - $totalCOGS;
@@ -166,6 +167,38 @@ class DashboardController extends Controller
 
         return view('dashboard.staff.index', compact(
             'products', 'customers', 'productsTotal', 'productsDisplayLimit'
+        ));
+    }
+
+    /**
+     * Admin POS — lets an admin-tier account sell directly, on behalf of
+     * any shop they choose (they aren't tied to a single shop like staff).
+     */
+    public function adminPos(Request $request)
+    {
+        $admin = Auth::user();
+
+        if (!$admin->isAdminTier()) {
+            abort(403, 'You are not authorized to access this page.');
+        }
+
+        $shops = Shops::orderBy('name')->get();
+        $shop = $request->filled('shop') ? Shops::find($request->query('shop')) : null;
+
+        if (!$shop) {
+            return view('dashboard.admin.pos_select_shop', compact('shops'));
+        }
+
+        $productsDisplayLimit = 500;
+        $productsQuery = Products::where('shop_id', $shop->id);
+        $productsTotal = (clone $productsQuery)->count();
+        $products = $productsQuery->orderByDesc('quantity')->orderBy('name')
+            ->limit($productsDisplayLimit)->get();
+
+        $customers = Customer::where('shop_id', $shop->id)->get();
+
+        return view('dashboard.admin.pos', compact(
+            'shop', 'shops', 'products', 'customers', 'productsTotal', 'productsDisplayLimit'
         ));
     }
 }

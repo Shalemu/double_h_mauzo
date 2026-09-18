@@ -1,14 +1,28 @@
 <?php
     $shops = $shops ?? collect();
-     $staff = Auth::guard('staff')->user();
 ?>
 
 <!-- APP HEADER -->
-<!-- STAFF HEADER -->
 <header class="app-header fixed-top bg-white shadow-sm">
-    <nav class="cat__top-bar__menu d-flex align-items-center w-100 px-3 flex-wrap">
+    <nav class="cat__top-bar__menu d-flex align-items-center w-100 px-3 flex-nowrap">
 
-        
+        <!-- MY BUSINESS -->
+        <div class="dropdown cat__menu-item">
+            <a href="#" class="dropdown-toggle cat__menu-link d-flex align-items-center gap-2" 
+               data-bs-toggle="dropdown" aria-expanded="false">
+                <span class="cat__menu-icon"><i class="icmn-briefcase"></i></span>
+                <span class="cat__menu-text">My Business</span>
+            </a>
+            <ul class="dropdown-menu shadow-sm">
+                <li><a class="dropdown-item" href="<?php echo e(isset($shop) ? route('dashboard.shop.show', $shop->id) : route('dashboard.shop')); ?>">
+                    <i class="icmn-office"></i> My Shop</a></li>
+                <li><a class="dropdown-item" href="<?php echo e(url('sale-point')); ?>"><i class="icmn-location"></i> Sale Point</a></li>
+                <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#categoryModal"><i class="icmn-list"></i> Product Categories</a></li>
+                <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#unitModal"><i class="icmn-meter"></i> Units</a></li>
+            </ul>
+        </div>
+
+        <!-- INVOICE & ORDER -->
         <div class="dropdown cat__menu-item">
             <a href="#" class="dropdown-toggle cat__menu-link d-flex align-items-center gap-2"
                data-bs-toggle="dropdown" aria-expanded="false">
@@ -16,75 +30,83 @@
                 <span class="cat__menu-text">Invoice & Order</span>
             </a>
             <ul class="dropdown-menu shadow-sm">
-                <li><a class="dropdown-item" href="<?php echo e(url('quotation')); ?>"><i class="icmn-file-plus"></i> Quotation</a></li>
+                <li><a class="dropdown-item" href="<?php echo e(url('quotation')); ?>"><i class="icmn-quotes-left"></i> Quotation</a></li>
                 <li><a class="dropdown-item" href="<?php echo e(url('purchase-order')); ?>"><i class="icmn-cart"></i> Purchase Order</a></li>
                 <li><a class="dropdown-item" href="<?php echo e(url('suppliers')); ?>"><i class="icmn-truck"></i> Supplier</a></li>
                 <li><a class="dropdown-item" href="<?php echo e(url('customers')); ?>"><i class="icmn-users"></i> Customer</a></li>
-
-                
-                <?php $staff = Auth::guard('staff')->user(); ?>
-                <?php if($staff && $staff->can_wholesale): ?> 
-                    <li><a class="dropdown-item" href="<?php echo e(url('wholesale')); ?>"><i class="icmn-basket"></i> Wholesale Sale</a></li>
-                <?php endif; ?>
             </ul>
         </div>
+
+        <!-- USER MANAGEMENT -->
         <div class="dropdown cat__menu-item">
             <a href="#" class="dropdown-toggle cat__menu-link d-flex align-items-center gap-2"
                data-bs-toggle="dropdown" aria-expanded="false">
-                <span class="cat__menu-icon"><i class="icmn-basket"></i></span>
-                <span class="cat__menu-text">Wholesale Sale</span>
+                <span class="cat__menu-icon"><i class="icmn-users"></i></span>
+                <span class="cat__menu-text">User Management</span>
             </a>
-            
+            <ul class="dropdown-menu shadow-sm">
+                <li><a class="dropdown-item" href="<?php echo e(route('staff.manage.index')); ?>"><i class="icmn-user"></i> My Staff</a></li>
+                <li><a class="dropdown-item" href="<?php echo e(route('dashboard.role')); ?>"><i class="icmn-lock"></i> Role & Permission</a></li>
+                <?php if(Auth::check() && Auth::user()->super_user): ?>
+                    <li><a class="dropdown-item" href="<?php echo e(route('users.manage.index')); ?>"><i class="icmn-shield"></i> Manage Users & Roles</a></li>
+                <?php endif; ?>
+            </ul>
         </div>
 
-       <!-- LOGOUT -->
-<?php if(Auth::guard('staff')->check()): ?>
-<div class="cat__logout ms-auto">
-    <form id="logoutForm" action="<?php echo e(route('logout')); ?>" method="POST" style="display: none;">
-        <?php echo csrf_field(); ?>
-    </form>
+        <!-- REPORTS -->
+        <div class="dropdown cat__menu-item">
+            <a href="#" class="dropdown-toggle cat__menu-link d-flex align-items-center gap-2"
+               data-bs-toggle="dropdown" aria-expanded="false">
+                <span class="cat__menu-icon"><i class="icmn-stats-bars"></i></span>
+                <span class="cat__menu-text">Reports</span>
+            </a>
+            <ul class="dropdown-menu shadow-sm">
+                <li><a class="dropdown-item" href="<?php echo e(url('report/sales')); ?>"><i class="icmn-stats-dots"></i> Sale Report</a></li>
+                <li><a class="dropdown-item" href="<?php echo e(url('report/purchase')); ?>"><i class="icmn-cart"></i> Purchase Report</a></li>
+                <li><a class="dropdown-item" href="<?php echo e(url('report/invoice')); ?>"><i class="icmn-file-text"></i> Invoice Report</a></li>
+                <li><a class="dropdown-item" href="<?php echo e(url('report/profit')); ?>"><i class="icmn-coin-dollar"></i> Profit Report</a></li>
+                <li><a class="dropdown-item" href="<?php echo e(url('report/stock')); ?>"><i class="icmn-box-add"></i> Stock Report</a></li>
+                <li><a class="dropdown-item" href="<?php echo e(url('stock-list')); ?>"><i class="icmn-list"></i> Stock List</a></li>
+            </ul>
+        </div>
 
-    <button type="button" class="btn btn-outline-danger cat__logout-btn" id="logoutBtn" title="Logout">
-        <i class="icmn-exit"></i>
-    </button>
+
+
+        <!-- LOGOUT -->
+        <div class="cat__logout ms-auto">
+    <form id="logoutForm" method="POST" action="<?php echo e(route('logout')); ?>">
+        <?php echo csrf_field(); ?>
+        <button type="button" class="btn btn-outline-danger" title="Logout" id="logoutBtn">
+            <i class="icmn-exit"></i>
+        </button>
+    </form>
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const logoutBtn = document.getElementById('logoutBtn');
-    const logoutForm = document.getElementById('logoutForm');
-
-    logoutBtn.addEventListener('click', function() {
-        Swal.fire({
-            title: 'Are you sure?',
-            text: "You will be logged out!",
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#d33',
-            cancelButtonColor: '#3085d6',
-            confirmButtonText: 'Yes, logout!',
-            cancelButtonText: 'Cancel'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                logoutForm.submit();
-            }
-        });
+document.getElementById('logoutBtn').addEventListener('click', function() {
+    Swal.fire({
+        title: 'Are you sure?',
+        text: "You will be logged out!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Yes, logout!',
+        cancelButtonText: 'Cancel'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            document.getElementById('logoutForm').submit();
+        }
     });
 });
 </script>
-
-            </form>
-        </div>
-        <?php endif; ?>
 
     </nav>
 </header>
 
 
-<!-- Include Bootstrap JS at the end of body -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-<br><br><br>
+<div style="height: 20px;"></div>
 
 <!-- UNIT MODAL -->
 <div class="modal fade" id="unitModal" tabindex="-1">
@@ -169,45 +191,22 @@ document.addEventListener('DOMContentLoaded', function() {
     height: 100px;
     background: #ffffff;
     box-shadow: 0 6px 24px rgba(0, 0, 0, 0.08);
-    z-index: 1100;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    z-index: 1030;
     margin-top: 60px;
 }
 
 .cat__top-bar__menu {
     gap: 6px;
     padding-left: 30px;
-}
-
-@media (max-width: 576px) {
-    .app-header {
-        height: auto;
-        min-height: 100px;
-        padding: 8px 0;
-    }
-
-    .cat__top-bar__menu {
-        padding-left: 10px;
-    }
-
-    .cat__menu-item {
-        margin-top: 8px;
-    }
-
-    .cat__menu-text {
-        display: none;
-    }
-
-    .cat__menu-item > a,
-    .cat__menu-link {
-        padding: 8px 12px;
-    }
+    height: 100%;
 }
 
 .cat__menu-item {
     position: relative;
     display: flex;
-    align-items: center;
-    margin-top: 20px;
+    align-items: stretch;
+    height: 100%;
 }
 
 .cat__menu-item > a,
@@ -278,7 +277,7 @@ document.addEventListener('DOMContentLoaded', function() {
 }
 
 .dropdown-menu {
-    border-radius: 14px;
+    border-radius: 6px;
     padding: 10px;
     border: none;
     box-shadow: 0 20px 50px rgba(0,0,0,0.15);
@@ -348,11 +347,11 @@ document.addEventListener('DOMContentLoaded', function() {
     min-width: 260px;
     padding: 10px 0;
     border: none;
-    border-radius: 12px; 
+    border-radius: 6px;
     background: #fff;
     box-shadow: 0 20px 50px rgba(0,0,0,0.15);
     transform-origin: top;
-    margin-top: 10px;
+    margin-top: 0;
 }
 
 /* Dropdown items */
@@ -412,4 +411,4 @@ document.addEventListener('DOMContentLoaded', function() {
 }
 
 
-</style><?php /**PATH D:\PROJECTS\d\double_h_mauzo\resources\views/components/staff_header.blade.php ENDPATH**/ ?>
+</style><?php /**PATH D:\PROJECTS\d\double_h_mauzo\resources\views/components/breadcrumb.blade.php ENDPATH**/ ?>

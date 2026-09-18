@@ -68,15 +68,23 @@ class CustomerController extends Controller
     // Store new customer
     public function store(Request $request)
     {
-        $request->validate([
+        $staff = Auth::guard('staff')->user();
+
+        $rules = [
             'name'  => 'required|string|max:255',
             'phone' => 'nullable|string|max:20',
-        ]);
+        ];
+        if (!$staff) {
+            // Admin POS: the shop isn't implied by a staff session, so it
+            // must be supplied explicitly.
+            $rules['shop_id'] = 'required|exists:shops,id';
+        }
+        $request->validate($rules);
 
         Customer::create([
             'name' => $request->name,
             'phone' => $request->phone,
-            'shop_id' => Auth::guard('staff')->user()->shop_id,
+            'shop_id' => $staff ? $staff->shop_id : $request->shop_id,
         ]);
 
         return redirect()->back()->with('success', 'Customer added successfully!');

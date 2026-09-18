@@ -8,6 +8,7 @@ use App\Models\Sale;
 use App\Models\SaleItem;
 use App\Models\Products;
 use App\Models\Shops;
+use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\DailySalesExport;
 use App\Exports\DailySalesPdfExport;
@@ -161,6 +162,21 @@ public function detail($shopId, $date)
             ]);
         }
 
+        $staff = $this->staff;
+        $admin = null;
+
+        if (!$staff) {
+            // No staff session — this must be an admin-tier account
+            // selling directly from the admin POS.
+            $admin = Auth::user();
+            if (!$admin || !$admin->isAdminTier()) {
+                abort(403, 'You are not authorized to record a sale.');
+            }
+            if (!Shops::whereKey($shopId)->exists()) {
+                abort(404, 'Shop not found.');
+            }
+        }
+
         $request->validate([
             'customer_id' => 'nullable|exists:customers,id',
             'payment_method' => 'required|string',
@@ -173,7 +189,6 @@ public function detail($shopId, $date)
         DB::beginTransaction();
 
         try {
-            $staff = $this->staff;
 
             $billDiscount = $request->bill_discount ?? 0;
             $shipping = $request->shipping ?? 0;
@@ -204,7 +219,8 @@ public function detail($shopId, $date)
             // Create sale
             $sale = Sale::create([
                 'shop_id' => $shopId,
-                'staff_id' => $staff->id,
+                'staff_id' => $staff?->id,
+                'admin_id' => $admin?->id,
                 'customer_id' => $request->customer_id,
                 'bill_discount' => $billDiscount,
                 'shipping' => $shipping,

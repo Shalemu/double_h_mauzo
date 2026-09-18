@@ -36,17 +36,11 @@ class Shops extends Model
         return $this->hasMany(Products::class, 'shop_id');
     }
 
-    // Sales (through staff)
+    // Sales — direct by shop_id (sales can be rung up by staff or, since
+    // admins can sell too, directly by an admin with no staff row at all).
     public function sales()
     {
-        return $this->hasManyThrough(
-            Sale::class,
-            Staff::class,
-            'shop_id',
-            'staff_id',
-            'id',
-            'id'
-        );
+        return $this->hasMany(Sale::class, 'shop_id');
     }
 
     // Operating Expenses

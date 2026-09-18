@@ -10,8 +10,9 @@ class Sale extends Model
     use HasFactory;
 
 protected $fillable = [
-    'shop_id', 
+    'shop_id',
     'staff_id',
+    'admin_id',
     'customer_id',
     'bill_discount',
     'shipping',
@@ -27,6 +28,11 @@ protected $fillable = [
 public function staff()
 {
     return $this->belongsTo(Staff::class);
+}
+
+public function admin()
+{
+    return $this->belongsTo(Users::class, 'admin_id');
 }
 
     public function items()

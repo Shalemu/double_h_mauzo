@@ -176,6 +176,20 @@ Route::middleware(['web', 'auth'])->group(function () {
     Route::get('/dashboard/admin', [DashboardController::class, 'index'])
         ->middleware('admin')->name('dashboard.admin');
 
+    /*
+    |--------------------------------------------------------------------------
+    | Admin POS — admin-tier accounts can sell directly, across any shop
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('dashboard/admin/pos')
+        ->middleware('admin')
+        ->name('admin.pos.')
+        ->group(function () {
+            Route::get('/', [DashboardController::class, 'adminPos'])->name('index');
+            Route::post('/checkout/{shop}', [SaleController::class, 'checkout'])->name('checkout');
+            Route::post('/customers', [CustomerController::class, 'store'])->name('customers.store');
+        });
+
     // Profile & Password
     Route::get('/profile', [UserController::class, 'profile'])->name('profile');
     Route::post('/update/{user_id}', [UserController::class, 'updateprofile'])->name('updateprofile');

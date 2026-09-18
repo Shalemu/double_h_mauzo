@@ -174,3 +174,19 @@
 [2026-09-18 13:06:24] local.INFO: Staff login success {"staff_id":2,"shop_id":3} 
 [2026-09-18 13:06:29] local.INFO: Login attempt {"login":"shadrackmussa97@gmail.com","password_length":13} 
 [2026-09-18 13:06:29] local.INFO: Admin login success {"user_id":4,"role_id":1} 
+[2026-09-18 13:30:22] local.INFO: Login attempt {"login":"shadrackmussa97@gmail.com","password_length":13} 
+[2026-09-18 13:30:22] local.INFO: Admin login success {"user_id":4,"role_id":1} 
+[2026-09-18 13:30:49] local.INFO: Login attempt {"login":"shadrackmussa97@gmail.com","password_length":14} 
+[2026-09-18 13:30:49] local.INFO: Admin login attempt failed for shadrackmussa97@gmail.com  
+[2026-09-18 13:30:49] local.INFO: Staff login attempt failed for shadrackmussa97@gmail.com  
+[2026-09-18 13:31:11] local.INFO: Login attempt {"login":"0712540305","password_length":12} 
+[2026-09-18 13:31:11] local.INFO: Admin login attempt failed for 0712540305  
+[2026-09-18 13:31:11] local.INFO: Staff login success {"staff_id":2,"shop_id":3} 
+[2026-09-18 13:31:19] local.INFO: Login attempt {"login":"shadrackmussa97@gmail.com","password_length":14} 
+[2026-09-18 13:31:20] local.INFO: Admin login attempt failed for shadrackmussa97@gmail.com  
+[2026-09-18 13:31:20] local.INFO: Staff login attempt failed for shadrackmussa97@gmail.com  
+[2026-09-18 13:31:29] local.INFO: Login attempt {"login":"shadrackmussa97@gmail.com","password_length":14} 
+[2026-09-18 13:31:29] local.INFO: Admin login attempt failed for shadrackmussa97@gmail.com  
+[2026-09-18 13:31:29] local.INFO: Staff login attempt failed for shadrackmussa97@gmail.com  
+[2026-09-18 13:32:03] local.INFO: Login attempt {"login":"cosmeticsdoubleh@gmail.com","password_length":7} 
+[2026-09-18 13:32:04] local.INFO: Admin login success {"user_id":10,"role_id":1} 
