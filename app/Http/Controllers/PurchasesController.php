@@ -21,14 +21,21 @@ class PurchasesController extends Controller
      */
     public function create()
     {
-        $products = Products::all();
+        $activeShopId = session('active_shop_id');
+
+        $products = Products::when($activeShopId, fn($q) => $q->where('shop_id', $activeShopId))
+            ->orderByDesc('quantity')
+            ->limit(500)
+            ->get();
+
         $suppliers = Supplier::all();
         $shops = Shops::all();
         $categories = ProductCategory::all();
         $units = Units::all();
+        $activeShopIdForView = $activeShopId;
 
-        return view('dashboard.purchases.create', compact(
-            'products', 'suppliers', 'shops', 'categories', 'units'
+        return view('pages.purchases.create', compact(
+            'products', 'suppliers', 'shops', 'categories', 'units', 'activeShopIdForView'
         ));
     }
 
@@ -42,7 +49,7 @@ class PurchasesController extends Controller
         $categories = ProductCategory::all();
         $units = Units::all();
 
-        return view('dashboard.purchases.new_product', compact(
+        return view('pages.purchases.new_product', compact(
             'units', 'categories', 'shops', 'suppliers'
         ));
     }
@@ -221,7 +228,13 @@ class PurchasesController extends Controller
      */
     public function index()
     {
-        $shop = Shops::where('user_id', auth()->id())->firstOrFail();
+        $activeShopId = session('active_shop_id');
+
+        if (!$activeShopId) {
+            return redirect()->route('dashboard.shop')->with('error', 'Please select an active shop first to view its purchases.');
+        }
+
+        $shop = Shops::findOrFail($activeShopId);
 
         $purchases = PurchaseInvoice::with('supplier', 'shop', 'items')
             ->where('shop_id', $shop->id)
@@ -230,13 +243,18 @@ class PurchasesController extends Controller
 
         $purchasesByDate = $purchases
             ->groupBy(fn($p) => Carbon::parse($p->purchased_at)->format('Y-m-d'))
+            // Same shape ShopsController@show builds — pages.purchases.index
+            // is shared by both and reads these keys.
             ->map(fn($items, $date) => [
                 'date' => $date,
-                'total' => $items->sum(fn($p) => $p->total_amount),
+                'total_amount' => $items->sum('total_amount'),
+                'total_paid' => $items->sum('amount_paid'),
+                'remaining' => $items->sum('remaining_amount'),
                 'items' => $items,
-            ]);
+            ])
+            ->sortKeysDesc();
 
-        return view('dashboard.purchases.index', compact('shop', 'purchases', 'purchasesByDate'));
+        return view('pages.purchases.page', compact('shop', 'purchases', 'purchasesByDate'));
     }
 
     /**
@@ -249,7 +267,7 @@ class PurchasesController extends Controller
             ->with(['product', 'invoice.supplier'])
             ->get();
 
-        return view('dashboard.purchases.detail', compact('purchases', 'date'));
+        return view('pages.purchases.detail', compact('purchases', 'date'));
     }
 
     /**
@@ -291,7 +309,7 @@ class PurchasesController extends Controller
     {
         $invoice = PurchaseInvoice::with('payments')->findOrFail($invoiceId);
 
-        return view('dashboard.purchases.history', compact('invoice'));
+        return view('pages.purchases.history', compact('invoice'));
     }
 
     /**
@@ -301,6 +319,6 @@ class PurchasesController extends Controller
     {
         $invoice = PurchaseInvoice::with('items.product', 'supplier', 'shop')->findOrFail($invoiceId);
 
-        return view('dashboard.purchases.print', compact('invoice'));
+        return view('pages.purchases.print', compact('invoice'));
     }
 }

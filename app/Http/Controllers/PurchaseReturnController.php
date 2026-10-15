@@ -26,7 +26,7 @@ class PurchaseReturnController extends Controller
 
         $itemRows = $this->aggregateItems($invoices);
 
-        return view('dashboard.purchase_returns.detail', compact('shop', 'date', 'itemRows'));
+        return view('pages.purchase_returns.detail', compact('shop', 'date', 'itemRows'));
     }
 
     // =========================

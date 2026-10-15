@@ -41,7 +41,7 @@ class SaleReturnController extends Controller
             ->latest()
             ->get();
 
-        return view('dashboard.sales_returns.index', compact('shop', 'sales', 'returns'));
+        return view('pages.sales_returns.index', compact('shop', 'sales', 'returns'));
     }
 
     // =========================
@@ -147,7 +147,7 @@ public function store(Request $request)
 
         $itemRows = $this->aggregateItems($sales);
 
-        return view('dashboard.sales_returns.detail', compact('shop', 'date', 'itemRows'));
+        return view('pages.sales_returns.detail', compact('shop', 'date', 'itemRows'));
     }
 
     // =========================

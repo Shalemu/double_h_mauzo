@@ -16,20 +16,21 @@ class CustomerController extends Controller
     public function index()
     {
         $customers = Customer::all();
-        return view('dashboard.staff.index', compact('customers'));
+        return view('pages.staff.index', compact('customers'));
     }
 
     // Admin: view all customers across every shop, with credit/debt tracking
     public function adminIndex()
     {
         $customers = Customer::with('shop')
+            ->when(session('active_shop_id'), fn ($q, $shopId) => $q->where('shop_id', $shopId))
             ->withSum('sales as total_purchases', 'total')
             ->withSum('sales as total_paid', 'received_amount')
             ->withSum('sales as total_debt', 'remaining_amount')
             ->latest()
             ->get();
 
-        return view('dashboard.admin.customers.index', compact('customers'));
+        return view('pages.admin.customers.index', compact('customers'));
     }
 
     // Admin: customer detail and purchase/debt history (any shop)
@@ -45,7 +46,7 @@ class CustomerController extends Controller
         $totalPaid      = $sales->sum('received_amount');
         $totalDebt      = $sales->sum('remaining_amount');
 
-        return view('dashboard.admin.customers.show', compact(
+        return view('pages.admin.customers.show', compact(
             'customer',
             'sales',
             'totalPurchases',
@@ -62,7 +63,7 @@ class CustomerController extends Controller
             ->latest()
             ->get();
 
-        return view('dashboard.staff.customers.index', compact('customers'));
+        return view('pages.staff.customers.index', compact('customers'));
     }
 
     // Store new customer
@@ -103,7 +104,7 @@ class CustomerController extends Controller
         $totalPaid      = $sales->sum('received_amount');  // total paid
         $totalDebt      = $sales->sum('remaining_amount'); // remaining debt
 
-                return view('dashboard.staff.customers.detail', compact(
+                return view('pages.staff.customers.detail', compact(
             'customer',
             'sales',
             'totalPurchases',

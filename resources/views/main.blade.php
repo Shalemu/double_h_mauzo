@@ -9,7 +9,92 @@
 
     @include('components.header')
 
+    <link rel="stylesheet" href="{{ asset('admin/css/adminlte.css') }}">
+
     <style>
+        /* components.header (shared with the legacy .cat__top-bar layout
+           still used by the shop-detail page) loads top-bar.cleanui.css,
+           which sets a global `body { padding-top: 4.64rem }` meant to
+           clear that old *fixed* top bar. This layout doesn't use that
+           header at all (AdminLTE's own grid positions .app-header), so
+           that padding was just leaving a blank gap above the sidebar.
+           Cancel it here, scoped to this layout only. */
+        body { padding-top: 0 !important; }
+
+        html[data-bs-theme="dark"] body {
+            background:#111827 !important;
+            color:#e5e7eb;
+        }
+        html[data-bs-theme="dark"] .app-main,
+        html[data-bs-theme="dark"] .app-content,
+        html[data-bs-theme="dark"] .app-content-header {
+            background:#111827 !important;
+            color:#e5e7eb;
+        }
+        html[data-bs-theme="dark"] .app-header,
+        html[data-bs-theme="dark"] .premium-navbar {
+            background:#1f2937 !important;
+            border-color:#374151 !important;
+            color:#e5e7eb;
+        }
+        html[data-bs-theme="dark"] .premium-navbar .navbar-icon-btn,
+        html[data-bs-theme="dark"] .premium-navbar .navbar-user-trigger,
+        html[data-bs-theme="dark"] .premium-navbar .navbar-search-box {
+            background:#273449 !important;
+            border-color:#3b4759 !important;
+            color:#e5e7eb !important;
+        }
+        html[data-bs-theme="dark"] .premium-navbar .navbar-search-box input { color:#f3f4f6 !important; }
+        html[data-bs-theme="dark"] .premium-navbar .navbar-kbd { background:#1f2937; border-color:#4b5563; color:#cbd5e1; }
+        /* Sidebar is already dark; just separate it from the dark page. */
+        html[data-bs-theme="dark"] .premium-sidebar {
+            border-right:1px solid #273449;
+        }
+        html[data-bs-theme="dark"] .card,
+        html[data-bs-theme="dark"] .cat__core__widget,
+        html[data-bs-theme="dark"] .dashboard-card,
+        html[data-bs-theme="dark"] .dashboard-panel,
+        html[data-bs-theme="dark"] .products-page-card,
+        html[data-bs-theme="dark"] .shop-table-container,
+        html[data-bs-theme="dark"] .customer-contact-item,
+        html[data-bs-theme="dark"] .bg-white {
+            background-color:#1f2937 !important;
+            background-image:none !important;
+            border-color:#374151 !important;
+            color:#e5e7eb !important;
+        }
+        html[data-bs-theme="dark"] .card-header,
+        html[data-bs-theme="dark"] .products-page-card .card-header,
+        html[data-bs-theme="dark"] .customer-detail-page .history-header {
+            background:#273449 !important;
+            border-color:#374151 !important;
+            color:#f3f4f6 !important;
+        }
+        html[data-bs-theme="dark"] .dashboard-title,
+        html[data-bs-theme="dark"] .dashboard-panel-title,
+        html[data-bs-theme="dark"] .customer-stat-label,
+        html[data-bs-theme="dark"] .text-muted {
+            color:#aeb9c8 !important;
+        }
+        html[data-bs-theme="dark"] .table {
+            --bs-table-bg:#1f2937;
+            --bs-table-color:#e5e7eb;
+            --bs-table-border-color:#374151;
+            --bs-table-hover-bg:#273449;
+            --bs-table-hover-color:#fff;
+        }
+        html[data-bs-theme="dark"] .table-warning {
+            --bs-table-bg:#493c1b;
+            --bs-table-color:#f8e4a1;
+            --bs-table-border-color:#66552b;
+        }
+        html[data-bs-theme="dark"] .form-control,
+        html[data-bs-theme="dark"] .form-select {
+            background-color:#111827;
+            border-color:#4b5563;
+            color:#e5e7eb;
+        }
+
         /* GLOBAL PAGE-LOAD PROGRESS BAR */
         #global-loader{
             position: fixed;
@@ -42,9 +127,11 @@
             transition: width .2s ease;
         }
     </style>
+
+    @stack('styles')
 </head>
 
-<body>
+<body class="layout-fixed sidebar-expand-lg bg-body-tertiary">
 
 {{-- GLOBAL PAGE-LOAD PROGRESS BAR --}}
 <div id="global-loader"><div class="bar"></div></div>
@@ -52,20 +139,12 @@
 (function () {
     var loader = document.getElementById('global-loader');
     if (!loader) return;
-
-    // Start the bar creeping toward ~78% right away
     loader.classList.add('is-active');
-
-    // On full load, snap it to 100% then fade out
     window.addEventListener('load', function () {
         loader.classList.remove('is-active');
         loader.classList.add('is-done');
-        setTimeout(function () {
-            loader.classList.remove('is-done');
-        }, 250);
+        setTimeout(function () { loader.classList.remove('is-done'); }, 250);
     });
-
-    // Restart the bar the instant the user navigates away
     window.addEventListener('beforeunload', function () {
         loader.classList.remove('is-done');
         loader.classList.add('is-active');
@@ -73,15 +152,54 @@
 })();
 </script>
 
-{{-- Top Menu --}}
-@include('components.mainmenu')
+<div class="app-wrapper">
+    @include('components.app_navbar')
+    @include('components.app_sidebar')
 
-{{-- Page Content --}}
-<main class="container-fluid" style="margin-top:70px;">
-    @yield('content')
-</main>
+    <main class="app-main">
+        <div class="app-content-header">
+            <div class="container-fluid">
+                <div class="row align-items-center mb-3">
+                    <div class="col-sm-6">
+                        <h3 class="mb-0">@yield('title')</h3>
+                    </div>
+                    <div class="col-sm-6">
+                        <ol class="breadcrumb float-sm-end mb-0">
+                            <li class="breadcrumb-item"><a href="{{ Auth::guard('staff')->check() ? route('staff.dashboard') : route('dashboard.admin') }}">Home</a></li>
+                            <li class="breadcrumb-item active">@yield('title')</li>
+                        </ol>
+                    </div>
+                </div>
+                @if(session('success'))
+                    <div class="alert alert-success alert-dismissible fade show">
+                        {{ session('success') }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                @endif
+                @if(session('error'))
+                    <div class="alert alert-danger alert-dismissible fade show">
+                        {{ session('error') }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                @endif
+            </div>
+        </div>
 
-{{-- Scripts --}}
+        <div class="app-content">
+            <div class="container-fluid">
+                @yield('content')
+            </div>
+        </div>
+    </main>
+
+    @include('components.footer')
+</div>
+
+<!-- Unit / Category quick-add modals (shared globally, was duplicated per-page before) -->
+@include('components.quick_add_modals')
+
+<script src="{{ asset('admin/js/adminlte.js') }}"></script>
+
 @stack('scripts')
 
 @include('components.dashboard_scripts')

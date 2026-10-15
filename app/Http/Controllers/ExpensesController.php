@@ -35,7 +35,7 @@ class ExpensesController extends Controller
                 'items' => $expenses,
             ]);
 
-        return view('dashboard.staff.expenses.index', compact('shop', 'expensesByDate'));
+        return view('pages.staff.expenses.index', compact('shop', 'expensesByDate'));
     }
 
     /**
@@ -57,7 +57,7 @@ public function details(Request $request, $shopId)
 
     $expenses = $query->orderBy('created_at', 'desc')->get();
 
-    return view('dashboard.staff.expenses.detail', compact('expenses', 'date', 'shop'));
+    return view('pages.staff.expenses.detail', compact('expenses', 'date', 'shop'));
 }
 
  
@@ -100,7 +100,7 @@ public function details(Request $request, $shopId)
             'user_id'  => $userId,
         ]);
 
-        return redirect()->route('dashboard.shop.show', $shop->id)
+        return back()
                          ->with('success', 'Expense added successfully!');
     }
 
@@ -144,7 +144,7 @@ public function details(Request $request, $shopId)
             'receipt' => $expense->receipt,
         ]);
 
-        return redirect()->route('dashboard.shop.show', $expense->shop_id)
+        return back()
                          ->with('success', 'Expense updated successfully!');
     }
 
@@ -162,7 +162,7 @@ public function details(Request $request, $shopId)
         $shopId = $expense->shop_id;
         $expense->delete();
 
-        return redirect()->route('dashboard.shop.show', $shopId)
+        return back()
                          ->with('success', 'Expense deleted successfully!');
     }
 }

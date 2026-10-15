@@ -13,10 +13,16 @@ class Shops extends Model
     protected $fillable = [
         'name',
         'location',
+        'status',
         'capital',
         'admin_id',
         'user_id',
     ];
+
+    public function isSuspended(): bool
+    {
+        return $this->status === 'suspended';
+    }
 
     /*
     |--------------------------------------------------------------------------

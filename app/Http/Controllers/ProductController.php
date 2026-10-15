@@ -24,38 +24,71 @@ class ProductController extends Controller
 
 public function index()
 {
+    $filter = request()->route('filter') ?? request()->query('filter', 'all');
+    if (!in_array($filter, ['all', 'in_stock', 'expired', 'out_of_stock', 'running_out', 'expiring'], true)) {
+        $filter = 'all';
+    }
+    $applyInventoryFilter = function ($query) use ($filter) {
+        switch ($filter) {
+            case 'in_stock':
+                return $query->where('quantity', '>', 0);
+            case 'expired':
+                return $query->whereNotNull('expire_date')->where('expire_date', '<', Carbon::today());
+            case 'out_of_stock':
+                return $query->where('quantity', '<=', 0);
+            case 'running_out':
+                return $query->where('quantity', '>', 0)->whereColumn('quantity', '<=', 'min_quantity');
+            case 'expiring':
+                return $query->whereNotNull('expire_date')
+                    ->whereBetween('expire_date', [Carbon::today(), Carbon::today()->addYear()]);
+            default:
+                return $query;
+        }
+    };
+
     if (Auth::guard('staff')->check()) {
         $staff = Auth::guard('staff')->user();
-        $products = Products::where('shop_id', $staff->shop_id)->get();
+
+        // A shop can hold tens of thousands of products — loading every
+        // row (and filtering it in PHP) crashed this page. Cap each list
+        // and do the filtering in SQL instead.
+        $displayLimit = 500;
+        $productsQuery = Products::where('shop_id', $staff->shop_id);
+        $products = $applyInventoryFilter(clone $productsQuery)->orderByDesc('quantity')->orderBy('name')
+            ->limit($displayLimit)->get();
+
         $categories = ProductCategory::whereNull('parent_id')->get();
         $units = Unit::all();
 
         $today = Carbon::today();
 
-        $runningOutProducts = $products->filter(function($p) {
-            return $p->quantity > 0 && $p->quantity <= $p->min_quantity;
-        });
+        $runningOutProducts = (clone $productsQuery)->where('quantity', '>', 0)
+            ->whereColumn('quantity', '<=', 'min_quantity')
+            ->limit($displayLimit)->get();
 
-        $expiringProducts = $products->filter(function($p) use ($today) {
-            return $p->expire_date
-                   && Carbon::parse($p->expire_date)->between($today, $today->copy()->addDays(7));
-        });
+        $expiringProducts = (clone $productsQuery)->whereNotNull('expire_date')
+            ->whereBetween('expire_date', [$today, $today->copy()->addDays(7)])
+            ->limit($displayLimit)->get();
 
-        $expiredProducts = $products->filter(function($p) use ($today) {
-            return $p->expire_date && Carbon::parse($p->expire_date)->lt($today);
-        });
+        $expiredProducts = (clone $productsQuery)->whereNotNull('expire_date')
+            ->where('expire_date', '<', $today)
+            ->limit($displayLimit)->get();
 
-        $disposedProducts = $products->filter(function($p) {
-            return $p->disposed == 1;
-        });
+        $finishedProducts = (clone $productsQuery)->where('quantity', 0)
+            ->limit($displayLimit)->get();
 
-        return view('dashboard.staff.products.index', compact(
+        // Note: products has no "disposed" column — always empty, matching
+        // prior behavior.
+        $disposedProducts = collect();
+
+        return view('pages.staff.products.index', compact(
             'products',
             'categories',
             'units',
             'runningOutProducts',
             'expiringProducts',
             'expiredProducts',
+            'finishedProducts',
             'disposedProducts'
         ));
     }
@@ -65,34 +98,54 @@ public function index()
     $isAdminTier = $admin->isAdminTier();
     $productsTotal = null;
     $productsDisplayLimit = 500;
+    $activeShop = ($isAdminTier && session('active_shop_id'))
+        ? Shops::find(session('active_shop_id'))
+        : null;
 
-    if ($isAdminTier) {
-        // Admin-tier accounts aren't tied to one shop — see everything,
-        // including any product still missing a shop assignment. But
-        // loading every row (a shop can hold tens of thousands) crashes
-        // the page, so the list is capped for display; the bulk-assign
-        // tool still operates on the full table regardless of what's
-        // shown here.
-        $productsTotal = Products::count();
-        $products = Products::with('shop')->latest()->limit($productsDisplayLimit)->get();
+    if ($activeShop) {
+        // Admin is focused on one shop via the active-shop switcher —
+        // behaves like a regular shop-scoped admin (no shop picker needed,
+        // it's implied), but still capped/sorted safely.
+        $productsQuery = $applyInventoryFilter(Products::where('shop_id', $activeShop->id));
+        $productsTotal = (clone $productsQuery)->count();
+        $products = (clone $productsQuery)
+            ->orderByDesc('quantity')->orderBy('name')
+            ->limit($productsDisplayLimit)->get();
+    } elseif ($isAdminTier) {
+        // No active shop chosen — global view across every shop, including
+        // any product still missing a shop assignment. Loading every row
+        // (a shop can hold tens of thousands) crashes the page, so the
+        // list is capped for display; the bulk-assign tool still operates
+        // on the full table regardless of what's shown here.
+        $productsQuery = $applyInventoryFilter(Products::query());
+        $productsTotal = (clone $productsQuery)->count();
+        $products = $productsQuery->with('shop')->latest()->limit($productsDisplayLimit)->get();
     } else {
         $products = $admin->shop
-            ? Products::where('shop_id', $admin->shop->id)->get()
+            ? $applyInventoryFilter(Products::where('shop_id', $admin->shop->id))->get()
             : collect();
     }
 
     $categories = ProductCategory::whereNull('parent_id')->get();
     $units = Unit::all();
     $shops = $isAdminTier ? Shops::orderBy('name')->get() : collect();
+    // Global mode = admin-tier with no active shop chosen: sees every shop
+    // at once and needs the shop picker/bulk-assign tooling. Once a shop is
+    // active, the page behaves like a regular single-shop admin.
+    $globalMode = $isAdminTier && !$activeShop;
+    $productFilter = $filter;
 
-    return view('dashboard.products.index', compact(
+    return view('pages.products.page', compact(
         'products',
         'categories',
         'units',
         'shops',
         'isAdminTier',
         'productsTotal',
-        'productsDisplayLimit'
+        'productsDisplayLimit',
+        'activeShop',
+        'globalMode',
+        'productFilter'
     ));
 }
 
@@ -181,8 +234,11 @@ public function store(Request $request)
     ]);
 
     $admin = Auth::user();
+    $activeShopId = session('active_shop_id');
 
-    if ($admin->isAdminTier()) {
+    if ($admin->isAdminTier() && $activeShopId) {
+        $data['shop_id'] = $activeShopId;
+    } elseif ($admin->isAdminTier()) {
         $request->validate(['shop_id' => 'required|exists:shops,id']);
         $data['shop_id'] = $request->shop_id;
     } elseif ($admin->shop) {
@@ -210,7 +266,7 @@ public function store(Request $request)
 public function show($id)
 {
     $product = Products::findOrFail($id);
-    return view('dashboard.products.show', compact('product'));
+    return view('pages.products.show', compact('product'));
 }
 
 public function edit($id)
@@ -219,7 +275,7 @@ public function edit($id)
     $categories = ProductCategory::whereNull('parent_id')->get();
     $units = Unit::all();
 
-    return view('dashboard.products.edit', compact('product', 'categories', 'units'));
+    return view('pages.products.edit', compact('product', 'categories', 'units'));
 }
 
 public function update(Request $request, $id)
@@ -289,7 +345,7 @@ public function exportExcel()
     public function exportPDF()
     {
         $products = Products::all();
-        $pdf = PDF::loadView('dashboard.products.pdf', compact('products'));
+        $pdf = PDF::loadView('pages.products.pdf', compact('products'));
         return $pdf->download('products.pdf');
     }
 
@@ -304,14 +360,16 @@ public function exportExcel()
  public function importExcel(Request $request)
     {
         $admin = Auth::user();
+        $activeShopId = session('active_shop_id');
 
         $rules = ['excel_file' => 'required|file|mimes:xlsx,xls'];
-        if ($admin->isAdminTier()) {
+        if ($admin->isAdminTier() && !$activeShopId) {
             $rules['shop_id'] = 'required|exists:shops,id';
         }
         $request->validate($rules);
 
-        $import = new ProductsImport($request->shop_id ? (int) $request->shop_id : null);
+        $targetShopId = $activeShopId ?: ($request->shop_id ? (int) $request->shop_id : null);
+        $import = new ProductsImport($targetShopId);
         Excel::import($import, $request->file('excel_file'));
 
         if (!empty($import->errors)) {
@@ -375,7 +433,7 @@ public function filterByStatus($status)
             ->where('quantity', '>', 0)
             ->get();
 
-        return view('dashboard.products.running_out', compact('products'));
+        return view('pages.products.running_out', compact('products'));
     }
 
     /**
@@ -395,7 +453,7 @@ public function filterByStatus($status)
                 ->where('expire_date', '<=', $today->copy()->addYear()) // within next 1 year
                 ->get();
 
-            return view('dashboard.products.expiring', compact('products'));
+            return view('pages.products.expiring', compact('products'));
         }
 
     /**
@@ -413,7 +471,7 @@ public function finished()
 
     $products = $query->get();
 
-    return view('dashboard.products.finished', compact('products'));
+    return view('pages.products.finished', compact('products'));
 }
 
 
@@ -430,7 +488,7 @@ public function finished()
             ->where('expire_date', '<', $today)
             ->get();
 
-        return view('dashboard.products.expired', compact('products'));
+        return view('pages.products.expired', compact('products'));
     }
 
     /**
@@ -471,8 +529,8 @@ public function finished()
 
 public function trash()
 {
-    $trashedProducts = ProductTrash::all();
-    return view('dashboard.products.trash', compact('trashedProducts'));
+    $trashedProducts = ProductTrash::with(['shop', 'category', 'unit'])->latest()->get();
+    return view('pages.products.trash', compact('trashedProducts'));
 }
 
 public function restore($id)

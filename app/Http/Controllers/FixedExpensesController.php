@@ -14,7 +14,7 @@ class FixedExpensesController extends Controller
         $shop = Shops::findOrFail($shopId);
         $fixedExpenses = FixedExpense::where('shop_id', $shop->id)->get();
 
-        return view('dashboard.fixed_expenses.index', compact('shop', 'fixedExpenses'));
+        return view('pages.fixed_expenses.index', compact('shop', 'fixedExpenses'));
     }
 
     // Show form to create a new fixed expense

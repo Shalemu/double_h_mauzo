@@ -31,4 +31,17 @@ class Role extends Model
     {
         return $this->hasMany(Users::class, 'role_id');
     }
+
+    public function permissions()
+    {
+        return $this->hasMany(RolePermission::class);
+    }
+
+    /**
+     * Permission keys granted to this role (see config/permissions.php).
+     */
+    public function permissionKeys(): array
+    {
+        return $this->permissions->pluck('permission')->all();
+    }
 }

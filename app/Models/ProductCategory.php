@@ -29,4 +29,14 @@ protected $fillable = [
     {
         return $this->hasMany(ProductCategory::class, 'parent_id');
     }
+
+    public function products()
+    {
+        return $this->hasMany(Products::class, 'category_id');
+    }
+
+    public function subcategoryProducts()
+    {
+        return $this->hasMany(Products::class, 'subcategory_id');
+    }
 }

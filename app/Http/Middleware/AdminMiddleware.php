@@ -12,7 +12,9 @@ class AdminMiddleware
     {
         $user = Auth::user();
 
-        if (!$user || !in_array($user->role_id, [1, 2])) { // 1=Super Admin, 2=Admin
+        // Admin/manager roles, super users, or any role given admin-panel
+        // permissions. What each may do is checked by PanelPermissionMiddleware.
+        if (!$user || !method_exists($user, 'isAdminTier') || !$user->isAdminTier()) {
             abort(403, 'You are not authorized to access this page.');
         }
 

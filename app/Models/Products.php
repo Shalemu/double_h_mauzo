@@ -64,4 +64,15 @@ class Products extends Model
         return $this->belongsTo(Shops::class, 'shop_id');
     }
 
+    protected static function booted()
+    {
+        // Typing a new brand on a product adds it to the Brands list.
+        static::saved(function (Products $product) {
+            $brand = trim((string) $product->brand);
+            if ($brand !== '' && ($product->wasRecentlyCreated || $product->wasChanged('brand'))) {
+                Brand::firstOrCreate(['name' => $brand]);
+            }
+        });
+    }
+
 }

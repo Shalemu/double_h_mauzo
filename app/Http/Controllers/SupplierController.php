@@ -9,7 +9,7 @@ class SupplierController extends Controller
 {
     public function index()
     {
-        $suppliers = Supplier::latest()->get();
+        $suppliers = Supplier::withCount('invoices')->latest()->get();
         return view('suppliers.index', compact('suppliers'));
     }
 
@@ -60,7 +60,7 @@ class SupplierController extends Controller
             'description' => 'nullable|string|max:500',
         ]);
 
-        $supplier->update($request->all());
+        $supplier->update($request->only('name', 'email', 'phone', 'address', 'description'));
 
         return redirect()->route('suppliers.index')
                          ->with('success', 'Supplier updated successfully.');
@@ -68,6 +68,14 @@ class SupplierController extends Controller
 
     public function destroy(Supplier $supplier)
     {
+        // purchase_invoices cascade-delete with their supplier, so a supplier
+        // with history must stay — deleting it would wipe those purchases.
+        $invoices = $supplier->invoices()->count();
+        if ($invoices) {
+            return redirect()->route('suppliers.index')
+                ->with('error', "\"{$supplier->name}\" has {$invoices} purchase invoice(s) and cannot be deleted.");
+        }
+
         $supplier->delete();
 
         return redirect()->route('suppliers.index')

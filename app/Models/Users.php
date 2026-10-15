@@ -18,6 +18,7 @@ class Users extends Authenticatable
         'middle_name',
         'last_name',
         'name',
+        'profile_image',
         'username',
         'email',
         'phone',
@@ -69,7 +70,40 @@ class Users extends Authenticatable
      */
     public function isAdminTier(): bool
     {
-        return in_array($this->role_id, [1, 2]) || (bool) $this->super_user;
+        return in_array($this->role_id, [1, 2]) || (bool) $this->super_user || $this->hasAnyPanelPermission();
+    }
+
+    /**
+     * The "admin" role (id 1) and super users can do everything; every other
+     * admin-panel role only what's ticked on Roles & Permissions.
+     */
+    public function hasFullAccess(): bool
+    {
+        return (int) $this->role_id === 1 || (bool) $this->super_user;
+    }
+
+    public function hasPermission(string $permission): bool
+    {
+        return $this->hasFullAccess()
+            || ($this->role && in_array($permission, $this->role->permissionKeys(), true));
+    }
+
+    /**
+     * Any admin-panel permission at all — what lets a custom role into the
+     * admin panel (staff "POS …" permissions don't count).
+     */
+    public function hasAnyPanelPermission(): bool
+    {
+        if (!$this->role) {
+            return false;
+        }
+
+        $staffOnly = collect(config('permissions'))
+            ->filter(fn ($perms, $module) => str_starts_with($module, 'POS '))
+            ->flatMap(fn ($perms) => array_keys($perms))
+            ->all();
+
+        return (bool) array_diff($this->role->permissionKeys(), $staffOnly);
     }
 
     public function expenses()

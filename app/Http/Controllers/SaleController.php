@@ -59,7 +59,7 @@ class SaleController extends Controller
         ])
         ->values();
 
-    return view('dashboard.staff.sales.index', compact('shop', 'salesByDate'));
+    return view('pages.staff.sales.index', compact('shop', 'salesByDate'));
 }
 
     /*
@@ -87,7 +87,7 @@ public function detail($shopId, $date)
 
         $itemRows = $this->aggregateItems($sales);
 
-        return view('dashboard.staff.sales.detail', compact('shop', 'date', 'itemRows'));
+        return view('pages.staff.sales.detail', compact('shop', 'date', 'itemRows'));
     }
 
     // ADMIN VIEW
@@ -99,7 +99,8 @@ public function detail($shopId, $date)
 
         $itemRows = $this->aggregateItems($sales);
 
-        return view('dashboard.sales.detail', compact('shop', 'date', 'itemRows'));
+        // Loaded into the shop page by AJAX = bare fragment; opened directly = full page.
+        return view(request()->ajax() ? 'pages.sales.detail' : 'pages.sales.detail_page', compact('shop', 'date', 'itemRows'));
     }
 
     abort(403, 'Unauthorized access.');

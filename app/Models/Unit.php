@@ -15,4 +15,9 @@ class Unit extends Model
         'shop_id',
         'admin_id',
     ];
+
+    public function products()
+    {
+        return $this->hasMany(Products::class, 'unit_id');
+    }
 }
