@@ -9,6 +9,72 @@
 
     @include('components.header')
 
+    {{-- App-wide notifications: everything uses the top-right toast (the POS "added to cart" style). --}}
+    <script>
+    (function () {
+        if (!window.Swal) return;
+
+        const toastDefaults = {
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3500,
+            timerProgressBar: true,
+            didOpen: (el) => {
+                el.addEventListener('mouseenter', Swal.stopTimer);
+                el.addEventListener('mouseleave', Swal.resumeTimer);
+            },
+        };
+        const originalFire = Swal.fire.bind(Swal);
+
+        // notify('success'|'error'|'warning'|'info', 'Title', 'optional detail')
+        window.notify = function (icon, title, text) {
+            return originalFire(Object.assign({}, toastDefaults, {
+                icon: icon,
+                title: title,
+                text: text || undefined,
+                // Problems stay up a little longer so they can be read.
+                timer: icon === 'error' || icon === 'warning' ? 6000 : 3500,
+            }));
+        };
+
+        // Plain "done" pop-ups become toasts; anything that asks a question stays a dialog.
+        Swal.fire = function () {
+            let opts = arguments[0];
+            if (typeof opts === 'string') {
+                opts = { title: arguments[0], text: arguments[1], icon: arguments[2] };
+            }
+            const asks = opts && (opts.showCancelButton || opts.showDenyButton || opts.input || opts.preConfirm);
+            if (opts && typeof opts === 'object' && opts.icon === 'success' && !opts.toast && !asks) {
+                const both = opts.title && opts.text;
+                return window.notify('success', both ? opts.title : (opts.text || opts.title), both ? opts.text : undefined);
+            }
+            return originalFire.apply(null, arguments);
+        };
+
+        // Messages from the server after saving (session flash + first validation error).
+        @php
+            $flashMessages = array_filter([
+                'success' => session('success'),
+                'error'   => session('error') ?? ((isset($errors) && $errors->any()) ? $errors->first() : null),
+                'warning' => session('warning'),
+                'info'    => session('info'),
+            ], fn ($m) => is_string($m) && $m !== '');
+        @endphp
+        const flashes = @json((object) $flashMessages);
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const texts = Object.values(flashes).map(t => t.replace(/\s+/g, ' ').trim());
+            // Pages that still print the same message as a box: hide that copy (the toast replaces it).
+            document.querySelectorAll('.alert').forEach(function (box) {
+                const text = box.textContent.replace(/\s+/g, ' ').trim();
+                if (text && texts.includes(text)) box.remove();
+            });
+            Object.entries(flashes).forEach(([icon, text], i) => setTimeout(() => window.notify(icon, text), i * 400));
+        });
+    })();
+    </script>
+
     <link rel="stylesheet" href="{{ asset('admin/css/adminlte.css') }}">
 
     <style>
@@ -126,6 +192,76 @@
             width: 100%;
             transition: width .2s ease;
         }
+
+        /* Primary buttons use the logo red (#831619) instead of Bootstrap blue. */
+        .btn-primary {
+            --bs-btn-bg: #831619;
+            --bs-btn-border-color: #831619;
+            --bs-btn-hover-bg: #6b1215;
+            --bs-btn-hover-border-color: #6b1215;
+            --bs-btn-active-bg: #5a0f12;
+            --bs-btn-active-border-color: #5a0f12;
+            --bs-btn-disabled-bg: #831619;
+            --bs-btn-disabled-border-color: #831619;
+            --bs-btn-focus-shadow-rgb: 131, 22, 25;
+        }
+        .btn-outline-primary {
+            --bs-btn-color: #831619;
+            --bs-btn-border-color: #831619;
+            --bs-btn-hover-bg: #831619;
+            --bs-btn-hover-border-color: #831619;
+            --bs-btn-active-bg: #6b1215;
+            --bs-btn-active-border-color: #6b1215;
+            --bs-btn-disabled-color: #831619;
+            --bs-btn-disabled-border-color: #831619;
+            --bs-btn-focus-shadow-rgb: 131, 22, 25;
+        }
+        /* The legacy cleanui theme (vendors/bootstrap/css/buttons.css) hard-codes
+           .btn.btn-primary to blue, some states with !important — match its
+           selectors so the logo red wins. */
+        .btn.btn-primary, .show > .btn.btn-primary {
+            background-color: #831619;
+            border-color: #831619;
+            color: #fff;
+        }
+        .btn.btn-primary:hover, .btn.btn-primary:active, .show > .btn.btn-primary:hover, .show > .btn.btn-primary:active {
+            background-color: #6b1215;
+            border-color: #6b1215;
+            color: #fff;
+        }
+        .btn.btn-primary:hover:active, .btn.btn-primary:focus, .btn.btn-primary.active,
+        .show > .btn.btn-primary:hover:active, .show > .btn.btn-primary:focus, .show > .btn.btn-primary.active {
+            background: #5a0f12 !important;
+            border-color: #5a0f12 !important;
+            color: #fff;
+        }
+        .btn.btn-primary:disabled, .btn.btn-primary.disabled {
+            background-color: #831619;
+            border-color: #831619;
+            opacity: .6;
+        }
+        .btn.btn-outline-primary, .show > .btn.btn-outline-primary {
+            border-color: #831619;
+            color: #831619;
+        }
+        .btn.btn-outline-primary:hover, .btn.btn-outline-primary:active, .btn.btn-outline-primary.active,
+        .show > .btn.btn-outline-primary:hover, .show > .btn.btn-outline-primary:active {
+            background-color: #831619 !important;
+            border-color: #831619 !important;
+            color: #fff !important;
+        }
+        .pagination {
+            --bs-pagination-color: #831619;
+            --bs-pagination-hover-color: #6b1215;
+            --bs-pagination-focus-color: #6b1215;
+            --bs-pagination-active-bg: #831619;
+            --bs-pagination-active-border-color: #831619;
+        }
+        .pagination .page-item.active .page-link {
+            background-color: #831619 !important;
+            border-color: #831619 !important;
+            color: #fff !important;
+        }
     </style>
 
     @stack('styles')
@@ -170,18 +306,7 @@
                         </ol>
                     </div>
                 </div>
-                @if(session('success'))
-                    <div class="alert alert-success alert-dismissible fade show">
-                        {{ session('success') }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                    </div>
-                @endif
-                @if(session('error'))
-                    <div class="alert alert-danger alert-dismissible fade show">
-                        {{ session('error') }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                    </div>
-                @endif
+                {{-- Flash messages are shown as top-right toasts (see "App-wide notifications" below). --}}
             </div>
         </div>
 

@@ -281,7 +281,7 @@ document.getElementById('supplierSelect').addEventListener('change', function ()
 document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.view-history').forEach(btn => {
         btn.addEventListener('click', function() {
-            fetch(this.dataset.url)
+            fetch(this.dataset.url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
                 .then(res => res.text())
                 .then(html => {
                     const modal = document.getElementById('historyModal');

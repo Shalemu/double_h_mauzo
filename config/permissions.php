@@ -26,6 +26,12 @@ return [
         'shops.edit'               => 'Edit / Suspend Shop',
         'shops.delete'             => 'Delete Shop',
     ],
+    'Stores' => [
+        'stores.view'              => 'List Stores',
+        'stores.create'            => 'Create Store',
+        'stores.edit'              => 'Edit / Suspend Store',
+        'stores.delete'            => 'Delete Store',
+    ],
     'Human Resource' => [
         'staff.view'               => 'List Staff',
         'staff.create'             => 'Create Staff',
@@ -110,6 +116,15 @@ return [
     'Stock Transfers' => [
         'transfers.view'           => 'List Stock Transfers',
         'transfers.create'         => 'Transfer Stock',
+    ],
+    'Distribution' => [
+        'distributions.view'       => 'List Distributions',
+        'distributions.create'     => 'Issue Stock to Distributor',
+        'distributions.settle'     => 'Settle Distribution & Record Payments',
+    ],
+    'SMS' => [
+        'sms.view'                 => 'View SMS & History',
+        'sms.send'                 => 'Send SMS',
     ],
 
     // ---------------- Staff POS app ----------------

@@ -231,12 +231,6 @@ html[data-bs-theme="dark"] #productTable_wrapper .dt-length select {
         <div class="alert alert-danger">{{ session('error') }}</div>
     @endif
 
-    {{-- Suggestions for the Brand fields in the add/edit product modals --}}
-    <datalist id="brandOptions">
-        @foreach(\App\Models\Brand::orderBy('name')->pluck('name') as $brandName)
-            <option value="{{ $brandName }}">
-        @endforeach
-    </datalist>
 
     <!-- PAGE HEADER -->
     <div class="d-flex justify-content-end align-items-center flex-wrap gap-2 mb-3" style="margin-top: 20px;">
@@ -247,10 +241,10 @@ html[data-bs-theme="dark"] #productTable_wrapper .dt-length select {
             <button type="button" class="btn btn-outline-warning" data-bs-toggle="modal" data-bs-target="#uploadExcelModal">
               <i class="bi bi-file-earmark-excel"></i> Upload Excel
             </button>
-            <a href="{{ route('products.export.excel') }}" class="btn btn-outline-success">
+            <a href="{{ route('products.export.excel', $productFilter !== 'all' ? ['filter' => $productFilter] : []) }}" class="btn btn-outline-success">
                 <i class="bi bi-file-earmark-spreadsheet"></i> Export Excel
             </a>
-            <a href="{{ route('products.export.pdf') }}" class="btn btn-outline-danger">
+            <a href="{{ route('products.export.pdf', $productFilter !== 'all' ? ['filter' => $productFilter] : []) }}" class="btn btn-outline-danger">
                 <i class="bi bi-file-earmark-pdf"></i> Export PDF
             </a>
             <a href="{{ route('categories.index') }}" class="btn btn-outline-secondary">
@@ -262,9 +256,9 @@ html[data-bs-theme="dark"] #productTable_wrapper .dt-length select {
             <a href="{{ route('units.index') }}" class="btn btn-outline-secondary">
                 <i class="bi bi-rulers"></i> Unit of Measure
             </a>
-            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addProductModal">
+            <a href="{{ route('products.create') }}" class="btn btn-primary">
                 <i class="bi bi-plus-lg"></i> Add Product
-            </button>
+            </a>
         </div>
     </div>
 
@@ -611,221 +605,6 @@ html[data-bs-theme="dark"] #productTable_wrapper .dt-length select {
 
 
 
- <!-- Trigger button -->
-
-
-<!-- Add Product Modal -->
-<div class="modal fade" id="addProductModal" tabindex="-1" aria-labelledby="addProductModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-dialog-centered">
-    <div class="modal-content border-0 shadow-lg rounded-4">
-      <form id="addProductForm" action="{{ route('products.store') }}" method="POST" enctype="multipart/form-data">
-    @csrf
-
-        <div class="modal-header border-0 pb-0">
-          <h5 class="modal-title fw-bold" id="addProductModalLabel"><i class="bi bi-plus-circle me-2 text-primary"></i>Add New Product</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-
-        <div class="modal-body">
-          <div class="row g-3">
-            <!-- Name -->
-            <div class="col-md-6">
-              <label for="name" class="form-label">Name <span class="text-danger">*</span></label>
-              <input type="text" class="form-control" id="name" name="name" required>
-            </div>
-
-            <!-- Item Category -->
-       <div class="col-md-6">
-            <label class="form-label">Item Category</label>
-            <select class="form-select" name="category_id">
-              <option value="">Select Category</option>
-              @foreach($categories as $category)
-                  <option value="{{ $category->id }}">
-                      {{ $category->name }}
-                  </option>
-              @endforeach
-            </select>
-          </div>
-
-            @if($globalMode)
-            <!-- Shop -->
-            <div class="col-md-6">
-                <label class="form-label">Shop <span class="text-danger">*</span></label>
-                <select class="form-select" name="shop_id" required>
-                    <option value="">Select Shop</option>
-                    @foreach($shops as $shop)
-                        <option value="{{ $shop->id }}">{{ $shop->name }}</option>
-                    @endforeach
-                </select>
-            </div>
-            @endif
-
-            <!-- Size -->
-            <div class="col-md-6">
-              <label for="size" class="form-label">Size</label>
-              <input type="text" class="form-control" id="size" name="size">
-            </div>
-
-            <!-- Color -->
-            <div class="col-md-6">
-              <label for="color" class="form-label">Color</label>
-              <input type="text" class="form-control" id="color" name="color">
-            </div>
-
-            <!-- Brand -->
-            <div class="col-md-6">
-              <label for="brand" class="form-label">Brand</label>
-              <input type="text" class="form-control" id="brand" name="brand" list="brandOptions" autocomplete="off">
-            </div>
-
-            <!-- Quantity -->
-            <div class="col-md-3">
-              <label for="quantity" class="form-label">Quantity</label>
-              <input type="number" class="form-control" id="quantity" name="quantity" min="0">
-            </div>
-
-            <!-- Unit -->
-        <div class="col-md-3">
-          <label class="form-label">Unit <span class="text-danger">*</span></label>
-          <select class="form-select" name="unit_id" required>
-            <option value="">Select Unit</option>
-            @foreach($units as $unit)
-                <option value="{{ $unit->id }}">
-                    {{ $unit->name }} ({{ $unit->short_name }})
-                </option>
-            @endforeach
-          </select>
-        </div>
-
-
-            <!-- Retail Purchasing Price -->
-            <div class="col-md-6">
-              <label for="purchase_price" class="form-label">Retail Purchasing Price (Tsh) <span class="text-danger">*</span></label>
-              <input type="number" class="form-control" id="purchase_price" name="purchase_price" required min="0">
-            </div>
-
-            <!-- Retail Selling Price -->
-            <div class="col-md-6">
-              <label for="selling_price" class="form-label">Retail Selling Price (Tsh)</label>
-              <input type="number" class="form-control" id="selling_price" name="selling_price" min="0">
-            </div>
-
-            <!-- Wholesale Selling Price -->
-            <div class="col-md-6">
-              <label for="wholesale_price" class="form-label">Wholesale Selling Price (Tsh)</label>
-              <input type="number" class="form-control" id="wholesale_price" name="wholesale_price" min="0">
-            </div>
-
-
-            <!-- Invoice Number -->
-            <div class="col-md-6">
-              <label for="invoice_number" class="form-label">Invoice Number</label>
-              <input type="text" class="form-control" id="invoice_number" name="invoice_number">
-            </div>
-
-            <!-- Barcode -->
-            <div class="col-md-6">
-              <label for="barcode" class="form-label">Barcode</label>
-              <input type="text" class="form-control" id="barcode" name="barcode">
-            </div>
-
-            <!-- Minimum Quantity -->
-            <div class="col-md-6">
-              <label for="min_quantity" class="form-label">Minimum Quantity</label>
-              <input type="number" class="form-control" id="min_quantity" name="min_quantity" min="0">
-            </div>
-
-            <!-- Expire Date -->
-            <div class="col-md-6">
-              <label for="expire_date" class="form-label">Expire Date</label>
-              <input type="date" class="form-control" id="expire_date" name="expire_date">
-            </div>
-
-            <!-- Image Upload -->
-            <div class="col-md-12">
-              <label for="image" class="form-label">Product Image (Optional)</label>
-              <input type="file" class="form-control" id="image" name="image" accept="image/*">
-              <img id="imagePreview" src="#" alt="Preview Image" style="display:none; max-height:100px; margin-top:10px;">
-            </div>
-          </div>
-        </div>
-
-        <div class="modal-footer border-0 pt-0">
-          <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
-          <button type="submit" class="btn btn-primary">Add Product</button>
-        </div>
-      </form>
-    </div>
-  </div>
-</div>
-
-<!-- Scripts to enhance modal -->
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    var form = document.getElementById('addProductForm');
-    var imageInput = document.getElementById('image');
-    var imagePreview = document.getElementById('imagePreview');
-    var addProductModal = document.getElementById('addProductModal');
-
-    // Preview image before upload
-    imageInput.addEventListener('change', function () {
-        if (this.files && this.files[0]) {
-            var reader = new FileReader();
-            reader.onload = function (e) {
-                imagePreview.src = e.target.result;
-                imagePreview.style.display = 'block';
-            }
-            reader.readAsDataURL(this.files[0]);
-        } else {
-            imagePreview.style.display = 'none';
-        }
-    });
-
-    // AJAX submit
-    form.addEventListener('submit', function(e) {
-        e.preventDefault();
-
-        var formData = new FormData(form);
-
-        fetch(form.action, {
-            method: 'POST',
-            headers: {
-                'X-CSRF-TOKEN': '{{ csrf_token() }}'
-            },
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            if(data.success){
-                // Show success message
-                alert(data.success);
-
-                // Reset form
-                form.reset();
-                imagePreview.style.display = 'none';
-
-                // Hide modal
-                var modal = bootstrap.Modal.getInstance(addProductModal);
-                modal.hide();
-
-                // Optional: reload your product table here via AJAX
-            } else {
-                // Show validation errors
-                let errors = data.errors;
-                let message = '';
-                for(let field in errors){
-                    message += errors[field] + "\n";
-                }
-                alert(message);
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Something went wrong!');
-        });
-    });
-});
-</script>
 
 </div>
 
@@ -851,7 +630,12 @@ document.addEventListener('DOMContentLoaded', function () {
             <!-- Brand -->
             <div class="col-lg-4 col-md-6">
               <label for="edit_brand" class="form-label">Brand</label>
-              <input type="text" class="form-control" id="edit_brand" name="brand" list="brandOptions" autocomplete="off">
+              <select class="form-select" id="edit_brand" name="brand">
+                <option value="">-- select brand --</option>
+                @foreach(\App\Models\Brand::orderBy('name')->pluck('name') as $brandName)
+                  <option value="{{ $brandName }}">{{ $brandName }}</option>
+                @endforeach
+              </select>
             </div>
 
             <!-- Category -->
@@ -958,7 +742,12 @@ document.addEventListener('DOMContentLoaded', function() {
             // Fill form fields
             editForm.dataset.id = id; // save ID for AJAX
             document.getElementById('edit_name').value = name;
-            document.getElementById('edit_brand').value = brand;
+            // Older products may carry a brand typed in before the list existed — keep it selectable.
+            const brandSelect = document.getElementById('edit_brand');
+            if (brand && !Array.from(brandSelect.options).some(o => o.value === brand)) {
+                brandSelect.add(new Option(brand, brand));
+            }
+            brandSelect.value = brand || '';
             document.getElementById('edit_category_id').value = category;
             const editShopSelect = document.getElementById('edit_shop_id');
             if (editShopSelect) { editShopSelect.value = shop || ''; }

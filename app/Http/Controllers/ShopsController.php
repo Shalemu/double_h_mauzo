@@ -23,7 +23,7 @@ class ShopsController extends Controller
         // here — a single shop can hold tens of thousands of products, and
         // loading every row into PHP just to sum() them was crashing the
         // page. Everything below is aggregated in SQL instead.
-        $shops = Shops::with(['staff', 'expenses', 'fixedExpenses'])
+        $shops = Shops::sellingShops()->with(['staff', 'expenses', 'fixedExpenses'])
             ->orderBy('name')
             ->get();
 
@@ -63,6 +63,7 @@ class ShopsController extends Controller
 
         Shops::create([
             'name'     => $request->name,
+            'type'     => \App\Enums\ShopType::Shop->value,
             'location' => $request->location,
             'capital'  => $request->capital ?? 0,
             'admin_id' => Auth::id(),

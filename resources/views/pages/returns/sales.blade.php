@@ -5,13 +5,6 @@
 @section('content')
 @php $canReturn = auth()->user()->hasPermission('sales-returns.create'); @endphp
 <div class="container-fluid py-4">
-    @if(session('success'))
-        <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            Swal.fire({ icon: 'success', title: 'Return recorded', text: @json(session('success')), confirmButtonColor: '#198754' });
-        });
-        </script>
-    @endif
 
     <div class="row g-3 mb-3">
         <div class="col-md-4"><div class="card shadow-sm"><div class="card-body">

@@ -1,0 +1,293 @@
+@extends('main')
+
+@section('title', 'Distribution')
+
+@section('content')
+<style>
+.dist-results { position:absolute; top:calc(100% + 4px); left:0; right:0; z-index:1060; max-height:260px; overflow:auto; display:none; }
+.dist-results.is-open { display:block; }
+</style>
+
+<div class="container-fluid py-4">
+    @if(session('success'))<div class="alert alert-success">{{ session('success') }}</div>@endif
+    @if($errors->any())<div class="alert alert-danger">{{ $errors->first() }}</div>@endif
+
+    <div class="card shadow-sm">
+        <div class="card-header bg-white d-flex flex-wrap gap-2 justify-content-between align-items-center">
+            <div>
+                <h5 class="mb-0"><i class="bi bi-truck-flatbed me-2"></i>Distribution</h5>
+                <small class="text-muted">A distributor takes stock out of a store. When they come back, returned units go back into the store and the rest is recorded as a sale.</small>
+            </div>
+            <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#issueModal" {{ $stores->isEmpty() ? 'disabled' : '' }}>
+                <i class="bi bi-box-arrow-right"></i> Issue stock
+            </button>
+        </div>
+        <div class="card-body">
+            @if($stores->isEmpty())
+                <div class="alert alert-info">You don't have a store yet. <a href="{{ route('stores.index') }}">Add a store</a> under Manage Business → All Stores.</div>
+            @endif
+
+            <div class="row g-3 mb-3">
+                <div class="col-sm-6 col-lg-3">
+                    <div class="border rounded-3 p-3 h-100">
+                        <div class="small text-muted">Distributors still out</div>
+                        <div class="fs-4 fw-semibold">{{ $totals['out'] }}</div>
+                    </div>
+                </div>
+                <div class="col-sm-6 col-lg-3">
+                    <div class="border rounded-3 p-3 h-100">
+                        <div class="small text-muted">Owed by distributors (TZS)</div>
+                        <div class="fs-4 fw-semibold {{ $totals['owing'] > 0 ? 'text-danger' : '' }}">{{ number_format($totals['owing'], 2) }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <form method="GET" class="row g-2 mb-3">
+                <div class="col-sm-4 col-lg-3">
+                    <select name="store" class="form-select form-select-sm" onchange="this.form.submit()" aria-label="Store">
+                        <option value="">All stores</option>
+                        @foreach($stores as $s)
+                            <option value="{{ $s->id }}" {{ (string) $storeId === (string) $s->id ? 'selected' : '' }}>{{ $s->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-sm-4 col-lg-3">
+                    <select name="status" class="form-select form-select-sm" onchange="this.form.submit()" aria-label="Status">
+                        <option value="">All statuses</option>
+                        <option value="out" {{ $status === 'out' ? 'selected' : '' }}>Still out</option>
+                        <option value="settled" {{ $status === 'settled' ? 'selected' : '' }}>Settled</option>
+                        <option value="owing" {{ $status === 'owing' ? 'selected' : '' }}>Owing money</option>
+                    </select>
+                </div>
+            </form>
+
+            <div class="table-responsive">
+                <table class="table table-bordered align-middle mb-0">
+                    <thead class="table-light text-center">
+                        <tr><th>#</th><th>Date</th><th>Store</th><th>Distributor</th><th>Taken</th><th>Status</th><th>Sold (TZS)</th><th>Balance (TZS)</th><th></th></tr>
+                    </thead>
+                    <tbody>
+                        @forelse($distributions as $d)
+                            <tr>
+                                <td class="text-center">{{ $d->id }}</td>
+                                <td class="text-nowrap">{{ $d->created_at->format('d M Y H:i') }}</td>
+                                <td>{{ $d->store->name ?? '—' }}</td>
+                                <td>{{ $d->staff->full_name ?? '—' }}</td>
+                                <td>
+                                    @foreach($d->items as $item)
+                                        <div class="small">{{ $item->product_name }} × {{ $item->quantity_taken }}</div>
+                                    @endforeach
+                                </td>
+                                <td class="text-center">
+                                    @if($d->isOut())
+                                        <span class="badge bg-warning text-dark">Out</span>
+                                    @else
+                                        <span class="badge bg-success">Settled</span>
+                                    @endif
+                                </td>
+                                <td class="text-end">{{ $d->isOut() ? '—' : number_format($d->total_value, 2) }}</td>
+                                <td class="text-end {{ $d->balance > 0 ? 'text-danger fw-semibold' : '' }}">{{ $d->isOut() ? '—' : number_format($d->balance, 2) }}</td>
+                                <td class="text-center">
+                                    <a href="{{ route('distributions.show', $d) }}" class="btn btn-sm {{ $d->isOut() ? 'btn-primary' : 'btn-outline-secondary' }}">
+                                        {{ $d->isOut() ? 'Settle' : 'View' }}
+                                    </a>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr><td colspan="9" class="text-center text-muted py-4">No distributions yet.</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+            <div class="mt-3">{{ $distributions->links('pagination::bootstrap-4') }}</div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="issueModal" tabindex="-1" aria-labelledby="issueTitle" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <form class="modal-content" method="POST" action="{{ route('distributions.store') }}">
+            @csrf
+            <div class="modal-header">
+                <h5 class="modal-title" id="issueTitle">Issue stock to a distributor</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-2 mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label" for="distStore">From store</label>
+                        <select name="store_id" id="distStore" class="form-select" required>
+                            <option value="">Choose...</option>
+                            @foreach($stores as $s)
+                                <option value="{{ $s->id }}" {{ (string) $storeId === (string) $s->id ? 'selected' : '' }}>{{ $s->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label" for="distStaff">Distributor</label>
+                        <select name="staff_id" id="distStaff" class="form-select" required>
+                            <option value="">Choose...</option>
+                            @foreach($staff as $person)
+                                <option value="{{ $person->id }}">{{ $person->full_name }}{{ $person->shop ? ' — ' . $person->shop->name : '' }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+
+                <div class="row g-2 mb-2">
+                    <div class="col-md-8 position-relative">
+                        <input type="search" id="distSearch" class="form-control" autocomplete="off"
+                               placeholder="Search product in the store..." aria-label="Search product" disabled>
+                        <div class="list-group shadow dist-results" id="distResults"></div>
+                    </div>
+                    <div class="col-md-2">
+                        <input type="number" id="distQty" class="form-control" min="1" placeholder="Qty" aria-label="Quantity" disabled>
+                    </div>
+                    <div class="col-md-2">
+                        <button type="button" class="btn btn-outline-primary w-100" id="distAdd" disabled>Add</button>
+                    </div>
+                </div>
+
+                <table class="table table-sm table-bordered align-middle">
+                    <thead class="table-light"><tr><th>Product</th><th class="text-center">In store</th><th class="text-center">Taking</th><th></th></tr></thead>
+                    <tbody id="distLines"><tr><td colspan="4" class="text-muted text-center small">No products added yet.</td></tr></tbody>
+                </table>
+
+                <label class="form-label" for="distNote">Note (optional)</label>
+                <textarea name="note" id="distNote" class="form-control" rows="2" maxlength="1000" placeholder="e.g. route, vehicle, area"></textarea>
+                <input type="hidden" name="items" id="distItems">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button class="btn btn-primary" id="distSubmit" disabled>Issue stock</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const searchUrl = @json(route('distributions.productSearch'));
+    const store = document.getElementById('distStore');
+    const staff = document.getElementById('distStaff');
+    const search = document.getElementById('distSearch');
+    const results = document.getElementById('distResults');
+    const qty = document.getElementById('distQty');
+    const addBtn = document.getElementById('distAdd');
+    const lines = document.getElementById('distLines');
+    const itemsInput = document.getElementById('distItems');
+    const submit = document.getElementById('distSubmit');
+    let selected = null;
+    let items = [];
+    let timer = null;
+
+    function syncState() {
+        search.disabled = qty.disabled = !store.value;
+        addBtn.disabled = !selected;
+        submit.disabled = !(store.value && staff.value && items.length);
+        itemsInput.value = JSON.stringify(items.map(i => ({ product_id: i.id, quantity: i.quantity })));
+    }
+
+    function render() {
+        lines.replaceChildren();
+        if (!items.length) {
+            const tr = document.createElement('tr');
+            tr.innerHTML = '<td colspan="4" class="text-muted text-center small">No products added yet.</td>';
+            lines.appendChild(tr);
+        }
+        items.forEach(function (item, index) {
+            const tr = document.createElement('tr');
+            [item.name, item.available, item.quantity].forEach(function (value, col) {
+                const td = document.createElement('td');
+                td.textContent = value;
+                if (col) td.className = 'text-center';
+                tr.appendChild(td);
+            });
+            const td = document.createElement('td');
+            const remove = document.createElement('button');
+            remove.type = 'button';
+            remove.className = 'btn btn-sm btn-outline-danger';
+            remove.textContent = 'Remove';
+            remove.addEventListener('click', () => { items.splice(index, 1); render(); });
+            td.appendChild(remove);
+            tr.appendChild(td);
+            lines.appendChild(tr);
+        });
+        syncState();
+    }
+
+    store.addEventListener('change', function () {
+        // Products belong to one store, so changing it clears the list.
+        items = [];
+        selected = null;
+        search.value = '';
+        render();
+    });
+    staff.addEventListener('change', syncState);
+
+    search.addEventListener('input', function () {
+        selected = null;
+        syncState();
+        clearTimeout(timer);
+        const term = search.value.trim();
+        if (term.length < 2) { results.classList.remove('is-open'); return; }
+        timer = setTimeout(function () {
+            fetch(searchUrl + '?' + new URLSearchParams({ q: term, store: store.value }), { headers: { 'Accept': 'application/json' } })
+                .then(r => r.json())
+                .then(function (products) {
+                    results.replaceChildren();
+                    if (!products.length) {
+                        const empty = document.createElement('div');
+                        empty.className = 'list-group-item small text-muted';
+                        empty.textContent = 'No products in stock match.';
+                        results.appendChild(empty);
+                    }
+                    products.forEach(function (p) {
+                        const btn = document.createElement('button');
+                        btn.type = 'button';
+                        btn.className = 'list-group-item list-group-item-action d-flex justify-content-between small';
+                        const name = document.createElement('span');
+                        name.textContent = p.name;
+                        const stock = document.createElement('span');
+                        stock.className = 'text-muted';
+                        stock.textContent = 'In stock: ' + p.quantity;
+                        btn.append(name, stock);
+                        btn.addEventListener('click', function () {
+                            selected = p;
+                            search.value = p.name;
+                            qty.max = p.quantity;
+                            qty.value = 1;
+                            results.classList.remove('is-open');
+                            syncState();
+                            qty.focus();
+                        });
+                        results.appendChild(btn);
+                    });
+                    results.classList.add('is-open');
+                });
+        }, 250);
+    });
+
+    addBtn.addEventListener('click', function () {
+        const q = parseInt(qty.value, 10);
+        const already = items.filter(i => i.id === selected.id).reduce((s, i) => s + i.quantity, 0);
+        if (!q || q < 1 || q + already > selected.quantity) {
+            alert('Quantity must be between 1 and ' + (selected.quantity - already) + '.');
+            return;
+        }
+        items.push({ id: selected.id, name: selected.name, available: selected.quantity, quantity: q });
+        selected = null;
+        search.value = '';
+        qty.value = '';
+        render();
+        search.focus();
+    });
+
+    document.addEventListener('click', function (e) {
+        if (!search.parentElement.contains(e.target)) results.classList.remove('is-open');
+    });
+
+    syncState();
+});
+</script>
+@endsection

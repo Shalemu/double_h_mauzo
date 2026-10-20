@@ -3,13 +3,6 @@
 <?php $__env->startSection('content'); ?>
 <?php $canReturn = auth()->user()->hasPermission('sales-returns.create'); ?>
 <div class="container-fluid py-4">
-    <?php if(session('success')): ?>
-        <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            Swal.fire({ icon: 'success', title: 'Return recorded', text: <?php echo json_encode(session('success'), 15, 512) ?>, confirmButtonColor: '#198754' });
-        });
-        </script>
-    <?php endif; ?>
 
     <div class="row g-3 mb-3">
         <div class="col-md-4"><div class="card shadow-sm"><div class="card-body">

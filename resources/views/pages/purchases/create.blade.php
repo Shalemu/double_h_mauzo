@@ -24,7 +24,7 @@
             <div class="row g-3">
                 <div class="col-md-6">
                     <label>Shop</label>
-                    <select name="shop_id" class="form-select" required>
+                    <select name="shop_id" id="purchaseShop" class="form-select" required>
                         <option value="">Select Shop</option>
                         @foreach($shops as $shop)
                         <option value="{{ $shop->id }}" {{ (isset($activeShopIdForView) && (int) $activeShopIdForView === $shop->id) ? 'selected' : '' }}>{{ $shop->name }}</option>
@@ -34,7 +34,8 @@
 
                 <div class="col-md-6">
                     <label>Supplier</label>
-                    <select name="supplier_id" class="form-select" required>
+                    <select name="supplier_id" id="purchaseSupplier" class="form-select" required
+                            data-products-url="{{ url('purchases/supplier/__ID__/products') }}">
                         <option value="">Select Supplier</option>
                         @foreach($suppliers as $supplier)
                         <option value="{{ $supplier->id }}">{{ $supplier->name }}</option>
@@ -51,8 +52,9 @@
             <h6>Add Items</h6>
 
             <!-- Item Input -->
-            <div class="row g-2">
+            <div class="row g-2 align-items-end">
     <div class="col-md-2">
+        <label class="form-label small mb-1" for="product">Product</label>
         <select id="product" class="form-select">
                         <option value="">Select Product</option>
                         @foreach($products as $product)
@@ -68,21 +70,28 @@
                     </select>
     </div>
     <div class="col-md-2">
+        <label class="form-label small mb-1" for="quantity">Quantity</label>
         <input type="number" id="quantity" class="form-control" placeholder="Qty" min="1">
     </div>
         <div class="col-md-2">
+            <label class="form-label small mb-1" for="purchase_price">Buying Price (Tsh)</label>
             <input type="number" id="purchase_price" class="form-control" placeholder="Buy Price">
         </div>
         <div class="col-md-2">
+            <label class="form-label small mb-1" for="selling_price">Retail Price (Tsh)</label>
             <input type="number" id="selling_price" class="form-control" placeholder="Retail Price">
         </div>
         <div class="col-md-2">
+            <label class="form-label small mb-1" for="wholesale_price">Wholesale Price (Tsh)</label>
             <input type="number" id="wholesale_price" class="form-control" placeholder="Wholesale Price">
         </div>
         <div class="col-md-2">
             <button type="button" id="addItemBtn" class="btn btn-primary w-100">Add</button>
         </div>
     </div>
+
+            {{-- Filled by the purchase script: which supplier's products the list shows. --}}
+            <div class="small mt-2" id="supplierProductsHint" aria-live="polite"></div>
 
             <!-- Items Table -->
             <div class="mt-4">

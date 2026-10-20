@@ -7,7 +7,12 @@ use App\Models\Products;
 use Illuminate\Support\Facades\Auth;
 use App\Models\ProductCategory;
 use App\Models\Unit;
-use App\Exports\ProductsExport;
+use App\Actions\Products\CreateProduct;
+use App\DataTables\ProductsExportTable;
+use App\DTO\Products\ProductData;
+use App\Enums\StockFilter;
+use App\Exports\ProductsExcelExport;
+use App\Exports\ProductsPdfExport;
 use Maatwebsite\Excel\Facades\Excel;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Exports\ProductsTemplateExport;  
@@ -24,27 +29,9 @@ class ProductController extends Controller
 
 public function index()
 {
-    $filter = request()->route('filter') ?? request()->query('filter', 'all');
-    if (!in_array($filter, ['all', 'in_stock', 'expired', 'out_of_stock', 'running_out', 'expiring'], true)) {
-        $filter = 'all';
-    }
-    $applyInventoryFilter = function ($query) use ($filter) {
-        switch ($filter) {
-            case 'in_stock':
-                return $query->where('quantity', '>', 0);
-            case 'expired':
-                return $query->whereNotNull('expire_date')->where('expire_date', '<', Carbon::today());
-            case 'out_of_stock':
-                return $query->where('quantity', '<=', 0);
-            case 'running_out':
-                return $query->where('quantity', '>', 0)->whereColumn('quantity', '<=', 'min_quantity');
-            case 'expiring':
-                return $query->whereNotNull('expire_date')
-                    ->whereBetween('expire_date', [Carbon::today(), Carbon::today()->addYear()]);
-            default:
-                return $query;
-        }
-    };
+    $stockFilter = StockFilter::fromInput(request()->route('filter') ?? request()->query('filter'));
+    $filter = $stockFilter->value;
+    $applyInventoryFilter = fn ($query) => $stockFilter->apply($query);
 
     if (Auth::guard('staff')->check()) {
         $staff = Auth::guard('staff')->user();
@@ -57,8 +44,8 @@ public function index()
         $products = $applyInventoryFilter(clone $productsQuery)->orderByDesc('quantity')->orderBy('name')
             ->limit($displayLimit)->get();
 
-        $categories = ProductCategory::whereNull('parent_id')->get();
-        $units = Unit::all();
+        $categories = ProductCategory::whereNull('parent_id')->orderBy('name')->get();
+        $units = Unit::orderBy('name')->get();
 
         $today = Carbon::today();
 
@@ -126,8 +113,8 @@ public function index()
             : collect();
     }
 
-    $categories = ProductCategory::whereNull('parent_id')->get();
-    $units = Unit::all();
+    $categories = ProductCategory::whereNull('parent_id')->orderBy('name')->get();
+    $units = Unit::orderBy('name')->get();
     $shops = $isAdminTier ? Shops::orderBy('name')->get() : collect();
     // Global mode = admin-tier with no active shop chosen: sees every shop
     // at once and needs the shop picker/bulk-assign tooling. Once a shop is
@@ -193,20 +180,33 @@ public function index()
      */
 public function create()
 {
-    $categories = ProductCategory::whereNull('parent_id')->get();
-    $units = Unit::all();
+    $admin = Auth::user();
+    $isAdminTier = $admin->isAdminTier();
+    $activeShop = ($isAdminTier && session('active_shop_id'))
+        ? Shops::find(session('active_shop_id'))
+        : null;
 
-    return view('products.create', compact('categories', 'units'));
+    $categories = ProductCategory::whereNull('parent_id')->orderBy('name')->get();
+    $units = Unit::with('baseUnit')->orderBy('name')->get();
+    $brands = \App\Models\Brand::orderBy('name')->pluck('name');
+    // Admin with no active shop picks where the product goes.
+    $shops = ($isAdminTier && !$activeShop) ? Shops::orderBy('type')->orderBy('name')->get() : collect();
+    $targetShop = $activeShop ?? ($isAdminTier ? null : $admin->shop);
+
+    return view('pages.products.create', compact('categories', 'units', 'brands', 'shops', 'targetShop'));
 }
 
     /**
      * Store product
      */
-public function store(Request $request)
+public function store(Request $request, CreateProduct $createProduct)
 {
     $request->validate([
         'name' => 'required|string|max:255',
         'unit_id' => 'required|integer',
+        'purchase_price' => 'required|numeric|min:0',
+        'quantity' => 'nullable|integer|min:0',
+        'min_quantity' => 'nullable|integer|min:0',
         'selling_price' => 'nullable|numeric|min:0',
         'wholesale_price' => 'nullable|numeric|min:0',
         'barcode' => 'nullable|string',
@@ -214,52 +214,34 @@ public function store(Request $request)
         'image' => 'nullable|image|max:2048',
     ]);
 
-    $data = $request->only([
-        'name',
-        'item_code',
-        'barcode',
-        'brand',
-        'category_id',
-        'subcategory_id',
-        'unit_id',
-        'quantity',
-        'min_quantity',
-        'purchase_price',
-        'selling_price',
-        'wholesale_price',
-        'invoice_number',
-        'expire_date',
-        'size',
-        'color',
-    ]);
-
+    // Which shop the product goes into: the active shop, the one picked on the form, or the user's own.
     $admin = Auth::user();
     $activeShopId = session('active_shop_id');
 
     if ($admin->isAdminTier() && $activeShopId) {
-        $data['shop_id'] = $activeShopId;
+        $shopId = $activeShopId;
     } elseif ($admin->isAdminTier()) {
         $request->validate(['shop_id' => 'required|exists:shops,id']);
-        $data['shop_id'] = $request->shop_id;
+        $shopId = $request->shop_id;
     } elseif ($admin->shop) {
-        $data['shop_id'] = $admin->shop->id;
-    } else {
+        $shopId = $admin->shop->id;
+    } elseif ($request->expectsJson()) {
         return response()->json([
             'error' => 'This user has no shop assigned'
         ], 422);
+    } else {
+        return back()->withInput()->with('error', 'This user has no shop assigned.');
     }
 
-    $data['admin_id'] = $admin->id;
-    $data['sync_status'] = 0;
+    $product = $createProduct->execute(ProductData::fromArray((int) $shopId, $request->all(), $request->file('image'), $admin->id));
 
-    if ($request->hasFile('image')) {
-        $data['image'] = $request->file('image')
-            ->store('products', 'public');
+    if ($request->expectsJson()) {
+        return response()->json(['success' => 'Product created successfully']);
     }
 
-    Products::create($data);
-
-    return response()->json(['success' => 'Product created successfully']);
+    // "Save & add another" stays on the form; plain save goes back to the list.
+    return redirect()->route($request->boolean('add_another') ? 'products.create' : 'products.index')
+        ->with('success', "Product \"{$product->name}\" created successfully.");
 }
 
 
@@ -272,8 +254,8 @@ public function show($id)
 public function edit($id)
 {
     $product = Products::findOrFail($id);
-    $categories = ProductCategory::whereNull('parent_id')->get();
-    $units = Unit::all();
+    $categories = ProductCategory::whereNull('parent_id')->orderBy('name')->get();
+    $units = Unit::orderBy('name')->get();
 
     return view('pages.products.edit', compact('product', 'categories', 'units'));
 }
@@ -334,19 +316,27 @@ public function update(Request $request, $id)
      */
 
 
-public function exportExcel()
+    /**
+     * Export products to Excel (App\Exports\ProductsExcelExport).
+     */
+    public function exportExcel(Request $request)
     {
-        return Excel::download(new ProductsExport, 'products.xlsx');
+        return (new ProductsExcelExport(ProductsExportTable::make($request)))->download();
     }
 
     /**
-     * Export products to PDF
+     * Export products to PDF; long lists are refused with a clear message.
      */
-    public function exportPDF()
+    public function exportPDF(Request $request)
     {
-        $products = Products::all();
-        $pdf = PDF::loadView('pages.products.pdf', compact('products'));
-        return $pdf->download('products.pdf');
+        $export = new ProductsPdfExport(ProductsExportTable::make($request));
+
+        if ($export->tooLarge()) {
+            return redirect()->back()->with('error', 'PDF export is limited to ' . number_format(ProductsPdfExport::ROW_LIMIT)
+                . ' products, but this list has ' . number_format($export->count()) . '. Pick a shop or a stock filter first, or use Export Excel for the full list.');
+        }
+
+        return $export->download();
     }
 
   public function downloadTemplate()

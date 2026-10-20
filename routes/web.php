@@ -57,6 +57,9 @@ use App\Http\Controllers\ProcurementController;
 use App\Http\Controllers\ReturnsController;
 use App\Http\Controllers\AdminOverviewController;
 use App\Http\Controllers\StockTransferController;
+use App\Http\Controllers\DistributionController;
+use App\Http\Controllers\StoreController;
+use App\Http\Controllers\SmsController;
 
 /*
 |--------------------------------------------------------------------------
@@ -265,6 +268,16 @@ Route::middleware(['web', 'auth', 'panel.permission'])->group(function () {
     Route::patch('/shops/{shop}/toggle-status', [ShopsController::class, 'toggleStatus'])
         ->middleware('admin')->name('shops.toggleStatus');
 
+    // Stores (warehouses) — separate module from shops
+    Route::prefix('dashboard/stores')->middleware('admin')->name('stores.')->group(function () {
+        Route::get('/', [StoreController::class, 'index'])->name('index');
+        Route::post('/', [StoreController::class, 'store'])->name('store');
+        Route::get('/{store}', [StoreController::class, 'show'])->name('show');
+        Route::put('/{store}', [StoreController::class, 'update'])->name('update');
+        Route::patch('/{store}/toggle-status', [StoreController::class, 'toggleStatus'])->name('toggleStatus');
+        Route::delete('/{store}', [StoreController::class, 'destroy'])->name('destroy');
+    });
+
     /*
     |--------------------------------------------------------------------------
     | Active Shop Switcher (admin-tier)
@@ -370,10 +383,14 @@ Route::middleware(['web', 'auth', 'panel.permission'])->group(function () {
 Route::prefix('purchases')->name('purchases.')->group(function () {
     Route::get('/', [PurchasesController::class, 'index'])->name('index');
     Route::get('/create', [PurchasesController::class, 'create'])->name('create');
+    Route::get('/supplier/{supplier}/products', [PurchasesController::class, 'supplierProducts'])->name('supplier_products');
     Route::post('/', [PurchasesController::class, 'store'])->name('store');
     Route::get('/shops/{shop}/purchases/{date}', [PurchasesController::class, 'detail'])->name('detail');
     Route::get('/history/{invoice}', [PurchasesController::class, 'history'])->name('history');
     Route::get('/print/{invoice}', [PurchasesController::class, 'print'])->name('print');
+    Route::get('/invoice/{invoice}/pdf', [PurchasesController::class, 'invoicePdf'])->name('invoice_pdf');
+    Route::get('/invoice/{invoice}/preview', [PurchasesController::class, 'invoicePreview'])->name('invoice_preview');
+    Route::post('/invoice/{invoice}/email', [PurchasesController::class, 'emailInvoice'])->name('invoice_email');
 
     Route::get('/new-product', [PurchasesController::class, 'newProduct'])->name('new_product');
     Route::post('/new-product', [PurchasesController::class, 'storeNewProduct'])->name('store_new_product');
@@ -451,6 +468,10 @@ Route::prefix('purchases')->name('purchases.')->group(function () {
 
         // Procurement
         Route::get('/supplier-products', [ProcurementController::class, 'supplierProducts'])->name('procurement.supplierProducts');
+        Route::get('/supplier-products/product-lookup', [ProcurementController::class, 'productLookup'])->name('procurement.supplierProducts.lookup');
+        Route::post('/supplier-products', [ProcurementController::class, 'assignProduct'])->name('procurement.supplierProducts.assign');
+        Route::post('/supplier-products/{assignment}/apply-price', [ProcurementController::class, 'applySupplierPrice'])->name('procurement.supplierProducts.applyPrice');
+        Route::delete('/supplier-products/{assignment}', [ProcurementController::class, 'removeAssignment'])->name('procurement.supplierProducts.remove');
         Route::get('/price-manager', [ProcurementController::class, 'priceManager'])->name('procurement.prices');
         Route::put('/price-manager', [ProcurementController::class, 'updatePrices'])->name('procurement.prices.update');
 
@@ -459,6 +480,8 @@ Route::prefix('purchases')->name('purchases.')->group(function () {
         Route::get('/sales-returns/sale/{sale}', [ReturnsController::class, 'createSaleReturn'])->name('returns.sales.create');
         Route::post('/sales-returns/sale/{sale}', [ReturnsController::class, 'storeSaleReturn'])->name('returns.sales.store');
         Route::get('/purchase-returns', [ReturnsController::class, 'purchases'])->name('returns.purchases');
+        Route::get('/purchase-returns/invoice/{invoice}', [ReturnsController::class, 'createPurchaseReturn'])->name('returns.purchases.create');
+        Route::post('/purchase-returns/invoice/{invoice}', [ReturnsController::class, 'storePurchaseReturn'])->name('returns.purchases.store');
         Route::get('/returns/sale-items', [ReturnsController::class, 'saleItemLookup'])->name('returns.saleItemLookup');
         Route::get('/returns/purchase-items', [ReturnsController::class, 'purchaseItemLookup'])->name('returns.purchaseItemLookup');
 
@@ -470,8 +493,22 @@ Route::prefix('purchases')->name('purchases.')->group(function () {
 
         // Stock transfers between shops
         Route::get('/stock-transfers', [StockTransferController::class, 'index'])->name('stock-transfers.index');
+        Route::get('/stock-transfers/create', [StockTransferController::class, 'create'])->name('stock-transfers.create');
         Route::post('/stock-transfers', [StockTransferController::class, 'store'])->name('stock-transfers.store');
         Route::get('/stock-transfers/product-search', [StockTransferController::class, 'productSearch'])->name('stock-transfers.productSearch');
+        Route::get('/stock-transfers/{transfer}', [StockTransferController::class, 'show'])->name('stock-transfers.show');
+
+        // SMS to customers / staff (Mobishastra)
+        Route::get('/sms', [SmsController::class, 'index'])->name('sms.index');
+        Route::post('/sms', [SmsController::class, 'send'])->name('sms.send');
+
+        // Distributors taking stock out of a store and settling when they come back
+        Route::get('/distributions', [DistributionController::class, 'index'])->name('distributions.index');
+        Route::post('/distributions', [DistributionController::class, 'store'])->name('distributions.store');
+        Route::get('/distributions/product-search', [DistributionController::class, 'productSearch'])->name('distributions.productSearch');
+        Route::get('/distributions/{distribution}', [DistributionController::class, 'show'])->name('distributions.show');
+        Route::post('/distributions/{distribution}/settle', [DistributionController::class, 'settle'])->name('distributions.settle');
+        Route::post('/distributions/{distribution}/payments', [DistributionController::class, 'pay'])->name('distributions.pay');
     });
 
 Route::prefix('dashboard/admin')->name('admin.')->middleware('admin')->group(function() {

@@ -13,6 +13,7 @@ class PurchaseInvoice extends Model
         'total_amount',
         'amount_paid',
         'remaining_amount',
+        'payment_type',
         'purchased_at',
     ];
 

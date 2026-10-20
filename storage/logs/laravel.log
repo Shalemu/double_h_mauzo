@@ -1353,3 +1353,68 @@
 #58 D:\\PROJECTS\\d\\double_h_mauzo\\server.php(21): require_once('D:\\\\PROJECTS\\\\d\\\\d...')
 #59 {main}
 "} 
+[2026-10-16 05:38:31] local.INFO: Login attempt {"login":"shadrackmussa97@gmail.com","password_length":14} 
+[2026-10-16 05:38:33] local.INFO: Admin login success {"user_id":4,"role_id":1} 
+[2026-10-16 05:48:37] local.ERROR: Maximum execution time of 30 seconds exceeded {"exception":"[object] (Symfony\\Component\\ErrorHandler\\Error\\FatalError(code: 0): Maximum execution time of 30 seconds exceeded at D:\\PROJECTS\\d\\double_h_mauzo\\vendor\\composer\\ClassLoader.php:429)
+[stacktrace]
+#0 {main}
+"} 
+[2026-10-16 08:47:38] local.INFO: Login attempt {"login":"shadrackmussa97@gmail.com","password_length":14} 
+[2026-10-16 08:47:41] local.INFO: Admin login success {"user_id":4,"role_id":1} 
+[2026-10-16 12:23:04] local.INFO: Login attempt {"login":"shadrackmussa97@gmail.com","password_length":14} 
+[2026-10-16 12:23:04] local.INFO: Admin login success {"user_id":4,"role_id":1} 
+[2026-10-16 12:24:12] local.INFO: Login attempt {"login":"shadrackmussa97@gmail.com","password_length":6} 
+[2026-10-16 12:24:12] local.INFO: Admin login attempt failed for shadrackmussa97@gmail.com  
+[2026-10-16 12:24:12] local.INFO: Staff login attempt failed for shadrackmussa97@gmail.com  
+[2026-10-16 12:24:25] local.INFO: Login attempt {"login":"0767983236","password_length":14} 
+[2026-10-16 12:24:25] local.INFO: Admin login attempt failed for 0767983236  
+[2026-10-16 12:24:25] local.INFO: Staff login attempt failed for 0767983236  
+[2026-10-16 12:24:31] local.INFO: Login attempt {"login":"0767983236","password_length":6} 
+[2026-10-16 12:24:31] local.INFO: Admin login attempt failed for 0767983236  
+[2026-10-16 12:24:31] local.INFO: Staff login success {"staff_id":3,"shop_id":3} 
+[2026-10-16 12:51:44] local.INFO: Login attempt {"login":"shadrackmussa97@gmail.com","password_length":14} 
+[2026-10-16 12:51:44] local.INFO: Admin login success {"user_id":4,"role_id":1} 
+[2026-10-16 12:54:20] local.INFO: Login attempt {"login":"0767983236","password_length":6} 
+[2026-10-16 12:54:20] local.INFO: Admin login attempt failed for 0767983236  
+[2026-10-16 12:54:20] local.INFO: Staff login success {"staff_id":3,"shop_id":3} 
+[2026-10-17 08:58:40] local.INFO: Login attempt {"login":"shadrackmussa97@gmail.com","password_length":14} 
+[2026-10-17 08:58:43] local.INFO: Admin login success {"user_id":4,"role_id":1} 
+[2026-10-17 11:11:18] local.INFO: Login attempt {"login":"0767983236","password_length":6} 
+[2026-10-17 11:11:18] local.INFO: Admin login attempt failed for 0767983236  
+[2026-10-17 11:11:18] local.INFO: Staff login success {"staff_id":3,"shop_id":3} 
+[2026-10-17 11:13:02] local.WARNING: Order email failed: Connection could not be established with host mail.mhsconsults.co.tz :stream_socket_client(): php_network_getaddresses: getaddrinfo for mail.mhsconsults.co.tz failed: No such host is known  
+[2026-10-17 11:13:02] local.WARNING: Order email failed: Connection could not be established with host mail.mhsconsults.co.tz :stream_socket_client(): php_network_getaddresses: getaddrinfo for mail.mhsconsults.co.tz failed: No such host is known  
+[2026-10-17 11:13:02] local.WARNING: Order email failed: Connection could not be established with host mail.mhsconsults.co.tz :stream_socket_client(): php_network_getaddresses: getaddrinfo for mail.mhsconsults.co.tz failed: No such host is known  
+[2026-10-17 11:14:15] local.INFO: Login attempt {"login":"shadrackmussa97@gmail.com","password_length":14} 
+[2026-10-17 11:14:15] local.INFO: Admin login success {"user_id":4,"role_id":1} 
+[2026-10-17 11:17:54] local.INFO: Login attempt {"login":"0767983236","password_length":6} 
+[2026-10-17 11:17:54] local.INFO: Admin login attempt failed for 0767983236  
+[2026-10-17 11:17:54] local.INFO: Staff login success {"staff_id":3,"shop_id":3} 
+[2026-10-17 12:26:11] local.INFO: Login attempt {"login":"0767983236","password_length":6} 
+[2026-10-17 12:26:11] local.INFO: Admin login attempt failed for 0767983236  
+[2026-10-17 12:26:11] local.INFO: Staff login success {"staff_id":3,"shop_id":3} 
+[2026-10-19 06:48:00] local.INFO: Login attempt {"login":"shadrackmussa97@gmail.com","password_length":14} 
+[2026-10-19 06:48:03] local.INFO: Admin login success {"user_id":4,"role_id":1} 
+[2026-10-19 09:27:54] local.ERROR: Maximum execution time of 300 seconds exceeded {"userId":4,"exception":"[object] (Symfony\\Component\\ErrorHandler\\Error\\FatalError(code: 0): Maximum execution time of 300 seconds exceeded at D:\\PROJECTS\\d\\double_h_mauzo\\vendor\\dompdf\\dompdf\\src\\Dompdf.php:509)
+[stacktrace]
+#0 {main}
+"} 
+[2026-10-19 09:33:15] local.ERROR: Allowed memory size of 536870912 bytes exhausted (tried to allocate 163840 bytes) {"userId":4,"exception":"[object] (Symfony\\Component\\ErrorHandler\\Error\\FatalError(code: 0): Allowed memory size of 536870912 bytes exhausted (tried to allocate 163840 bytes) at D:\\PROJECTS\\d\\double_h_mauzo\\vendor\\dompdf\\dompdf\\src\\Cellmap.php:630)
+[stacktrace]
+#0 {main}
+"} 
+[2026-10-19 09:35:44] local.ERROR: Allowed memory size of 805306368 bytes exhausted (tried to allocate 4096 bytes) {"userId":4,"exception":"[object] (Symfony\\Component\\ErrorHandler\\Error\\FatalError(code: 0): Allowed memory size of 805306368 bytes exhausted (tried to allocate 4096 bytes) at D:\\PROJECTS\\d\\double_h_mauzo\\vendor\\phpoffice\\phpspreadsheet\\src\\PhpSpreadsheet\\Cell\\Cell.php:125)
+[stacktrace]
+#0 {main}
+"} 
+[2026-10-19 10:13:24] local.ERROR: Allowed memory size of 134217728 bytes exhausted (tried to allocate 8192 bytes) {"userId":4,"exception":"[object] (Symfony\\Component\\ErrorHandler\\Error\\FatalError(code: 0): Allowed memory size of 134217728 bytes exhausted (tried to allocate 8192 bytes) at D:\\PROJECTS\\d\\double_h_mauzo\\vendor\\dompdf\\dompdf\\lib\\Cpdf.php:5781)
+[stacktrace]
+#0 {main}
+"} 
+[2026-10-19 10:54:38] local.ERROR: SMS sending error: Class "GuzzleHttp\HandlerStack" not found  
+[2026-10-19 10:54:38] local.ERROR: SMS sending error: Class "GuzzleHttp\HandlerStack" not found  
+[2026-10-19 10:54:38] local.ERROR: SMS sending error: Class "GuzzleHttp\HandlerStack" not found  
+[2026-10-19 10:54:38] local.ERROR: SMS sending error: Class "GuzzleHttp\HandlerStack" not found  
+[2026-10-19 10:54:38] local.ERROR: SMS sending error: Class "GuzzleHttp\HandlerStack" not found  
+[2026-10-20 08:37:16] local.INFO: Login attempt {"login":"shadrackmussa97@gmail.com","password_length":14} 
+[2026-10-20 08:37:17] local.INFO: Admin login success {"user_id":4,"role_id":1} 

@@ -116,8 +116,8 @@
         <div class="card-header d-flex justify-content-between align-items-center bg-primary text-white">
         <!-- Export buttons -->
         <div class="btn-group mb-2">
-            <button type="button" class="btn btn-success btn-sm" id="export-excel">Export Excel</button>
-            <button type="button" class="btn btn-danger btn-sm" id="export-pdf">Export PDF</button>
+            <button type="button" class="btn btn-success btn-sm" data-export="excel" data-export-table="#productTable" data-export-title="Shop products"><i class="bi bi-file-earmark-excel"></i> Export Excel</button>
+            <button type="button" class="btn btn-danger btn-sm" data-export="pdf" data-export-table="#productTable" data-export-title="Shop products"><i class="bi bi-file-earmark-pdf"></i> Export PDF</button>
         </div>
 
         <!-- Search input -->
@@ -133,7 +133,8 @@
         <div id="status-tables">
             <!-- Running Out -->
        <div class="status-table" data-status="running">
-    <table class="table table-bordered table-sm">
+    <div class="table-responsive">
+    <table class="table table-bordered table-striped table-hover align-middle mb-0" id="runningOutTable">
         <thead class="table-primary h-100">
             <tr>
                 <th>Item</th>
@@ -151,18 +152,17 @@
                     <td>{{ $product->selling_price }}</td>
                 </tr>
             @empty
-                <tr>
-                    <td colspan="4" class="text-center">No running out products found</td>
-                </tr>
             @endforelse
         </tbody>
     </table>
+    </div>
 </div>
 
 
             <!-- Expiring -->
             <div class="status-table d-none" data-status="expiring">
-                <table class="table table-bordered table-sm">
+                <div class="table-responsive">
+                <table class="table table-bordered table-striped table-hover align-middle mb-0">
                     <thead class="table-primary h-100">
                         <tr>
                             <th>Item</th>
@@ -178,17 +178,16 @@
                     <td>{{ $product->quantity }}</td>
                 </tr>
             @empty
-                <tr>
-                    <td colspan="3" class="text-center">No products expiring in the next 7 days</td>
-                </tr>
             @endforelse
         </tbody>
                 </table>
+                </div>
             </div>
 
             <!-- Finished -->
             <div class="status-table d-none" data-status="finished">
-                <table class="table table-bordered table-sm">
+                <div class="table-responsive">
+                <table class="table table-bordered table-striped table-hover align-middle mb-0" id="finishedTable">
                    <thead class="table-primary h-100">
                         <tr>
                             <th>Item</th>
@@ -203,21 +202,18 @@
         <td>{{ $product->quantity }}</td>
     </tr>
 @empty
-    <tr>
-        <td colspan="2" class="text-center">
-            No finished products found
-        </td>
-    </tr>
 @endforelse
 </tbody>
 
 
                 </table>
+                </div>
             </div>
 
             <!-- Expired -->
             <div class="status-table d-none" data-status="expired">
-                <table class="table table-bordered table-sm">
+                <div class="table-responsive">
+                <table class="table table-bordered table-striped table-hover align-middle mb-0" id="expiredTable">
                       <thead class="table-primary h-100">
                         <tr>
                             <th>Item</th>
@@ -233,12 +229,10 @@
                     <td>{{ $product->quantity }}</td>
                 </tr>
             @empty
-                <tr>
-                    <td colspan="3" class="text-center">No expired products found</td>
-                </tr>
             @endforelse
         </tbody>
                 </table>
+                </div>
             </div>
             
         </div>
@@ -270,6 +264,7 @@
         if (activeTable) {
             activeTable.classList.remove('d-none');
         }
+        $('#table-search').trigger('input');
     });
 });
 
@@ -293,7 +288,33 @@ document.addEventListener('DOMContentLoaded', function() {
         let val = parseInt($(this).val());
         table.page.len(val > 0 ? val : table.data().length).draw();
     });
+
+    const statusTables = {};
+    const emptyMessages = {
+        runningOutTable: 'No running out products found',
+        finishedTable: 'No finished products found',
+        expiredTable: 'No expired products found'
+    };
+    ['runningOutTable', 'finishedTable', 'expiredTable'].forEach(function(id) {
+        statusTables[id] = $('#' + id).DataTable({
+            responsive: true,
+            pageLength: 10,
+            lengthChange: false,
+            autoWidth: false,
+            dom: 'rtip',
+            language: { emptyTable: emptyMessages[id] }
+        });
+    });
+
+    $('#table-search').on('input', function() {
+        const activeStatus = document.querySelector('.status-table:not(.d-none)');
+        const activeTable = activeStatus && activeStatus.querySelector('table');
+        if (activeTable && statusTables[activeTable.id]) {
+            statusTables[activeTable.id].search(this.value).draw();
+        }
+    });
 });
 </script>
 
+@include('components.table_export')
 @endsection

@@ -15,7 +15,12 @@ class FeedbackController extends Controller
 
     public function index()
     {
-        return view('pages.staff.report_issue.index');
+        $staff = Auth::guard('staff')->user();
+        $issues = Feedback::where('staff_id', $staff->id)
+            ->latest()
+            ->paginate(10);
+
+        return view('pages.staff.report_issue.index', compact('issues'));
     }
 
 

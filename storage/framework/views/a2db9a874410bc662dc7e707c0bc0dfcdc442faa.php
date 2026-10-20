@@ -177,17 +177,17 @@ $totalCapital = 0;
                             <div class="row g-3">
                                 <div class="col-md-4">
                                     <input type="text" name="name" class="form-control"
-                                           placeholder="Shop Name" required>
+                                           placeholder="Shop Name" value="<?php echo e(old('name')); ?>" required>
                                 </div>
 
                                 <div class="col-md-4">
                                     <input type="text" name="location" class="form-control"
-                                           placeholder="Location" required>
+                                           placeholder="Location" value="<?php echo e(old('location')); ?>" required>
                                 </div>
 
                                 <div class="col-md-4">
                                     <input type="number" name="capital" class="form-control"
-                                           placeholder="Initial Capital">
+                                           placeholder="Initial Capital" value="<?php echo e(old('capital')); ?>">
                                 </div>
                             </div>
 

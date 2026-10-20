@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Products;
+use App\Models\PurchaseInvoice;
 use App\Models\PurchaseReturn;
 use App\Models\Sale;
 use App\Models\SaleReturn;
@@ -21,6 +22,9 @@ class ReturnsController extends Controller
 {
     /** Reasons offered when recording a sales return. */
     public const SALE_RETURN_REASONS = ['Damaged', 'Expired', 'Wrong item', 'Customer changed mind', 'Other'];
+
+    /** Reasons offered when sending goods back to a supplier. */
+    public const PURCHASE_RETURN_REASONS = ['Damaged', 'Expired', 'Wrong item', 'Excess stock', 'Other'];
 
     /**
      * Sales Returns page: "Sales" tab (pick a sale to return from) and
@@ -134,18 +138,129 @@ class ReturnsController extends Controller
             ->with('success', 'Return recorded for sale #' . $sale->id . ' (' . $lines->sum('quantity') . ' item(s)). Stock has been put back.');
     }
 
+    /**
+     * Purchase Returns page: "Purchases" tab (pick an invoice to send goods
+     * back from) and "History" tab (returns already recorded).
+     */
     public function purchases(Request $request)
     {
         [$shopId, $from, $to] = $this->filters($request);
+        $tab = $request->query('tab') === 'history' ? 'history' : 'purchases';
+        $search = trim((string) $request->query('q'));
 
         $query = PurchaseReturn::with('shop', 'product', 'processedBy', 'purchaseItem.invoice.supplier')
             ->when($shopId, fn ($q) => $q->where('shop_id', $shopId))
             ->whereBetween(DB::raw('coalesce(returned_at, created_at)'), [$from, $to]);
 
         $totals = (clone $query)->toBase()->selectRaw('count(*) as count, coalesce(sum(quantity), 0) as quantity, coalesce(sum(amount), 0) as amount')->first();
-        $returns = $query->latest()->paginate(10)->withQueryString();
+        $returns = $query->latest()->paginate(10, ['*'], 'history_page')->withQueryString();
 
-        return view('pages.returns.purchases', $this->shared($shopId, $from, $to) + compact('returns', 'totals'));
+        // Purchases that still have something left to send back.
+        $invoices = PurchaseInvoice::with('shop', 'supplier')
+            ->withSum('items as items_left', 'quantity')
+            ->withCount(['items as lines_count' => fn ($q) => $q->where('quantity', '>', 0)])
+            ->whereHas('items', fn ($q) => $q->where('quantity', '>', 0))
+            ->when($shopId, fn ($q) => $q->where('shop_id', $shopId))
+            ->whereBetween('purchased_at', [$from, $to])
+            ->when($search !== '', fn ($q) => $q->where(fn ($w) => $w
+                ->where('invoice_number', 'like', "%{$search}%")
+                ->orWhere('id', ctype_digit(ltrim($search, '#')) ? (int) ltrim($search, '#') : 0)
+                ->orWhereHas('supplier', fn ($s) => $s->where('name', 'like', "%{$search}%"))))
+            ->latest('purchased_at')
+            ->paginate(10, ['*'], 'purchases_page')
+            ->withQueryString();
+
+        return view('pages.returns.purchases', $this->shared($shopId, $from, $to) + compact('returns', 'totals', 'invoices', 'tab', 'search'));
+    }
+
+    /**
+     * Return form for one purchase invoice: each line with what can still go
+     * back (limited by what's left on the invoice and what's still in stock).
+     */
+    public function createPurchaseReturn(PurchaseInvoice $invoice)
+    {
+        $invoice->load('shop', 'supplier', 'items.product');
+        $returned = PurchaseReturn::whereIn('purchase_item_id', $invoice->items->pluck('id'))
+            ->groupBy('purchase_item_id')->selectRaw('purchase_item_id, sum(quantity) as qty')->pluck('qty', 'purchase_item_id');
+        $reasons = self::PURCHASE_RETURN_REASONS;
+
+        return view('pages.returns.purchase_return', compact('invoice', 'returned', 'reasons'));
+    }
+
+    /**
+     * Send several lines of one invoice back to the supplier at once: take
+     * the stock out, reduce each purchased line and the invoice total, and
+     * take the credit off what is still owed on a credit invoice.
+     */
+    public function storePurchaseReturn(Request $request, PurchaseInvoice $invoice)
+    {
+        $data = $request->validate([
+            'reason'           => 'required|string|max:100',
+            'note'             => 'nullable|string|max:255',
+            'lines'            => 'required|array',
+            'lines.*.quantity' => 'nullable|integer|min:0',
+            'lines.*.amount'   => 'nullable|numeric|min:0',
+        ]);
+
+        $lines = collect($data['lines'])->filter(fn ($line) => (int) ($line['quantity'] ?? 0) > 0);
+        if ($lines->isEmpty()) {
+            return back()->withInput()->withErrors(['lines' => 'Enter a quantity for at least one item to send back.']);
+        }
+
+        $reason = $data['reason'] . (!empty($data['note']) ? ': ' . $data['note'] : '');
+
+        DB::transaction(function () use ($invoice, $lines, $reason) {
+            $items = $invoice->items()->with('product')->whereIn('id', $lines->keys())->lockForUpdate()->get()->keyBy('id');
+            $creditTotal = 0;
+
+            foreach ($lines as $itemId => $line) {
+                $item = $items->get($itemId);
+                $qty = (int) $line['quantity'];
+                $product = $item ? Products::lockForUpdate()->find($item->product_id) : null;
+                $name = $product->name ?? 'that item';
+
+                if (!$item || $qty > $item->quantity) {
+                    throw ValidationException::withMessages([
+                        'lines' => 'You can send back at most ' . ($item->quantity ?? 0) . " of {$name} from this invoice.",
+                    ]);
+                }
+                if (!$product || $qty > $product->quantity) {
+                    throw ValidationException::withMessages([
+                        'lines' => "Only " . ($product->quantity ?? 0) . " of {$name} left in stock — you can't send back {$qty}.",
+                    ]);
+                }
+
+                $amount = isset($line['amount']) && $line['amount'] !== '' ? (float) $line['amount'] : round($item->purchase_price * $qty, 2);
+
+                PurchaseReturn::create([
+                    'shop_id'          => $invoice->shop_id,
+                    'purchase_item_id' => $item->id,
+                    'product_id'       => $product->id,
+                    'processed_by'     => auth()->id(),
+                    'quantity'         => $qty,
+                    'amount'           => $amount,
+                    'reason'           => $reason,
+                    'returned_at'      => now(),
+                ]);
+
+                // Goods leave the shop and go back to the supplier.
+                $product->decrement('quantity', $qty);
+                $item->decrement('quantity', $qty);
+                $creditTotal += $amount;
+            }
+
+            // total_amount is a frozen snapshot that reports read directly.
+            $invoice->total_amount = max(0, $invoice->total_amount - $creditTotal);
+            if ($invoice->payment_type === 'credit') {
+                $invoice->remaining_amount = max(0, $invoice->remaining_amount - $creditTotal);
+            }
+            $invoice->save();
+        });
+
+        $label = $invoice->invoice_number ?: '#' . $invoice->id;
+
+        return redirect()->route('returns.purchases', ['tab' => 'history'])
+            ->with('success', "Return recorded for invoice {$label} (" . $lines->sum('quantity') . ' item(s)). Stock has been taken out.');
     }
 
     // Sold lines that can still be returned (search by product name or sale number).

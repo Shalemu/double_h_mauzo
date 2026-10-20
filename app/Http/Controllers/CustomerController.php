@@ -82,11 +82,20 @@ class CustomerController extends Controller
         }
         $request->validate($rules);
 
-        Customer::create([
+        $customer = Customer::create([
             'name' => $request->name,
             'phone' => $request->phone,
             'shop_id' => $staff ? $staff->shop_id : $request->shop_id,
         ]);
+
+        // The POS adds customers without reloading, so the cart isn't lost.
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Customer added successfully!',
+                'customer' => $customer->only('id', 'name', 'phone'),
+            ]);
+        }
 
         return redirect()->back()->with('success', 'Customer added successfully!');
     }

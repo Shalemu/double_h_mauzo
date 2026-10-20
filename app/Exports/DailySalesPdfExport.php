@@ -19,7 +19,7 @@ class DailySalesPdfExport
 
     public function download($filename = 'daily_sales.pdf')
     {
-        $pdf = Pdf::loadView('dashboard.sales.detail-pdf', [
+        $pdf = Pdf::loadView('pages.sales.detail-pdf', [
             'shop' => $this->shop,
             'date' => $this->date,
             'itemRows' => $this->rows

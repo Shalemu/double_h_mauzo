@@ -70,8 +70,9 @@ class SalesRevenueController extends Controller
         $items = (clone $query)
             ->selectRaw("sale_items.product_id, products.name as product, shops.name as shop, sale_items.sale_type,
                 sum(sale_items.quantity) as quantity, sum($lineRevenue) as revenue, sum($lineCost) as cost,
+                avg(sale_items.price) as selling_price, coalesce(products.purchase_price, 0) as purchase_price,
                 max(sales.created_at) as last_sold")
-            ->groupBy('sale_items.product_id', 'products.name', 'shops.name', 'sale_items.sale_type')
+            ->groupBy('sale_items.product_id', 'products.name', 'products.purchase_price', 'shops.name', 'sale_items.sale_type')
             ->orderByDesc('revenue')
             ->paginate(10)
             ->withQueryString();

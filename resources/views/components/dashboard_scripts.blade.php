@@ -75,6 +75,85 @@ function initPurchaseForm() {
 
     if (!product || !addBtn) return;
 
+    // Choosing a supplier limits the product list to the products assigned
+    // to that supplier (Supplier Products) in the chosen shop, priced at the
+    // supplier's price. "Show all products" brings back the full list.
+    const supplierSelect = formContainer.querySelector('#purchaseSupplier');
+    const shopSelect = formContainer.querySelector('#purchaseShop');
+    const hint = formContainer.querySelector('#supplierProductsHint');
+    const allOptions = Array.from(product.options).map(o => o.cloneNode(true));
+    const supplierProductsPage = @json(route('procurement.supplierProducts'));
+
+    function showAllProducts() {
+        product.replaceChildren(...allOptions.map(o => o.cloneNode(true)));
+    }
+
+    function loadSupplierProducts() {
+        if (!supplierSelect || !hint) return;
+        product.value = '';
+        buy.value = retail.value = wholesale.value = '';
+        if (!supplierSelect.value) {
+            showAllProducts();
+            hint.replaceChildren();
+            return;
+        }
+        const supplierName = supplierSelect.options[supplierSelect.selectedIndex].text;
+        const url = supplierSelect.dataset.productsUrl.replace('__ID__', supplierSelect.value)
+            + (shopSelect && shopSelect.value ? '?shop=' + encodeURIComponent(shopSelect.value) : '');
+        hint.textContent = 'Loading products for ' + supplierName + '...';
+        hint.className = 'small mt-2 text-muted';
+
+        fetch(url, { headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' } })
+            .then(r => r.json())
+            .then(function (list) {
+                product.replaceChildren(new Option(list.length ? 'Select Product' : 'No products assigned', ''));
+                list.forEach(function (p) {
+                    const opt = new Option(p.name + (p.unit ? ' (' + p.unit + ')' : ''), p.id);
+                    // Supplier's price first; fall back to the product's purchasing price.
+                    opt.dataset.buy = p.supplier_price ?? p.purchase_price ?? '';
+                    opt.dataset.retail = p.selling_price ?? '';
+                    opt.dataset.wholesale = p.wholesale_price ?? '';
+                    product.add(opt);
+                });
+
+                hint.replaceChildren();
+                const text = document.createElement('span');
+                const link = document.createElement('a');
+                link.href = supplierProductsPage + '?' + new URLSearchParams({ supplier: supplierSelect.value });
+                link.target = '_blank';
+                link.rel = 'noopener';
+                if (list.length) {
+                    hint.className = 'small mt-2 text-success';
+                    text.textContent = 'Showing the ' + list.length + ' product(s) assigned to ' + supplierName + ', at the supplier\'s price. ';
+                    link.textContent = 'Manage assignments';
+                } else {
+                    hint.className = 'small mt-2 text-warning';
+                    text.textContent = 'No products are assigned to ' + supplierName
+                        + (shopSelect && shopSelect.value ? ' in this shop' : '') + '. ';
+                    link.textContent = 'Assign products';
+                }
+                const all = document.createElement('a');
+                all.href = '#';
+                all.className = 'ms-2';
+                all.textContent = 'Show all products';
+                all.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    showAllProducts();
+                    hint.className = 'small mt-2 text-muted';
+                    hint.textContent = 'Showing all products.';
+                });
+                hint.append(text, link, all);
+            })
+            .catch(function () {
+                showAllProducts();
+                hint.className = 'small mt-2 text-danger';
+                hint.textContent = 'Could not load the supplier\'s products — showing all products.';
+            });
+    }
+
+    supplierSelect?.addEventListener('change', loadSupplierProducts);
+    shopSelect?.addEventListener('change', loadSupplierProducts);
+
     product.addEventListener('change', () => {
         const opt = product.options[product.selectedIndex];
         buy.value = opt.getAttribute('data-buy') || '';

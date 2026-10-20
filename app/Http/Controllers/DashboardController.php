@@ -258,10 +258,11 @@ class DashboardController extends Controller
             abort(403, 'You are not authorized to access this page.');
         }
 
-        $shops = Shops::orderBy('name')->get();
+        // Stores only hold stock, so they never appear at the POS.
+        $shops = Shops::sellingShops()->orderBy('name')->get();
         // Default to the shop the admin is working in, if one is picked.
         $shopId = $request->query('shop', session('active_shop_id'));
-        $shop = $shopId ? Shops::find($shopId) : null;
+        $shop = $shopId ? Shops::sellingShops()->find($shopId) : null;
 
         if (!$shop) {
             return view('pages.admin.pos_select_shop', compact('shops'));

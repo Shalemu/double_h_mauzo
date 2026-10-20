@@ -25,10 +25,10 @@ $shops = $shops ?? collect();
                                     <input type="text" id="staffSearch" class="form-control form-control-sm" placeholder="Search staff...">
                                 </div>
                                 <div style="margin-right:8px;">
-                                    <button class="btn btn-sm btn-success">Export Excel</button>
+                                    <button type="button" class="btn btn-sm btn-success" data-export="excel" data-export-table=".staff-table" data-export-title="Staff list">Export Excel</button>
                                 </div>
                                 <div>
-                                    <button class="btn btn-sm btn-danger">Export PDF</button>
+                                    <button type="button" class="btn btn-sm btn-danger" data-export="pdf" data-export-table=".staff-table" data-export-title="Staff list">Export PDF</button>
                                 </div>
                             </div>
 
@@ -56,7 +56,7 @@ $shops = $shops ?? collect();
                                     <th>Shop</th>
                                     <th>Wages</th>
                                     <th>Created</th>
-                                    <th>Action</th>
+                                    <th class="no-export">Action</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -71,7 +71,7 @@ $shops = $shops ?? collect();
         <td>{{ $s->shop->name ?? '-' }}</td>
         <td>{{ number_format($s->wages, 2) }}</td>
         <td>{{ $s->created_at->format('Y-m-d') }}</td>
-        <td>
+        <td class="no-export">
     
             <a href="{{ route('staff.manage.edit', $s->id) }}" class="btn btn-sm btn-info">Edit</a>
 
@@ -92,7 +92,8 @@ $shops = $shops ?? collect();
 <tr class="table-success">
     <td colspan="3"><strong>Total Wages</strong></td>
     <td><strong>{{ number_format($totalWages, 2) }}</strong></td>
-    <td colspan="2"></td>
+    <td></td>
+    <td class="no-export"></td>
 </tr>
 </tbody>
 
@@ -221,5 +222,7 @@ $shops = $shops ?? collect();
 
     <!-- REQUIRED BOOTSTRAP JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+@include('components.table_export')
 
 @endsection

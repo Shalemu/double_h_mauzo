@@ -16,12 +16,6 @@
             ->count()
         : 0;
     $can =fn ($permission) => $staffUser && $staffUser->hasPermission($permission);
-
-    // Flat sidebar link: [route, label, icon, active-pattern(s), route params]
-    $link = function ($route, $label, $icon, $active, $params = [], $badge = null) {
-        $isActive = collect((array) $active)->contains(fn ($pattern) => request()->routeIs($pattern));
-        return view('components.sidebar_link', compact('route', 'label', 'icon', 'isActive', 'params', 'badge'))->render();
-    };
 ?>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -104,126 +98,87 @@
 
     <div class="sidebar-wrapper">
         <nav class="mt-2">
+            <?php
+                // Menu definition lives in config/sidebar.php.
+                $user = $staffUser ?? $adminUser;
+                $badges = ['pending_orders' => $pendingOrders, 'open_issues' => $openIssues];
+
+                $allowed = function (array $item) use ($isStaff, $can, $adminUser) {
+                    if (!empty($item['super_user']) && !($adminUser && $adminUser->super_user)) return false;
+                    if ($isStaff) {
+                        $permission = $item['permission'] ?? null;
+                        return $permission === null || collect((array) $permission)->contains($can);
+                    }
+                    // Admin links default to the same map the server enforces.
+                    $permission = array_key_exists('permission', $item)
+                        ? $item['permission']
+                        : \App\Http\Middleware\PanelPermissionMiddleware::permissionFor($item['route']);
+                    return $permission === null
+                        || collect((array) $permission)->contains(fn ($p) => $adminUser->hasPermission($p));
+                };
+                $isActive = fn (array $item) => request()->routeIs(...(array) ($item['patterns'] ?? $item['route']));
+                $params = fn (array $item) => collect($item['params'] ?? [])->map(fn ($attr) => $user->{$attr})->all();
+
+                // Drop links the user may not open, and groups left with no children.
+                $sections = collect(config('sidebar.' . ($isStaff ? 'staff' : 'admin'), []))
+                    ->map(function ($section) use ($allowed) {
+                        $section['items'] = collect($section['items'] ?? [])->map(function ($item) use ($allowed) {
+                            if (isset($item['children'])) {
+                                $item['children'] = array_values(array_filter($item['children'], $allowed));
+                                return $item['children'] ? $item : null;
+                            }
+                            return $allowed($item) ? $item : null;
+                        })->filter()->values();
+                        return $section;
+                    })
+                    ->filter(fn ($section) => $section['items']->isNotEmpty())
+                    ->values();
+            ?>
+
             <ul class="nav flex-column" id="sidebarAccordion">
-
-                <?php if($isStaff): ?>
-                    
-                    <li class="nav-section-title">Sales &amp; Revenue</li>
-                    <?php echo $link('staff.dashboard', 'POS / Sell', 'bi-cash-coin', 'staff.dashboard'); ?>
-
-                    <?php if($can('sales.view')): ?>
-                        <?php echo $link('staff.sales.index', 'My Sales', 'bi-receipt', 'staff.sales.*', [$staffUser->shop_id]); ?>
-
-                    <?php endif; ?>
-                    <?php if($can('customers.manage')): ?>
-                        <?php echo $link('staff.customers.manage', 'Customers & Credit', 'bi-people', 'staff.customers.*'); ?>
-
-                    <?php endif; ?>
-                    <?php if($can('expenses.manage')): ?>
-                        <?php echo $link('staff.expenses.index', 'Expenses', 'bi-wallet2', 'staff.expenses.*', [$staffUser->shop_id]); ?>
-
-                    <?php endif; ?>
-
-                    <?php if($can('orders.create') || $can('orders.view')): ?>
+                <?php $__currentLoopData = $sections; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $section): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                    <?php if (! ($loop->first)): ?>
                         <li class="nav-divider"></li>
-                        <li class="nav-section-title">Procurement</li>
-                        <?php if($can('orders.create')): ?>
-                            <?php echo $link('staff.orders.create', 'Request Stock', 'bi-cart-plus', 'staff.orders.create'); ?>
+                    <?php endif; ?>
+                    <?php if(!empty($section['title'])): ?>
+                        <li class="nav-section-title"><?php echo e($section['title']); ?></li>
+                    <?php endif; ?>
 
+                    <?php $__currentLoopData = $section['items']; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $item): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                        <?php if(isset($item['children'])): ?>
+                            <?php
+                                $groupId = \Illuminate\Support\Str::camel($item['title']) . 'Submenu';
+                                $open = collect($item['children'])->contains($isActive);
+                            ?>
+                            <li class="nav-item mb-1">
+                                <a href="#<?php echo e($groupId); ?>" class="nav-link d-flex align-items-center px-3 py-2 <?php echo e($open ? 'active' : ''); ?>"
+                                   data-bs-toggle="collapse" role="button" aria-expanded="<?php echo e($open ? 'true' : 'false'); ?>">
+                                    <i class="nav-icon bi <?php echo e($item['icon'] ?? ''); ?>"></i><span class="flex-grow-1"><?php echo e($item['title']); ?></span><i class="bi bi-chevron-down"></i>
+                                </a>
+                                <div class="collapse <?php echo e($open ? 'show' : ''); ?>" id="<?php echo e($groupId); ?>" data-bs-parent="#sidebarAccordion">
+                                    <ul class="nav-submenu">
+                                        <?php $__currentLoopData = $item['children']; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $child): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                            <li>
+                                                <a href="<?php echo e(route($child['route'], $params($child))); ?>" class="nav-link d-flex align-items-center py-2 <?php echo e($isActive($child) ? 'active' : ''); ?>">
+                                                    <span><?php echo e($child['title']); ?></span>
+                                                </a>
+                                            </li>
+                                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                                    </ul>
+                                </div>
+                            </li>
+                        <?php else: ?>
+                            <?php echo $__env->make('components.sidebar_link', [
+                                'route' => $item['route'],
+                                'label' => $item['title'],
+                                'icon' => $item['icon'] ?? '',
+                                'isActive' => $isActive($item),
+                                'params' => $params($item),
+                                'badge' => isset($item['badge']) ? ($badges[$item['badge']] ?: null) : null,
+                            ], \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
                         <?php endif; ?>
-                        <?php if($can('orders.view')): ?>
-                            <?php echo $link('staff.orders.index', 'My Order Requests', 'bi-bag-check', ['staff.orders.index', 'staff.orders.show']); ?>
-
-                        <?php endif; ?>
-                    <?php endif; ?>
-
-                    <?php if($can('products.view')): ?>
-                        <li class="nav-divider"></li>
-                        <li class="nav-section-title">Inventory</li>
-                        <?php echo $link('staff.products.index', 'Shop Items', 'bi-box-seam', 'staff.products.*'); ?>
-
-                    <?php endif; ?>
-
-                    <?php if($can('issues.report')): ?>
-                        <li class="nav-divider"></li>
-                        <?php echo $link('staff.report.issue.index', 'Report Issue', 'bi-exclamation-circle', 'staff.report.issue.*'); ?>
-
-                    <?php endif; ?>
-                <?php else: ?>
-                    
-                    <?php
-                        // Links the signed-in role may open (same map the server enforces).
-                        $allowed = function ($route) use ($adminUser) {
-                            $permission = \App\Http\Middleware\PanelPermissionMiddleware::permissionFor($route);
-                            return $permission === null
-                                || collect((array) $permission)->contains(fn ($p) => $adminUser->hasPermission($p));
-                        };
-                        $panelLink = fn (...$args) => $allowed($args[0]) ? $link(...$args) : '';
-                        $section = function ($title, array $links) {
-                            $html = implode('', array_filter($links));
-                            return $html === '' ? '' : '<li class="nav-divider"></li><li class="nav-section-title">' . e($title) . '</li>' . $html;
-                        };
-                        $subLink = fn ($route, $label, $patterns) => $allowed($route)
-                            ? '<li><a href="' . route($route) . '" class="nav-link d-flex align-items-center py-2 ' . (request()->routeIs(...(array) $patterns) ? 'active' : '') . '"><span>' . e($label) . '</span></a></li>'
-                            : '';
-                        $group = function ($id, $label, $icon, $openPatterns, array $subLinks) {
-                            $items = implode('', array_filter($subLinks));
-                            if ($items === '') return '';
-                            $open = request()->routeIs(...(array) $openPatterns);
-                            return '<li class="nav-item mb-1"><a href="#' . $id . '" class="nav-link d-flex align-items-center px-3 py-2 ' . ($open ? 'active' : '') . '"'
-                                . ' data-bs-toggle="collapse" role="button" aria-expanded="' . ($open ? 'true' : 'false') . '">'
-                                . '<i class="nav-icon bi ' . $icon . '"></i><span class="flex-grow-1">' . e($label) . '</span><i class="bi bi-chevron-down"></i></a>'
-                                . '<div class="collapse ' . ($open ? 'show' : '') . '" id="' . $id . '" data-bs-parent="#sidebarAccordion"><ul class="nav-submenu">' . $items . '</ul></div></li>';
-                        };
-                    ?>
-
-                    <?php echo $panelLink('dashboard.admin', 'Dashboard', 'bi-speedometer2', 'dashboard.admin'); ?>
-
-
-                    <?php echo $section('Administration', [
-                        $group('businessSubmenu', 'Manage Business', 'bi-shop', ['dashboard.shop', 'dashboard.shop.show'], [
-                            $subLink('dashboard.shop', 'All Shops', ['dashboard.shop', 'dashboard.shop.show']),
-                        ]),
-                        $group('hrSubmenu', 'Human Resource', 'bi-person-vcard', ['staff.manage.*', 'dashboard.role', 'dashboard.roles.*'], [
-                            $subLink('staff.manage.index', 'Staff', 'staff.manage.*'),
-                            $subLink('dashboard.role', 'Roles & Permissions', ['dashboard.role', 'dashboard.roles.*']),
-                        ]),
-                        $panelLink('admin.issues', 'Reported Issues', 'bi-exclamation-circle', 'admin.issues', [], $openIssues ?: null),
-                        ($adminUser && $adminUser->super_user) ? $link('users.manage.index', 'User Management', 'bi-shield-lock', 'users.manage.*') : '',
-                    ]); ?>
-
-
-                    <?php echo $section('Sales & Revenue', [
-                        $panelLink('admin.pos.index', 'POS / Sell', 'bi-cash-coin', 'admin.pos.*'),
-                        $panelLink('admin.sales.index', 'Sales', 'bi-receipt', ['admin.sales.index', 'admin.sales.detail']),
-                        $panelLink('admin.sales.items', 'Sale Items', 'bi-basket', 'admin.sales.items'),
-                        $panelLink('returns.sales', 'Sales Returns', 'bi-arrow-return-left', ['returns.sales', 'admin.sales_returns.detail']),
-                        $panelLink('admin.credit', 'Credit', 'bi-credit-card', 'admin.credit'),
-                        $panelLink('customers.index', 'Customers', 'bi-people', 'customers.*'),
-                        $panelLink('admin.revenue', 'Revenue & Profit', 'bi-graph-up-arrow', 'admin.revenue'),
-                        $panelLink('admin.expenses', 'Expenses', 'bi-wallet2', ['admin.expenses', 'expenses.*']),
-                        $panelLink('admin.fixedExpenses', 'Fixed Expenses', 'bi-calendar2-check', ['admin.fixedExpenses', 'fixed-expenses.*']),
-                    ]); ?>
-
-
-                    
-                    <?php echo $section('Procurement', [
-                        $panelLink('admin.orders.index', 'Order Requests', 'bi-bag-check', 'admin.orders.*', [], $pendingOrders ?: null),
-                        $panelLink('products.index', 'Product Management', 'bi-box-seam', ['products.index', 'products.create', 'products.edit', 'products.in-stock', 'products.running-out', 'products.expiring', 'products.expired', 'products.out-of-stock', 'products.finished']),
-                        $panelLink('suppliers.index', 'Suppliers', 'bi-truck', 'suppliers.*'),
-                        $panelLink('procurement.supplierProducts', 'Supplier Products', 'bi-diagram-3', 'procurement.supplierProducts'),
-                        $panelLink('procurement.prices', 'Price Manager', 'bi-tags', 'procurement.prices*'),
-                        $panelLink('purchases.index', 'Purchases', 'bi-cart-check', 'purchases.*'),
-                        $panelLink('returns.purchases', 'Purchase Returns', 'bi-box-arrow-left', ['returns.purchases', 'admin.purchase_returns.detail']),
-                    ]); ?>
-
-
-                    <?php echo $section('Inventory', [
-                        $panelLink('stock-transfers.index', 'Stock Transfers', 'bi-arrow-left-right', 'stock-transfers.*'),
-                        $panelLink('products.trash', 'Deleted Products', 'bi-trash', 'products.trash'),
-                    ]); ?>
-
-                <?php endif; ?>
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
             </ul>
         </nav>
     </div>

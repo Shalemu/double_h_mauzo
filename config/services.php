@@ -35,4 +35,12 @@ return [
         'secret' => env('STRIPE_SECRET'),
     ],
 
+    // Mobishastra (mshastra.com) bulk SMS — same setup as KANISASOFT demo_backend.
+    'mshastra' => [
+        'user' => env('MSHASTRA_USER'),
+        'password' => env('MSHASTRA_PASSWORD'),
+        'sender' => env('MSHASTRA_SENDERID'),
+        'json_url' => env('MSHASTRA_JSON_URL', 'http://mshastra.com/sendsms_api_json.aspx'),
+    ],
+
 ];

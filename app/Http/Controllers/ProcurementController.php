@@ -2,9 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\Procurement\ApplySupplierPrice;
+use App\Actions\Procurement\AssignProductToSupplier;
+use App\DataTables\SupplierDeliveriesDataTable;
+use App\DataTables\SupplierProductsDataTable;
+use App\DTO\Procurement\SupplierAssignmentData;
 use App\Models\Products;
 use App\Models\Shops;
 use App\Models\Supplier;
+use App\Models\SupplierProduct;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -16,34 +22,91 @@ class ProcurementController extends Controller
      */
     public function supplierProducts(Request $request)
     {
-        $supplierId = $request->query('supplier');
-        $shopId = $request->has('shop') ? $request->query('shop') : session('active_shop_id');
-        $search = trim((string) $request->query('q'));
+        $tab = $request->query('tab') === 'history' ? 'history' : 'assigned';
+        $assignedTable = SupplierProductsDataTable::make($request);
+        $deliveriesTable = SupplierDeliveriesDataTable::make($request);
 
-        $rows = DB::table('purchase_items')
-            ->join('purchase_invoices', 'purchase_invoices.id', '=', 'purchase_items.purchase_invoice_id')
-            ->join('suppliers', 'suppliers.id', '=', 'purchase_invoices.supplier_id')
-            ->leftJoin('products', 'products.id', '=', 'purchase_items.product_id')
-            ->when($supplierId, fn ($q) => $q->where('purchase_invoices.supplier_id', $supplierId))
-            ->when($shopId, fn ($q) => $q->where('purchase_invoices.shop_id', $shopId))
-            ->when($search !== '', fn ($q) => $q->where('products.name', 'like', "%{$search}%"))
-            ->selectRaw('suppliers.id as supplier_id, suppliers.name as supplier, suppliers.phone,
-                purchase_items.product_id, products.name as product,
-                products.purchase_price as current_cost, products.selling_price, products.quantity as in_stock,
-                count(distinct purchase_invoices.id) as deliveries, sum(purchase_items.quantity) as total_qty,
-                min(purchase_items.purchase_price) as min_cost, max(purchase_items.purchase_price) as max_cost,
-                max(coalesce(purchase_invoices.purchased_at, purchase_invoices.created_at)) as last_purchased')
-            ->groupBy('suppliers.id', 'suppliers.name', 'suppliers.phone', 'purchase_items.product_id',
-                'products.name', 'products.purchase_price', 'products.selling_price', 'products.quantity')
-            ->orderBy('suppliers.name')
+        return view('pages.procurement.supplier_products', [
+            'tab' => $tab,
+            'assigned' => $assignedTable->paginate(),
+            'rows' => $deliveriesTable->paginate(),
+            'suppliers' => Supplier::orderBy('name')->get(['id', 'name']),
+            'shops' => Shops::orderBy('name')->get(['id', 'name']),
+            'supplierId' => $assignedTable->supplierId(),
+            // The shop filter shown is the active tab's.
+            'shopId' => $tab === 'history' ? $deliveriesTable->shopId() : $assignedTable->shopId(),
+            'search' => trim((string) $request->query('q')),
+        ]);
+    }
+
+    /**
+     * Product search for the "Assign product" form: name/barcode match with
+     * shop, unit and current prices so the purchasing price loads by itself.
+     */
+    public function productLookup(Request $request)
+    {
+        $term = trim((string) $request->query('q'));
+        if (mb_strlen($term) < 2) {
+            return response()->json([]);
+        }
+
+        return Products::query()
+            ->leftJoin('shops', 'shops.id', '=', 'products.shop_id')
+            ->leftJoin('units', 'units.id', '=', 'products.unit_id')
+            ->when($request->query('shop'), fn ($q, $shop) => $q->where('products.shop_id', $shop))
+            ->where(fn ($q) => $q->where('products.name', 'like', "%{$term}%")->orWhere('products.barcode', $term))
             ->orderBy('products.name')
-            ->paginate(10)
-            ->withQueryString();
+            ->limit(30)
+            ->get(['products.id', 'products.name', 'products.barcode', 'products.quantity', 'products.purchase_price',
+                'products.selling_price', 'products.wholesale_price', 'shops.name as shop', 'units.short_name as unit']);
+    }
 
-        $suppliers = Supplier::orderBy('name')->get(['id', 'name']);
-        $shops = Shops::orderBy('name')->get(['id', 'name']);
+    /**
+     * Assign a product to a supplier (or update the supplier's price when it's
+     * already assigned). With "update purchasing price" ticked, the new price
+     * also becomes the product's purchasing price — what Price Manager shows.
+     */
+    public function assignProduct(Request $request, AssignProductToSupplier $assign)
+    {
+        $validated = $request->validate([
+            'supplier_id' => 'required|exists:suppliers,id',
+            'product_id'  => 'required|exists:products,id',
+            'new_price'   => 'nullable|numeric|min:0',
+        ], [
+            'product_id.required' => 'Search and pick a product to assign.',
+        ]);
 
-        return view('pages.procurement.supplier_products', compact('rows', 'suppliers', 'shops', 'supplierId', 'shopId', 'search'));
+        $data = SupplierAssignmentData::fromArray($validated);
+        $result = $assign->execute($data, auth()->user()->hasPermission('prices.edit'), auth()->id());
+
+        $supplier = Supplier::find($data->supplierId)->name;
+        $message = "\"{$result['product']->name}\" assigned to {$supplier} at Tsh " . number_format($result['price'], 2) . '.';
+        if ($result['cost_updated']) {
+            $message .= ' Purchasing price updated from Tsh ' . number_format($result['old_cost'], 2) . '.';
+        } elseif ($result['price'] !== $result['old_cost']) {
+            $message .= " Purchasing price not changed — you don't have permission to change prices.";
+        }
+
+        return redirect()->route('procurement.supplierProducts', ['supplier' => $data->supplierId])->with('success', $message);
+    }
+
+    /**
+     * Make the supplier's price the product's purchasing price.
+     */
+    public function applySupplierPrice(SupplierProduct $assignment, ApplySupplierPrice $apply)
+    {
+        $apply->execute($assignment);
+
+        return back()->with('success', "Purchasing price of \"{$assignment->product->name}\" set to Tsh "
+            . number_format($assignment->supplier_price, 2) . " ({$assignment->supplier->name}'s price).");
+    }
+
+    public function removeAssignment(SupplierProduct $assignment)
+    {
+        $assignment->load('product', 'supplier');
+        $assignment->delete();
+
+        return back()->with('success', "\"{$assignment->product->name}\" removed from {$assignment->supplier->name}.");
     }
 
     /**

@@ -26,7 +26,8 @@ class PurchaseReturnController extends Controller
 
         $itemRows = $this->aggregateItems($invoices);
 
-        return view('pages.purchase_returns.detail', compact('shop', 'date', 'itemRows'));
+        // Loaded by AJAX = bare fragment; opened directly = full page.
+        return view(request()->ajax() ? 'pages.purchase_returns.detail' : 'pages.purchase_returns.detail_page', compact('shop', 'date', 'itemRows'));
     }
 
     // =========================

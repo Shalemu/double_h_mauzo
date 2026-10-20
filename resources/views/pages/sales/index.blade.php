@@ -21,8 +21,8 @@
                 <div class="col-12 d-flex justify-content-between flex-wrap align-items-center">
                     <!-- Export buttons -->
                     <div class="btn-group mb-2">
-                        <button type="button" class="btn btn-success btn-sm" id="export-excel">Export Excel</button>
-                        <button type="button" class="btn btn-danger btn-sm" id="export-pdf">Export PDF</button>
+                        <button type="button" class="btn btn-success btn-sm" data-export="excel" data-export-table="#sales-table" data-export-title="{{ ($shop->name ?? 'Shop') }} - Sales"><i class="bi bi-file-earmark-excel"></i> Export Excel</button>
+                        <button type="button" class="btn btn-danger btn-sm" data-export="pdf" data-export-table="#sales-table" data-export-title="{{ ($shop->name ?? 'Shop') }} - Sales"><i class="bi bi-file-earmark-pdf"></i> Export PDF</button>
                     </div>
 
                     <!-- Search input -->
@@ -154,4 +154,4 @@ function attachSaleTypeFilter() {
 
 </script>
 
-
+@include('components.table_export')

@@ -31,8 +31,8 @@
                             <th>Shop</th>
                             <th>Type</th>
                             <th>Qty sold</th>
-                            <th>Revenue (Tsh)</th>
-                            <th>Cost (Tsh)</th>
+                            <th>Selling price (Tsh)</th>
+                            <th>Purchase price (Tsh)</th>
                             <th>Profit (Tsh)</th>
                             <th>Last sold</th>
                         </tr>
@@ -45,8 +45,8 @@
                                 <td><?php echo e($item->shop ?? 'N/A'); ?></td>
                                 <td><?php echo e(ucfirst($item->sale_type ?? 'retail')); ?></td>
                                 <td><?php echo e(number_format($item->quantity)); ?></td>
-                                <td><?php echo e(number_format($item->revenue, 2)); ?></td>
-                                <td><?php echo e(number_format($item->cost, 2)); ?></td>
+                                <td><?php echo e(number_format($item->selling_price, 2)); ?></td>
+                                <td><?php echo e(number_format($item->purchase_price, 2)); ?></td>
                                 <td class="<?php echo e($profit < 0 ? 'text-danger' : 'text-success'); ?>"><?php echo e(number_format($profit, 2)); ?></td>
                                 <td class="text-nowrap"><?php echo e(\Carbon\Carbon::parse($item->last_sold)->format('d M Y')); ?></td>
                             </tr>
