@@ -69,6 +69,25 @@
             left: -120px;
         }
 
+        .login-brand-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 420px;
+            padding: 56px 32px 48px;
+            max-width: 380px;
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.03);
+            position: relative;
+            z-index: 1;
+        }
+
+        .login-brand-box p {
+            margin: 0;
+        }
+
         .login-brand-logo {
             width: 88px;
             height: 88px;
@@ -119,16 +138,10 @@
             padding: 40px 20px;
         }
 
-        .login-card {
-            max-width: 400px;
-            width: 100%;
-            background: #ffffff;
-            border-radius: 10px;
-            padding: 36px 40px;
-            box-shadow:
-                0 30px 70px rgba(0, 0, 0, 0.10),
-                0 10px 25px rgba(0, 0, 0, 0.06),
-                0 0 0 1px rgba(0, 0, 0, 0.04);
+        /* Login card - AdminLTE (Faramas) style */
+        .login-box {
+            width: 400px;
+            max-width: 100%;
             animation: card-in 0.5s ease both;
         }
 
@@ -137,160 +150,147 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        .login-card h2 {
-            font-size: 26px;
-            font-weight: 700;
-            letter-spacing: 0.2px;
-            color: #1f1f1f;
-            margin: 0 0 16px;
+        .login-logo {
+            margin-bottom: 0.9rem;
+            font-size: 2.1rem;
+            font-weight: 300;
             text-align: center;
-            position: relative;
-            padding-bottom: 16px;
+            color: #6c757d;
         }
 
-        .login-card h2::after {
-            content: '';
-            position: absolute;
-            left: 50%;
-            bottom: 0;
-            transform: translateX(-50%);
-            width: 44px;
-            height: 3px;
-            border-radius: 3px;
-            background: linear-gradient(90deg, #a02128, #d4626a);
+        .login-logo b {
+            font-weight: 700;
         }
 
-        .form-group {
-            position: relative;
-            margin-bottom: 18px;
-        }
-
-        .form-group label {
-            display: block;
-            font-size: 12px;
-            font-weight: 500;
-            letter-spacing: 0.4px;
-            text-transform: uppercase;
-            color: #9a9a9a;
-            margin-bottom: 7px;
-        }
-
-        .form-group i.field-icon {
-            position: absolute;
-            left: 16px;
-            top: 39px;
-            color: #c2c2c2;
-            font-size: 16px;
-        }
-
-        .form-group .toggle-password {
-            position: absolute;
-            right: 16px;
-            top: 39px;
-            color: #c2c2c2;
-            cursor: pointer;
-            font-size: 16px;
-        }
-
-        .form-control {
-            width: 100%;
-            height: 48px;
-            padding: 0 44px;
-            border: 1.5px solid #ececec;
-            border-radius: 10px;
-            background: #fafafa;
-            transition: 0.2s;
-            font-size: 14.5px;
-            font-family: 'Poppins', sans-serif;
-            color: #333;
-        }
-
-        .form-control:focus {
-            outline: none;
-            border-color: #a02128;
+        .login-card {
             background: #fff;
-            box-shadow: 0 0 0 4px rgba(160, 33, 40, 0.08);
+            border-radius: 0.375rem;
+            box-shadow: 0 0 1px rgba(0, 0, 0, 0.125), 0 1px 3px rgba(0, 0, 0, 0.2);
         }
 
-        .form-options {
+        .login-card-body {
+            padding: 20px;
+            color: #6c757d;
+        }
+
+        .login-box-msg {
+            padding: 0 20px 20px;
+            margin: 0;
+            text-align: center;
+        }
+
+        .input-group {
+            display: flex;
+            align-items: stretch;
+            margin-bottom: 1rem;
+        }
+
+        .input-group .form-control {
+            flex: 1 1 auto;
+            min-width: 0;
+            height: 38px;
+            padding: 0.375rem 0.75rem;
+            border: 1px solid #dee2e6;
+            border-right: 0;
+            border-radius: 0.375rem 0 0 0.375rem;
+            background: #fff;
+            font-family: 'Poppins', sans-serif;
+            font-size: 14.5px;
+            color: #212529;
+            transition: border-color 0.15s ease-in-out;
+        }
+
+        .input-group-text {
+            display: flex;
+            align-items: center;
+            padding: 0.375rem 0.75rem;
+            border: 1px solid #dee2e6;
+            border-radius: 0 0.375rem 0.375rem 0;
+            color: #6c757d;
+            background: transparent;
+            transition: border-color 0.15s ease-in-out;
+        }
+
+        .input-group .form-control:focus {
+            outline: none;
+        }
+
+        .input-group:focus-within .form-control,
+        .input-group:focus-within .input-group-text {
+            border-color: #d0898d;
+        }
+
+        .toggle-password {
+            cursor: pointer;
+        }
+
+        .form-row {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 16px;
-            font-size: 13px;
+            gap: 12px;
         }
 
-        .form-options .remember {
+        .form-check {
             display: flex;
             align-items: center;
             gap: 7px;
-            color: #777;
+            color: #6c757d;
             cursor: pointer;
+            font-size: 14px;
         }
 
-        .form-options input[type="checkbox"] {
+        .form-check input[type="checkbox"] {
             accent-color: #a02128;
             width: 15px;
             height: 15px;
         }
 
-        .form-options a {
-            color: #a02128;
-            text-decoration: none;
-            font-weight: 500;
-        }
-
-        .form-options a:hover {
-            text-decoration: underline;
-        }
-
         .btn-login {
-            width: 100%;
-            height: 48px;
-            border: none;
-            border-radius: 10px;
+            min-width: 110px;
+            height: 38px;
+            padding: 0 16px;
+            border: 1px solid #a02128;
+            border-radius: 0.375rem;
             background: #a02128;
             color: #fff;
             font-family: 'Poppins', sans-serif;
-            font-weight: 600;
-            letter-spacing: 0.4px;
-            font-size: 14px;
+            font-size: 14.5px;
             cursor: pointer;
-            transition: 0.25s;
-            box-shadow: 0 10px 20px rgba(160, 33, 40, 0.3);
+            transition: background 0.15s ease-in-out;
         }
 
         .btn-login:hover {
             background: #841a20;
-            transform: translateY(-1px);
-            box-shadow: 0 14px 26px rgba(160, 33, 40, 0.38);
+            border-color: #841a20;
         }
 
-        .btn-login:active {
-            transform: translateY(0);
+        .login-links {
+            margin: 16px 0 0;
+            font-size: 14px;
         }
 
-        .register-hint {
-            text-align: center;
-            margin-top: 14px;
-            font-size: 13.5px;
-            color: #9a9a9a;
+        .login-links p {
+            margin: 0 0 4px;
         }
 
-        .register-hint a {
+        .login-links a {
             color: #a02128;
-            font-weight: 600;
             text-decoration: none;
+        }
+
+        .login-links a:hover {
+            text-decoration: underline;
         }
 
         .alert-premium {
             background: #fdf1f1;
             border-left: 4px solid #c0392b;
             color: #a8323a;
-            border-radius: 8px;
-            padding: 12px 16px;
+            border-radius: 0.375rem;
+            padding: 10px 14px;
             font-size: 13.5px;
-            margin-bottom: 20px;
+            margin-bottom: 16px;
         }
 
         .alert-premium ul {
@@ -309,8 +309,9 @@
             .login-panel { padding: 40px 20px; }
         }
 
-        @media (max-width: 600px) {
-            .login-card { padding: 28px 24px; border-radius: 8px; }
+        @media (max-width: 576px) {
+            .login-box { width: 90%; }
+            .login-logo { font-size: 1.75rem; }
         }
     </style>
 </head>
@@ -319,17 +320,24 @@
 <div class="login-row">
 
     <div class="login-brand">
-        <div class="login-brand-logo">
-            <img src="{{ asset('assets/img/logo.png') }}" alt="Double H Cosmetics">
+        <div class="login-brand-box">
+            <div class="login-brand-logo">
+                <img src="{{ asset('assets/img/logo.png') }}" alt="Double H Cosmetics">
+            </div>
+            <h1>Double H Cosmetics</h1>
+            <p>Manage inventory, sales and purchases from one admin panel built for your team.</p>
         </div>
-        <h1>Double H Cosmetics</h1>
-        <p>Manage inventory, sales and purchases from one admin panel built for your team.</p>
     </div>
 
     <div class="login-panel">
-    <div class="login-card">
+    <div class="login-box">
 
-        <h2>Welcome Back</h2>
+        <div class="login-logo"><b>MEMBER LOGIN</b></div>
+
+        <div class="login-card">
+        <div class="login-card-body">
+
+        <p class="login-box-msg">Sign in to start your session</p>
 
         @if(Auth::check())
             <script>window.location = "/main/dashboard";</script>
@@ -356,45 +364,48 @@
         <form method="POST" action="{{ route('login') }}">
             {{ csrf_field() }}
 
-            <div class="form-group">
-                <label>Email or Username</label>
-                <i class="bi bi-person field-icon"></i>
+            <div class="input-group">
                 <input id="validation-email"
                        class="form-control"
-                       placeholder="Enter email or username"
+                       placeholder="Email or Username"
                        name="email"
                        type="text"
                        value="{{ old('email') }}"
                        required
                        autofocus>
+                <div class="input-group-text">
+                    <span class="bi bi-envelope"></span>
+                </div>
             </div>
 
-            <div class="form-group">
-                <label>Password</label>
-                <i class="bi bi-lock field-icon"></i>
+            <div class="input-group">
                 <input id="validation-password"
                        class="form-control"
                        name="password"
                        type="password"
-                       placeholder="Enter password"
+                       placeholder="Password"
                        minlength="4"
                        required>
-                <i class="bi bi-eye toggle-password" id="togglePassword"></i>
+                <div class="input-group-text toggle-password" id="togglePassword" title="Show password">
+                    <span class="bi bi-lock-fill"></span>
+                </div>
             </div>
 
-            <div class="form-options">
-                <label class="remember">
-                    <input type="checkbox" name="remember" checked> Remember me
+            <div class="form-row">
+                <label class="form-check">
+                    <input type="checkbox" name="remember" checked> Remember Me
                 </label>
-                <a href="{{ url('/password/lost') }}">Forgot Password?</a>
-            </div>
-
-            <button type="submit" class="btn-login" name="login" value="login">Sign In</button>
-
-            <div class="register-hint">
-                Don't have an account? <a href="{{ route('register') }}">Register here</a>
+                <button type="submit" class="btn-login" name="login" value="login">Sign In</button>
             </div>
         </form>
+
+        <div class="login-links">
+            <p><a href="{{ url('/password/lost') }}">I forgot my password</a></p>
+            <p><a href="{{ route('register') }}">Register a new membership</a></p>
+        </div>
+
+        </div>
+        </div>
 
     </div>
     </div>
@@ -406,11 +417,13 @@
         var toggle = document.getElementById('togglePassword');
         var passwordInput = document.getElementById('validation-password');
         if (toggle && passwordInput) {
+            var icon = toggle.querySelector('span');
             toggle.addEventListener('click', function () {
                 var isPassword = passwordInput.type === 'password';
                 passwordInput.type = isPassword ? 'text' : 'password';
-                toggle.classList.toggle('bi-eye', !isPassword);
-                toggle.classList.toggle('bi-eye-slash', isPassword);
+                icon.classList.toggle('bi-lock-fill', !isPassword);
+                icon.classList.toggle('bi-unlock-fill', isPassword);
+                toggle.title = isPassword ? 'Hide password' : 'Show password';
             });
         }
     })();

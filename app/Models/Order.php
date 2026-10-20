@@ -15,8 +15,16 @@ class Order extends Model
     protected $fillable = [
         'staff_id',
         'shop_id',
-        'status', // e.g., pending, approved, rejected
+        'status', // pending, approved, rejected, purchased
         'total_amount',
+        'note',
+        'reviewed_by',
+        'reviewed_at',
+        'admin_note',
+    ];
+
+    protected $casts = [
+        'reviewed_at' => 'datetime',
     ];
 
     // Optional: default status for new orders
@@ -38,5 +46,10 @@ class Order extends Model
     public function items()
     {
         return $this->hasMany(OrderItem::class);
+    }
+
+    public function reviewer()
+    {
+        return $this->belongsTo(Users::class, 'reviewed_by');
     }
 }

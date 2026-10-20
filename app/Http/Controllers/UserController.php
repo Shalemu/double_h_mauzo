@@ -9,6 +9,7 @@ use Validator;
 use Image;
 use Illuminate\Support\Facades\Input;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 class UserController extends Controller
 {
     
@@ -30,14 +31,14 @@ class UserController extends Controller
 	
 	public function profile()
     {
-        $users = Users::all();
-        return view('user.profile',  compact('users'));
+        $user = Auth::user();
+        return view('user.profile', compact('user'));
     }
 	
 	public function changepassword()
     {
-        $users = Users::all();
-        return view('user.changepassword', ['users' => $users]);
+        $user = Auth::user();
+        return view('user.changepassword', compact('user'));
     }
 
     /**
@@ -48,65 +49,45 @@ class UserController extends Controller
 
     public function updateprofile(Request $request, $user_id)
     {
-        $Usr = Users::find($user_id);
-         $request->validate([
+        $Usr = Users::findOrFail($user_id);
+        $request->validate([
             'name' => 'required|string|max:255',
-            'username' => 'required|string|max:255|unique:users,username,' . $user_id,
+            'phone' => 'nullable|string|max:20',
             'email' => 'required|string|email|max:255|unique:users,email,' . $user_id,
-            'contact_no' => 'nullable|string|max:20',
-            'profile_summary' => 'nullable|string|max:500',
-            'profile_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'profile_image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:3072',
         ]);
         $Usr->name = $request->input('name');
-        $Usr->username = $request->input('username');
+        $Usr->phone = $request->input('phone');
         $Usr->email = $request->input('email');
-        $Usr->contact_no = $request->input('contact_no');
-        $Usr->profile_summary = $request->input('profile_summary');
-        if($request->hasFile('profile_image')){
-                $image = $request->file('profile_image');
-                $filename = time(). '.' . $image->getClientOriginalExtension();
-                Image::make($image)->resize(128,128)->save(public_path('/upload/profileimage/'.$filename));
-                $Usr->profile_image = $filename;
+        if ($request->hasFile('profile_image')) {
+            if ($Usr->profile_image) {
+                Storage::disk('public')->delete($Usr->profile_image);
             }
+            $Usr->profile_image = $request->file('profile_image')->store('profile-images', 'public');
+        }
         $Usr->save();
-        //User::find($user_id)->update($request->all());
-        return redirect('user/profile')->with('success','Profile updated successfully');
+
+        return redirect()->route('profile')->with('success', 'Profile updated successfully');
     }
    
     public function updatePassword(Request $request, $user_id)
     {
-        $rules = array(
-                    'old_password'       =>  'required|string|min:6',
-                    'new_password'       =>  'required|string|min:6',
-                    'confirm_password'       =>  'required|same:new_password'
-                    );
+        $request->validate([
+            'old_password' => 'required|string|min:6',
+            'new_password' => 'required|string|min:6',
+            'confirm_password' => 'required|same:new_password',
+        ]);
 
-        $validator = Validator::make(Input::only('old_password', 'new_password', 'confirm_password'), $rules);
+        $user = Users::findOrFail($user_id);
 
-        if($validator->fails())
-        {
-             return redirect('changepassword')->with('error', 'new password & confirm Password must be 6 Characters !');
-        } else
-            {
-                $users = Users::where('user_id', '=', $user_id)->first();
-                if (Hash::check(Input::get('old_password'), $users->password))
-                {
-                    if(Input::get('new_password') == Input::get('confirm_password'))
-                    {
-                        $users->password =Hash::make(Input::get('new_password'));
-                        $users->save();
-                        return redirect('changepassword')->with('success' , 'Password changed Successfully !');    
-                    }else
-                    {
-                        return redirect('changepassword')->with('error', 'New password and Confirm password did not match !');
-                    }
-                }else
-                
-                {
-                    return redirect('changepassword')->with('error','Current password is incorrect !');
-                }
-            }
-         
+        if (!Hash::check($request->old_password, $user->password)) {
+            return redirect()->route('changepassword')->with('error', 'Current password is incorrect!');
+        }
+
+        $user->password = Hash::make($request->new_password);
+        $user->save();
+
+        return redirect()->route('changepassword')->with('success', 'Password changed successfully!');
     }
 
     public function userlogout()

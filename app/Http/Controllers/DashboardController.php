@@ -18,7 +18,12 @@ class DashboardController extends Controller
      */
     public function index()
     {
-        $shops = Shops::with(['staff', 'expenses', 'fixedExpenses'])->get();
+        // When an admin has picked a shop to work in, every figure on the
+        // dashboard is for that shop only; otherwise it covers all shops.
+        $activeShopId = session('active_shop_id');
+        $inShop = fn ($query, $column = 'shop_id') => $activeShopId ? $query->where($column, $activeShopId) : $query;
+
+        $shops = $inShop(Shops::with(['staff', 'expenses', 'fixedExpenses']), 'id')->get();
 
         // Aggregate stock value & sales per shop in SQL instead of hydrating
         // every product/sale row into PHP memory (a shop can have tens of
@@ -111,18 +116,83 @@ class DashboardController extends Controller
         // -----------------------------
         // Product inventory summary
         // -----------------------------
-        $totalProducts     = Products::count();
-        $outOfStockProducts = Products::where('quantity', '<=', 0)->count();
-        $runningOutProducts = Products::whereColumn('quantity', '<=', 'min_quantity')
+        $products          = fn () => $inShop(Products::query());
+        $totalProducts     = $products()->count();
+        $outOfStockProducts = $products()->where('quantity', '<=', 0)->count();
+        $runningOutProducts = $products()->whereColumn('quantity', '<=', 'min_quantity')
             ->where('quantity', '>', 0)
             ->count();
-        $expiredProducts   = Products::whereNotNull('expire_date')
+        $expiredProducts   = $products()->whereNotNull('expire_date')
             ->where('expire_date', '<', Carbon::today())
             ->count();
-        $disposedProducts  = Products::onlyTrashed()->count();
+        // Same 1-year window as the products "expiring" filter.
+        $expiringProducts  = $products()->whereNotNull('expire_date')
+            ->whereBetween('expire_date', [Carbon::today(), Carbon::today()->addYear()])
+            ->count();
+        $disposedProducts  = $inShop(Products::onlyTrashed())->count();
         $remainingProducts = $totalProducts - $outOfStockProducts;
 
-        return view('dashboard.admin.index', compact(
+        // Stock alert tabs — the 10 most urgent products in each list.
+        $alertColumns = ['id', 'name', 'shop_id', 'quantity', 'min_quantity', 'expire_date'];
+        $stockAlerts = [
+            'expired' => $products()->with('shop:id,name')->whereNotNull('expire_date')
+                ->where('expire_date', '<', Carbon::today())
+                ->orderByDesc('expire_date')->limit(10)->get($alertColumns),
+            'running_out' => $products()->with('shop:id,name')->where('quantity', '>', 0)
+                ->whereColumn('quantity', '<=', 'min_quantity')
+                ->orderBy('quantity')->limit(10)->get($alertColumns),
+            'expiring' => $products()->with('shop:id,name')->whereNotNull('expire_date')
+                ->whereBetween('expire_date', [Carbon::today(), Carbon::today()->addYear()])
+                ->orderBy('expire_date')->limit(10)->get($alertColumns),
+            'out_of_stock' => $products()->with('shop:id,name')->where('quantity', '<=', 0)
+                ->latest('updated_at')->limit(10)->get($alertColumns),
+        ];
+
+        // -----------------------------
+        // Overview chart — Sales / Purchases / Expenses per month,
+        // current year, for the active shop (or every shop).
+        // -----------------------------
+        $currentYear = Carbon::now()->year;
+
+        $monthlySalesRaw = $inShop(DB::table('sales'))
+            ->selectRaw('MONTH(created_at) as m, SUM(total) as total')
+            ->whereYear('created_at', $currentYear)
+            ->groupBy('m')
+            ->pluck('total', 'm');
+
+        $monthlyPurchasesRaw = $inShop(DB::table('purchase_invoices'))
+            ->selectRaw('MONTH(purchased_at) as m, SUM(total_amount) as total')
+            ->whereYear('purchased_at', $currentYear)
+            ->groupBy('m')
+            ->pluck('total', 'm');
+
+        $monthlyExpensesRaw = $inShop(DB::table('expenses'))
+            ->selectRaw('MONTH(created_at) as m, SUM(amount) as total')
+            ->whereYear('created_at', $currentYear)
+            ->groupBy('m')
+            ->pluck('total', 'm');
+
+        $monthlySales = [];
+        $monthlyPurchases = [];
+        $monthlyExpenses = [];
+        for ($m = 1; $m <= 12; $m++) {
+            $monthlySales[]     = (float) ($monthlySalesRaw[$m] ?? 0);
+            $monthlyPurchases[] = (float) ($monthlyPurchasesRaw[$m] ?? 0);
+            $monthlyExpenses[]  = (float) ($monthlyExpensesRaw[$m] ?? 0);
+        }
+
+        // -----------------------------
+        // Top selling products (by quantity sold), across every shop.
+        // -----------------------------
+        $topSellingProducts = $inShop(DB::table('sale_items')
+            ->join('products', 'sale_items.product_id', '=', 'products.id'), 'products.shop_id')
+            ->selectRaw('products.id, products.name, products.brand, SUM(sale_items.quantity) as total_qty, SUM(sale_items.quantity * sale_items.price) as total_revenue')
+            ->groupBy('products.id', 'products.name', 'products.brand')
+            ->orderByDesc('total_qty')
+            ->limit(5)
+            ->get();
+
+        return view('pages.admin.index', compact(
             'shops',
             'totalPurchases',
             'totalSales',
@@ -138,7 +208,13 @@ class DashboardController extends Controller
             'expiredProducts',
             'disposedProducts',
             'runningOutProducts',
-            'outOfStockProducts'
+            'expiringProducts',
+            'stockAlerts',
+            'outOfStockProducts',
+            'monthlySales',
+            'monthlyPurchases',
+            'monthlyExpenses',
+            'topSellingProducts'
         ));
     }
 
@@ -165,7 +241,7 @@ class DashboardController extends Controller
 
         $customers = Customer::where('shop_id', $staff->shop_id)->get();
 
-        return view('dashboard.staff.index', compact(
+        return view('pages.staff.index', compact(
             'products', 'customers', 'productsTotal', 'productsDisplayLimit'
         ));
     }
@@ -182,11 +258,14 @@ class DashboardController extends Controller
             abort(403, 'You are not authorized to access this page.');
         }
 
-        $shops = Shops::orderBy('name')->get();
-        $shop = $request->filled('shop') ? Shops::find($request->query('shop')) : null;
+        // Stores only hold stock, so they never appear at the POS.
+        $shops = Shops::sellingShops()->orderBy('name')->get();
+        // Default to the shop the admin is working in, if one is picked.
+        $shopId = $request->query('shop', session('active_shop_id'));
+        $shop = $shopId ? Shops::sellingShops()->find($shopId) : null;
 
         if (!$shop) {
-            return view('dashboard.admin.pos_select_shop', compact('shops'));
+            return view('pages.admin.pos_select_shop', compact('shops'));
         }
 
         $productsDisplayLimit = 500;
@@ -197,7 +276,7 @@ class DashboardController extends Controller
 
         $customers = Customer::where('shop_id', $shop->id)->get();
 
-        return view('dashboard.admin.pos', compact(
+        return view('pages.admin.pos', compact(
             'shop', 'shops', 'products', 'customers', 'productsTotal', 'productsDisplayLimit'
         ));
     }

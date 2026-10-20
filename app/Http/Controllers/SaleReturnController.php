@@ -41,7 +41,7 @@ class SaleReturnController extends Controller
             ->latest()
             ->get();
 
-        return view('dashboard.sales_returns.index', compact('shop', 'sales', 'returns'));
+        return view('pages.sales_returns.index', compact('shop', 'sales', 'returns'));
     }
 
     // =========================
@@ -147,7 +147,8 @@ public function store(Request $request)
 
         $itemRows = $this->aggregateItems($sales);
 
-        return view('dashboard.sales_returns.detail', compact('shop', 'date', 'itemRows'));
+        // Loaded by AJAX = bare fragment; opened directly = full page.
+        return view(request()->ajax() ? 'pages.sales_returns.detail' : 'pages.sales_returns.detail_page', compact('shop', 'date', 'itemRows'));
     }
 
     // =========================

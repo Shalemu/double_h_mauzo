@@ -16,7 +16,10 @@ class StaffController extends Controller
 
 public function index()
 {
-    $staff = Staff::with(['shop', 'role'])->latest()->get();
+    $staff = Staff::with(['shop', 'role'])
+        ->when(session('active_shop_id'), fn ($q, $shopId) => $q->where('shop_id', $shopId))
+        ->latest()
+        ->get();
     $shops = Shops::orderBy('name')->get();
 
     // Only show roles for normal staff
@@ -24,7 +27,7 @@ public function index()
                  ->orderBy('name')
                  ->get();
 
-    return view('dashboard.admin.staff', compact('staff', 'shops', 'roles'));
+    return view('pages.admin.staff', compact('staff', 'shops', 'roles'));
 }
 
 
@@ -70,7 +73,7 @@ public function edit($id)
     $shops = Shops::orderBy('name')->get();
     $roles = Role::whereNotIn('name', ['admin', 'super admin'])->orderBy('name')->get();
 
-    return view('dashboard.admin.staff_edit', compact('staff', 'shops', 'roles'));
+    return view('pages.admin.staff_edit', compact('staff', 'shops', 'roles'));
 }
 
 // Update staff

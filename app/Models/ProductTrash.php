@@ -32,6 +32,11 @@ class ProductTrash extends Model
         'admin_id'
     ];
 
+        public function shop()
+    {
+        return $this->belongsTo(\App\Models\Shops::class, 'shop_id');
+    }
+
         public function category()
     {
         return $this->belongsTo(\App\Models\ProductCategory::class, 'category_id');

@@ -18,7 +18,7 @@ class SuperAdminController extends Controller
         $approvedUsers = Users::where('role_id', '>', 0)->with('role')->latest()->get();
         $roles = Role::orderBy('name')->get();
 
-        return view('dashboard.admin.user_management', compact('pendingUsers', 'approvedUsers', 'roles'));
+        return view('pages.admin.user_management', compact('pendingUsers', 'approvedUsers', 'roles'));
     }
 
     /**

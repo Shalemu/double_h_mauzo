@@ -216,15 +216,18 @@
                                         <td class="text-end fw-bold fs-5 text-primary">Tsh <span id="summary-grand-total">0.00</span></td>
                                     </tr>
                                     <tr id="received-row" style="display:none;">
-                        <td class="fw-semibold">Received</td>
+                        <td class="fw-semibold"><label for="received-amount" class="mb-0">Received</label></td>
                         <td>
-                            <input type="number" class="form-control form-control-sm text-end" id="received-amount" value="0">
+                            <div class="input-group input-group-sm">
+                                <input type="number" class="form-control text-end" id="received-amount" value="0" min="0" step="any">
+                                <button type="button" class="btn btn-outline-secondary" id="received-exact" title="Set to the exact total">Exact</button>
+                            </div>
                         </td>
                     </tr>
 
                     <tr id="change-row" style="display:none;">
-                        <td class="fw-semibold text-success">Change</td>
-                        <td class="text-end text-success fw-bold">
+                        <td class="fw-semibold" id="change-label">Change</td>
+                        <td class="text-end fw-bold" id="change-cell">
                             Tsh <span id="change-amount">0.00</span>
                         </td>
                     </tr>
@@ -297,8 +300,9 @@
             @if(session('success'))
                 <div class="alert alert-success m-3">{{ session('success') }}</div>
             @endif
-            <form action="{{ $customerStoreUrl }}" method="POST">
+            <form action="{{ $customerStoreUrl }}" method="POST" id="addCustomerForm">
                 @csrf
+                <div class="alert alert-danger m-3 mb-0 small" id="addCustomerError" hidden></div>
                 @if(!empty($customerStoreShopId))
                     <input type="hidden" name="shop_id" value="{{ $customerStoreShopId }}">
                 @endif
@@ -314,7 +318,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary btn-sm">Save</button>
+                    <button type="submit" class="btn btn-primary btn-sm" id="addCustomerSave">Save</button>
                 </div>
             </form>
         </div>
@@ -498,6 +502,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const mobileRow = document.getElementById('mobile-row');
 
     let cart = {};
+    let receivedEdited = false; // cashier typed their own "Received" amount
     const stockMap = {};
 
     // Initialize stock map
@@ -552,9 +557,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
         cartTotalEl && (cartTotalEl.textContent = total.toFixed(2));
         subTotalEl && (subTotalEl.textContent = total.toFixed(2));
+        // "Payment Sum" = items total before bill discount / shipping (was never filled in).
+        document.getElementById('payment-sum') && (document.getElementById('payment-sum').textContent = total.toFixed(2));
         summaryShippingEl && (summaryShippingEl.textContent = shipping.toFixed(2));
         document.getElementById('bill-discount-value') && (document.getElementById('bill-discount-value').textContent = billDiscount.toFixed(2));
-        grandTotalEl && (grandTotalEl.textContent = (total - billDiscount + shipping).toFixed(2));
+        // A discount can't push the total below zero.
+        grandTotalEl && (grandTotalEl.textContent = Math.max(0, total - billDiscount + shipping).toFixed(2));
+        billDiscountEl && billDiscountEl.classList.toggle('is-invalid', billDiscount > total + shipping);
 
         calculatePaymentEffects();
     }
@@ -694,16 +703,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
             Object.keys(cart).forEach(id => { stockMap[id] += cart[id].qty; });
             cart = {};
+            receivedEdited = false; // Received follows the (new) total again
             updateCartDisplay();
         });
     });
 
     // --- PAYMENT CALCULATION ---
+    // Cash: "Received" follows the Grand Total until the cashier types an amount
+    // (e.g. the customer hands over more), then Change is worked out from it.
     function calculatePaymentEffects() {
         if (!paymentMethodEl || !receivedInput) return;
 
         const total = parseFloat(grandTotalEl?.textContent) || 0;
         const method = paymentMethodEl.value;
+
+        if (method === 'cash' && !receivedEdited) {
+            receivedInput.value = total.toFixed(2);
+        }
         let received = parseFloat(receivedInput.value) || 0;
 
         [receivedRow, changeRow, remainingRow, bankRow, mobileRow].forEach(el => el && (el.style.display = 'none'));
@@ -711,7 +727,15 @@ document.addEventListener('DOMContentLoaded', () => {
         if (method === 'cash') {
             receivedRow && (receivedRow.style.display = '');
             changeRow && (changeRow.style.display = '');
-            changeAmountEl && (changeAmountEl.textContent = Math.max(received - total, 0).toFixed(2));
+            const short = total - received;
+            const isShort = short > 0.004;
+            document.getElementById('change-label').textContent = isShort ? 'Short by' : 'Change';
+            document.getElementById('change-label').className = 'fw-semibold ' + (isShort ? 'text-danger' : 'text-success');
+            document.getElementById('change-cell').className = 'text-end fw-bold ' + (isShort ? 'text-danger' : 'text-success');
+            changeAmountEl && (changeAmountEl.textContent = (isShort ? short : Math.max(received - total, 0)).toFixed(2));
+            receivedInput.classList.toggle('is-invalid', isShort);
+        } else {
+            receivedInput.classList.remove('is-invalid');
         }
 
         if (method === 'credit') {
@@ -729,11 +753,86 @@ document.addEventListener('DOMContentLoaded', () => {
         if (method === 'bank') bankRow && (bankRow.style.display = '');
     }
 
-    paymentMethodEl?.addEventListener('change', calculatePaymentEffects);
-    receivedInput?.addEventListener('input', calculatePaymentEffects);
+    paymentMethodEl?.addEventListener('change', function () {
+        // Cash starts at the full total; credit starts at no deposit.
+        receivedEdited = false;
+        if (receivedInput && paymentMethodEl.value !== 'cash') receivedInput.value = 0;
+        calculatePaymentEffects();
+    });
+    receivedInput?.addEventListener('input', function () {
+        receivedEdited = receivedInput.value !== '';
+        calculatePaymentEffects();
+    });
+    receivedInput?.addEventListener('focus', () => receivedInput.select());
+    document.getElementById('received-exact')?.addEventListener('click', function () {
+        receivedEdited = false;
+        calculatePaymentEffects();
+        receivedInput.focus();
+    });
     customerSelect?.addEventListener('change', calculatePaymentEffects);
 
     calculatePaymentEffects();
+
+    // --- ADD CUSTOMER without reloading (a reload would wipe the cart) ---
+    const addCustomerForm = document.getElementById('addCustomerForm');
+    addCustomerForm?.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        const errorBox = document.getElementById('addCustomerError');
+        const saveBtn = document.getElementById('addCustomerSave');
+        errorBox.hidden = true;
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Saving...';
+
+        try {
+            const response = await fetch(addCustomerForm.action, {
+                method: 'POST',
+                headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                body: new FormData(addCustomerForm),
+            });
+            const data = await response.json().catch(() => ({}));
+
+            if (!response.ok || !data.success) {
+                const errors = data.errors ? Object.values(data.errors).flat() : [data.message || 'Could not save the customer.'];
+                errorBox.textContent = errors.join(' ');
+                errorBox.hidden = false;
+                return;
+            }
+
+            // Add to the dropdown (dropping a "No customers yet" placeholder) and select it.
+            Array.from(customerSelect.options).forEach(o => { if (o.value === '' && o.text !== '-- Select Customer --') o.remove(); });
+            const option = new Option(data.customer.name, data.customer.id, true, true);
+            customerSelect.add(option);
+            customerSelect.dispatchEvent(new Event('change'));
+
+            addCustomerForm.reset();
+            bootstrap.Modal.getInstance(document.getElementById('addCustomerModal'))?.hide();
+            Swal.fire({ icon: 'success', title: 'Customer added', text: data.customer.name + ' is selected for this sale.', timer: 1800, showConfirmButton: false });
+        } catch (err) {
+            errorBox.textContent = 'Could not save the customer: ' + err.message;
+            errorBox.hidden = false;
+        } finally {
+            saveBtn.disabled = false;
+            saveBtn.textContent = 'Save';
+        }
+    });
+
+    // After a sale: start the next one clean — no leftover customer, discount,
+    // shipping, payment choice or received amount from the last sale.
+    function resetSaleForm() {
+        receivedEdited = false;
+        if (customerSelect) customerSelect.value = '';
+        if (paymentMethodEl) paymentMethodEl.value = 'cash';
+        if (billDiscountEl) billDiscountEl.value = 0;
+        if (shippingEl) shippingEl.value = 0;
+        ['bank-name', 'mobile-name'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+        const saleDate = document.getElementById('sale-date');
+        if (saleDate) {
+            const d = new Date(), pad = n => String(n).padStart(2, '0');
+            saleDate.value = d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); // local date, not UTC
+        }
+        document.querySelectorAll('.product-card .qty-input, .product-card .discount-input').forEach(el => { el.value = 0; });
+        document.querySelectorAll('.product-card .add-to-cart').forEach(el => el.classList.add('d-none'));
+    }
 
     // --- CHECKOUT ---
     checkoutBtn?.addEventListener('click', async () => {
@@ -747,6 +846,22 @@ document.addEventListener('DOMContentLoaded', () => {
             : paymentMethod === 'mobile' ? document.getElementById('mobile-name')?.value
             : null;
         const receivedAmount = parseFloat(receivedInput?.value) || 0;
+        const grandTotal = parseFloat(grandTotalEl?.textContent) || 0;
+        const itemsTotal = parseFloat(subTotalEl?.textContent) || 0;
+
+        if ((parseFloat(billDiscountEl?.value) || 0) > itemsTotal + (parseFloat(shippingEl?.value) || 0)) {
+            Swal.fire({ icon: 'warning', title: 'Discount too big', text: 'The bill discount is more than the sale total.', confirmButtonColor: '#831619' });
+            billDiscountEl?.focus();
+            return;
+        }
+
+        if (paymentMethod === 'cash' && receivedAmount + 0.004 < grandTotal) {
+            Swal.fire({ icon: 'warning', title: 'Not enough received',
+                text: 'Received Tsh ' + receivedAmount.toLocaleString() + ' is less than the total Tsh ' + grandTotal.toLocaleString() + '. Use credit for a partial payment.',
+                confirmButtonColor: '#831619' });
+            receivedInput?.focus();
+            return;
+        }
 
         const payload = {
             cart: Object.entries(cart).map(([productId, item]) => ({
@@ -785,6 +900,7 @@ document.addEventListener('DOMContentLoaded', () => {
             Swal.fire({ icon: 'success', title: 'Sale Completed', text: data.message || 'Sale submitted successfully!', confirmButtonColor: '#3085d6' });
 
             cart = {};
+            resetSaleForm();
             updateCartDisplay();
         } catch (err) {
             Swal.fire({ icon: 'error', title: 'Checkout Error', text: 'Checkout failed: ' + err.message, confirmButtonColor: '#d33' });

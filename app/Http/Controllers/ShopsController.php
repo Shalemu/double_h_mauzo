@@ -23,7 +23,7 @@ class ShopsController extends Controller
         // here — a single shop can hold tens of thousands of products, and
         // loading every row into PHP just to sum() them was crashing the
         // page. Everything below is aggregated in SQL instead.
-        $shops = Shops::with(['staff', 'expenses', 'fixedExpenses'])
+        $shops = Shops::sellingShops()->with(['staff', 'expenses', 'fixedExpenses'])
             ->orderBy('name')
             ->get();
 
@@ -45,7 +45,7 @@ class ShopsController extends Controller
             $shop->total_credit = $shop->invoices()->where('payment_type', 'credit')->sum('remaining_credit');
         });
 
-        return view('dashboard.shops.shop', compact('shops'));
+        return view('pages.shops.shop', compact('shops'));
     }
 
     
@@ -63,6 +63,7 @@ class ShopsController extends Controller
 
         Shops::create([
             'name'     => $request->name,
+            'type'     => \App\Enums\ShopType::Shop->value,
             'location' => $request->location,
             'capital'  => $request->capital ?? 0,
             'admin_id' => Auth::id(),
@@ -110,6 +111,44 @@ class ShopsController extends Controller
 
         return redirect()->route('dashboard.shop')
             ->with('success', "Shop \"$shopName\" and all its data have been deleted.");
+    }
+
+    /**
+     * Flip a shop between active/suspended. Visual flag only for now — no
+     * access restrictions are enforced based on this status yet.
+     */
+    public function toggleStatus(Shops $shop)
+    {
+        $shop->status = $shop->isSuspended() ? 'active' : 'suspended';
+        $shop->save();
+
+        return redirect()->route('dashboard.shop')
+            ->with('success', "Shop \"{$shop->name}\" is now {$shop->status}.");
+    }
+
+    /**
+     * Set which shop an admin-tier account is currently "working in" —
+     * pages that are aware of it (Manage Products, etc.) scope themselves
+     * to this shop instead of showing everything across every shop.
+     */
+    public function setActiveShop(Request $request)
+    {
+        $request->validate(['shop_id' => 'required|exists:shops,id']);
+
+        $shop = Shops::findOrFail($request->shop_id);
+        session(['active_shop_id' => $shop->id]);
+
+        return redirect()->back()->with('success', "Now working in \"{$shop->name}\".");
+    }
+
+    /**
+     * Drop back to the global, all-shops view.
+     */
+    public function clearActiveShop()
+    {
+        session()->forget('active_shop_id');
+
+        return redirect()->back()->with('success', 'Switched back to all shops.');
     }
 
     /**
@@ -264,7 +303,7 @@ class ShopsController extends Controller
     ->orderByDesc('created_at') // use created_at instead of deleted_at
     ->get();
 
-        return view('dashboard.dashboard', compact(
+        return view('pages.dashboard', compact(
             'shop',
             'products',
             'finishedProducts',

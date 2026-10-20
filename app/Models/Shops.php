@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\ShopType;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Carbon\Carbon;
@@ -12,11 +13,40 @@ class Shops extends Model
 
     protected $fillable = [
         'name',
+        'type',
         'location',
+        'status',
         'capital',
         'admin_id',
         'user_id',
     ];
+
+    public function isSuspended(): bool
+    {
+        return $this->status === 'suspended';
+    }
+
+    // A store (warehouse) holds stock but never sells at the POS.
+    public function isStore(): bool
+    {
+        return $this->type === ShopType::Store->value;
+    }
+
+    public function scopeSellingShops($query)
+    {
+        return $query->where('type', '!=', ShopType::Store->value);
+    }
+
+    public function scopeStores($query)
+    {
+        return $query->where('type', ShopType::Store->value);
+    }
+
+    // Name with a "(Store)" tag, for pickers that list shops and stores together.
+    public function getLabelAttribute(): string
+    {
+        return $this->name . ($this->isStore() ? ' (Store)' : '');
+    }
 
     /*
     |--------------------------------------------------------------------------
@@ -28,6 +58,12 @@ class Shops extends Model
     public function staff()
     {
         return $this->hasMany(Staff::class, 'shop_id');
+    }
+
+    // Distributor trips taken out of this store
+    public function distributions()
+    {
+        return $this->hasMany(Distribution::class, 'store_id');
     }
 
     // Products

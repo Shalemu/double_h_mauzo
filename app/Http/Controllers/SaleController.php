@@ -3,10 +3,9 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use App\Actions\Sales\CheckoutSale;
+use App\DTO\Sales\SaleData;
 use App\Models\Sale;
-use App\Models\SaleItem;
-use App\Models\Products;
 use App\Models\Shops;
 use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Facades\Excel;
@@ -59,7 +58,7 @@ class SaleController extends Controller
         ])
         ->values();
 
-    return view('dashboard.staff.sales.index', compact('shop', 'salesByDate'));
+    return view('pages.staff.sales.index', compact('shop', 'salesByDate'));
 }
 
     /*
@@ -87,7 +86,7 @@ public function detail($shopId, $date)
 
         $itemRows = $this->aggregateItems($sales);
 
-        return view('dashboard.staff.sales.detail', compact('shop', 'date', 'itemRows'));
+        return view('pages.staff.sales.detail', compact('shop', 'date', 'itemRows'));
     }
 
     // ADMIN VIEW
@@ -99,7 +98,8 @@ public function detail($shopId, $date)
 
         $itemRows = $this->aggregateItems($sales);
 
-        return view('dashboard.sales.detail', compact('shop', 'date', 'itemRows'));
+        // Loaded into the shop page by AJAX = bare fragment; opened directly = full page.
+        return view(request()->ajax() ? 'pages.sales.detail' : 'pages.sales.detail_page', compact('shop', 'date', 'itemRows'));
     }
 
     abort(403, 'Unauthorized access.');
@@ -114,14 +114,7 @@ public function detail($shopId, $date)
     */
     public function exportExcel($shopId, $date)
     {
-        $shop = Shops::findOrFail($shopId);
-
-        $sales = Sale::with(['items.product', 'staff'])
-            ->where('shop_id', $shop->id)
-            ->whereDate('created_at', $date)
-            ->get();
-
-        $itemRows = $this->aggregateItems($sales);
+        [$shop, $itemRows] = $this->exportRows($shopId, $date);
 
         return Excel::download(new DailySalesExport($itemRows), "daily_sales_{$date}.xlsx");
     }
@@ -133,14 +126,7 @@ public function detail($shopId, $date)
     */
     public function exportPdf($shopId, $date)
     {
-        $shop = Shops::findOrFail($shopId);
-
-        $sales = Sale::with(['items.product', 'staff'])
-            ->where('shop_id', $shop->id)
-            ->whereDate('created_at', $date)
-            ->get();
-
-        $itemRows = $this->aggregateItems($sales);
+        [$shop, $itemRows] = $this->exportRows($shopId, $date);
 
         return (new DailySalesPdfExport($shop, $date, $itemRows))
             ->download("daily_sales_{$date}.pdf");
@@ -151,15 +137,10 @@ public function detail($shopId, $date)
     | CHECKOUT (CREATE SALE)
     |--------------------------------------------------------------------------
     */
-    public function checkout(Request $request, $shopId)
+    public function checkout(Request $request, $shopId, CheckoutSale $checkoutSale)
     {
-        $cart = $request->input('cart', []);
-
-        if (empty($cart)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Cart is empty.'
-            ]);
+        if (empty($request->input('cart', []))) {
+            return response()->json(['success' => false, 'message' => 'Cart is empty.']);
         }
 
         $staff = $this->staff;
@@ -177,7 +158,15 @@ public function detail($shopId, $date)
             }
         }
 
-        $request->validate([
+        if (Shops::whereKey($shopId)->stores()->exists()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This is a store — it holds stock only and cannot sell. Transfer the stock to a shop first.',
+            ], 422);
+        }
+
+        $validated = $request->validate([
+            'cart' => 'required|array|min:1',
             'customer_id' => 'nullable|exists:customers,id',
             'payment_method' => 'required|string',
             'payment_type' => 'nullable|string',
@@ -186,91 +175,55 @@ public function detail($shopId, $date)
             'shipping' => 'nullable|numeric|min:0',
         ]);
 
-        DB::beginTransaction();
-
         try {
-
-            $billDiscount = $request->bill_discount ?? 0;
-            $shipping = $request->shipping ?? 0;
-
-            $subTotal = collect($cart)->sum(fn($item) =>
-                ($item['qty'] * $item['price']) - ($item['discount'] ?? 0)
-            );
-
-            $grandTotal = $subTotal - $billDiscount + $shipping;
-            $received = $request->received_amount ?? 0;
-            $remaining = 0;
-            $change = 0;
-
-            if ($request->payment_method === 'cash') {
-                if ($received < $grandTotal) {
-                    throw new \Exception("Received amount is less than total.");
-                }
-                $change = $received - $grandTotal;
-            }
-
-            if ($request->payment_method === 'credit') {
-                if (!$request->customer_id) {
-                    throw new \Exception("Customer required for credit sale.");
-                }
-                $remaining = max(0, $grandTotal - $received);
-            }
-
-            // Create sale
-            $sale = Sale::create([
-                'shop_id' => $shopId,
-                'staff_id' => $staff?->id,
-                'admin_id' => $admin?->id,
-                'customer_id' => $request->customer_id,
-                'bill_discount' => $billDiscount,
-                'shipping' => $shipping,
-                'total' => $grandTotal,
-                'payment_method' => $request->payment_method,
-                'payment_type' => $request->payment_type,
-                'received_amount' => $received,
-                'remaining_amount' => $remaining,
-                'change_amount' => $change,
-            ]);
-
-            // Save sale items
-            foreach ($cart as $item) {
-                $product = Products::lockForUpdate()->find($item['product_id']);
-
-                if (!$product) {
-                    throw new \Exception("Product not found.");
-                }
-
-                if ($item['qty'] > $product->quantity) {
-                    throw new \Exception("Not enough stock for {$product->name}");
-                }
-
-                $product->decrement('quantity', $item['qty']);
-
-                SaleItem::create([
-                    'sale_id' => $sale->id,
-                    'product_id' => $product->id,
-                    'quantity' => $item['qty'],
-                    'price' => $item['price'],
-                    'discount' => $item['discount'] ?? 0,
-                    'sale_type' => $item['sale_type'] ?? 'retail', 
-                ]);
-            }
-
-            DB::commit();
-
-            return response()->json([
-                'success' => true,
-                'sale_id' => $sale->id,
-                'message' => 'Sale completed successfully!'
-            ]);
+            $sale = $checkoutSale->execute(SaleData::fromArray((int) $shopId, $validated, $staff?->id, $admin?->id));
         } catch (\Throwable $e) {
-            DB::rollBack();
+            // Rule problems (not enough cash/stock, no customer for credit…) come back
+            // in the shape the POS already shows: "Checkout failed: …".
+            if (!$e instanceof \DomainException) {
+                report($e);
+            }
 
-            return response()->json([
-                'success' => false,
-                'message' => 'Checkout failed: ' . $e->getMessage()
-            ], 500);
+            return response()->json(['success' => false, 'message' => 'Checkout failed: ' . $e->getMessage()], 500);
         }
+
+        return response()->json([
+            'success' => true,
+            'sale_id' => $sale->id,
+            'message' => 'Sale completed successfully!',
+        ]);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | HELPER: Rows for the daily Excel/PDF exports
+    |--------------------------------------------------------------------------
+    | Staff may only export their own shop and their own sales (same as the
+    | detail page they export from); ?type=retail|wholesale narrows the rows.
+    */
+    private function exportRows($shopId, $date): array
+    {
+        $shop = Shops::findOrFail($shopId);
+        $staff = auth()->guard('staff')->user();
+
+        if ($staff && $staff->shop_id != $shop->id) {
+            abort(403, 'Unauthorized');
+        }
+
+        $sales = Sale::with(['items.product', 'staff'])
+            ->where('shop_id', $shop->id)
+            ->when($staff, fn ($q) => $q->where('staff_id', $staff->id))
+            ->whereDate('created_at', $date)
+            ->get();
+
+        $rows = $this->aggregateItems($sales);
+
+        $type = request()->query('type');
+        if (in_array($type, ['retail', 'wholesale'], true)) {
+            $rows = array_values(array_filter($rows, fn ($row) => ($row['sale_type'] ?? 'retail') === $type));
+        }
+
+        return [$shop, $rows];
     }
 
     /*

@@ -47,6 +47,11 @@ class Staff extends Authenticatable
         return $this->morphMany(Expenses::class, 'created_by');
     }
 
+    public function hasPermission(string $permission): bool
+    {
+        return $this->role && in_array($permission, $this->role->permissionKeys(), true);
+    }
+
     // Accessor
     public function getFullNameAttribute()
     {
