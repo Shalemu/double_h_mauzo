@@ -70,7 +70,7 @@ class SupplierController extends Controller
     {
         // purchase_invoices cascade-delete with their supplier, so a supplier
         // with history must stay — deleting it would wipe those purchases.
-        $invoices = $supplier->invoices()->count();
+        $invoices = $supplier->invoices()->withoutGlobalScope('received')->count(); // orders too
         if ($invoices) {
             return redirect()->route('suppliers.index')
                 ->with('error', "\"{$supplier->name}\" has {$invoices} purchase invoice(s) and cannot be deleted.");

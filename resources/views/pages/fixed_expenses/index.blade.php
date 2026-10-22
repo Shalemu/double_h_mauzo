@@ -261,47 +261,8 @@
 <!-- SWEET ALERT -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-
-    // Delete confirmation
-    document.querySelectorAll('.delete-expense-btn').forEach(button => {
-        button.addEventListener('click', function (e) {
-            e.preventDefault();
-
-            const form = this.closest('form');
-
-            Swal.fire({
-                title: 'Delete Expense?',
-                text: "This expense will be permanently deleted.",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#dc3545',
-                cancelButtonColor: '#6c757d',
-                confirmButtonText: 'Yes, delete it',
-                cancelButtonText: 'Cancel',
-                reverseButtons: true
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    form.submit();
-                }
-            });
-        });
-    });
-
-});
-</script>
+@include('pages.fixed_expenses._index_scripts')
 
 @if(session('success'))
-<script>
-document.addEventListener("DOMContentLoaded", function(){
-    Swal.fire({
-        icon: 'success',
-        title: 'Success',
-        text: "{{ session('success') }}",
-        timer: 2000,
-        showConfirmButton: false
-    });
-});
-</script>
+@include('pages.fixed_expenses._index_scripts_2')
 @endif

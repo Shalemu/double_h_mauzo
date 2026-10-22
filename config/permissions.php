@@ -107,7 +107,8 @@ return [
     ],
     'Purchases' => [
         'purchases.view'           => 'List Purchases & Invoices',
-        'purchases.create'         => 'Create Purchase',
+        'purchases.create'         => 'Create Purchase Order',
+        'purchases.receive'        => 'Receive Purchase Order (adds stock)',
     ],
     'Purchase Returns' => [
         'purchase-returns.view'    => 'List Purchase Returns',

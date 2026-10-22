@@ -25,7 +25,7 @@ class SupplierDeliveriesDataTable extends DataTable
         $search = $this->search();
 
         return DB::table('purchase_items')
-            ->join('purchase_invoices', 'purchase_invoices.id', '=', 'purchase_items.purchase_invoice_id')
+            ->join('purchase_invoices', fn ($j) => $j->on('purchase_invoices.id', '=', 'purchase_items.purchase_invoice_id')->where('purchase_invoices.status', 'received'))
             ->join('suppliers', 'suppliers.id', '=', 'purchase_invoices.supplier_id')
             ->leftJoin('products', 'products.id', '=', 'purchase_items.product_id')
             ->when($this->supplierId(), fn ($q, $supplier) => $q->where('purchase_invoices.supplier_id', $supplier))

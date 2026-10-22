@@ -1,0 +1,1 @@
+<?php /**PATH D:\PROJECTS\d\double_h_mauzo\resources\views\pages\products\edit.blade.php ENDPATH**/ ?>

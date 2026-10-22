@@ -43,22 +43,31 @@ class ProcurementController extends Controller
      * Product search for the "Assign product" form: name/barcode match with
      * shop, unit and current prices so the purchasing price loads by itself.
      */
+    /** Most products the assign dropdown lists for one shop; beyond that, typing searches the server. */
+    public const SHOP_PRODUCT_LIMIT = 5000;
+
     public function productLookup(Request $request)
     {
         $term = trim((string) $request->query('q'));
-        if (mb_strlen($term) < 2) {
+        $shop = $request->query('shop');
+        // With a shop picked, an empty search lists all of that shop's products (for the dropdown).
+        if (mb_strlen($term) < 2 && !$shop) {
             return response()->json([]);
         }
 
         return Products::query()
             ->leftJoin('shops', 'shops.id', '=', 'products.shop_id')
             ->leftJoin('units', 'units.id', '=', 'products.unit_id')
-            ->when($request->query('shop'), fn ($q, $shop) => $q->where('products.shop_id', $shop))
-            ->where(fn ($q) => $q->where('products.name', 'like', "%{$term}%")->orWhere('products.barcode', $term))
+            // Flags products the chosen supplier already has, so the list can show it.
+            ->leftJoin('supplier_products as sp', fn ($j) => $j->on('sp.product_id', '=', 'products.id')
+                ->where('sp.supplier_id', (int) $request->query('supplier')))
+            ->when($shop, fn ($q) => $q->where('products.shop_id', $shop))
+            ->when(mb_strlen($term) >= 2, fn ($q) => $q->where(fn ($w) => $w->where('products.name', 'like', "%{$term}%")->orWhere('products.barcode', $term)))
             ->orderBy('products.name')
-            ->limit(30)
+            ->limit(mb_strlen($term) >= 2 ? ($shop ? 500 : 30) : self::SHOP_PRODUCT_LIMIT)
             ->get(['products.id', 'products.name', 'products.barcode', 'products.quantity', 'products.purchase_price',
-                'products.selling_price', 'products.wholesale_price', 'shops.name as shop', 'units.short_name as unit']);
+                'products.selling_price', 'products.wholesale_price', 'products.shop_id', 'shops.name as shop',
+                'units.short_name as unit', DB::raw('sp.id is not null as assigned')]);
     }
 
     /**

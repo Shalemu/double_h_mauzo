@@ -160,7 +160,7 @@ class DashboardController extends Controller
             ->groupBy('m')
             ->pluck('total', 'm');
 
-        $monthlyPurchasesRaw = $inShop(DB::table('purchase_invoices'))
+        $monthlyPurchasesRaw = $inShop(DB::table('purchase_invoices')->where('status', 'received'))
             ->selectRaw('MONTH(purchased_at) as m, SUM(total_amount) as total')
             ->whereYear('purchased_at', $currentYear)
             ->groupBy('m')

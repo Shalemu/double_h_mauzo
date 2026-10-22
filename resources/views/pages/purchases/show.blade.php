@@ -7,6 +7,8 @@
     $money = fn ($value) => number_format((float) $value, 2);
     $owed = (float) ($invoice->remaining_amount ?? 0);
     $isCredit = ($invoice->payment_type ?? null) === 'credit';
+    $isPending = $invoice->isPending();
+    $isCancelled = $invoice->status === \App\Models\PurchaseInvoice::CANCELLED;
     $subtotal = $invoice->items->sum(fn ($item) => $item->quantity * $item->purchase_price);
 @endphp
 
@@ -24,6 +26,9 @@
             <i class="bi bi-arrow-left"></i> Back
         </a>
         <div class="d-flex gap-2">
+            @if($isPending && auth()->user()->hasPermission('purchases.receive'))
+                <a href="{{ route('purchases.receive', $invoice->id) }}" class="btn btn-sm btn-success"><i class="bi bi-box-arrow-in-down"></i> Receive order</a>
+            @endif
             @if(auth()->user()->hasPermission('purchase-returns.create') && $invoice->items->sum('quantity') > 0)
                 <a href="{{ route('returns.purchases.create', $invoice->id) }}" class="btn btn-sm btn-danger"><i class="bi bi-box-arrow-left"></i> Return to supplier</a>
             @endif
@@ -32,6 +37,12 @@
     </div>
 
     @if(session('error'))<div class="alert alert-danger no-print">{{ session('error') }}</div>@endif
+    @if(session('success'))<div class="alert alert-success no-print">{{ session('success') }}</div>@endif
+    @if($isPending)
+        <div class="alert alert-warning no-print"><i class="bi bi-hourglass-split me-1"></i> <strong>Pending order.</strong> Nothing is in stock or counted yet. Receive it when the goods arrive to confirm quantities and prices.</div>
+    @elseif($isCancelled)
+        <div class="alert alert-secondary no-print"><i class="bi bi-x-circle me-1"></i> This order was cancelled. Nothing was stocked or paid.</div>
+    @endif
 
     <div class="card shadow-sm mb-4 no-print">
         <div class="card-body py-2 d-flex flex-wrap align-items-center justify-content-between gap-2">
@@ -45,8 +56,12 @@
             {{-- The invoice exactly as the PDF / email shows it. --}}
             <div class="card shadow-sm">
                 <div class="card-header bg-white d-flex flex-wrap justify-content-between align-items-center gap-2 no-print">
-                    <h5 class="mb-0">Invoice {{ \App\Helpers\InvoiceNumber::for($invoice) }}</h5>
-                    @if($isCredit && $owed > 0)
+                    <h5 class="mb-0">{{ $isPending || $isCancelled ? 'Order' : 'Invoice' }} {{ \App\Helpers\InvoiceNumber::for($invoice) }}</h5>
+                    @if($isPending)
+                        <span class="badge bg-warning text-dark">Pending delivery</span>
+                    @elseif($isCancelled)
+                        <span class="badge bg-secondary">Cancelled</span>
+                    @elseif($isCredit && $owed > 0)
                         <span class="badge bg-danger">Still owe Tsh {{ $money($owed) }}</span>
                     @else
                         <span class="badge bg-success">Paid</span>
@@ -64,7 +79,17 @@
             <div class="card shadow-sm mb-4">
                 <div class="card-body">
                     <dl class="row mb-0 small">
-                        <dt class="col-5 text-muted fw-normal">Date</dt><dd class="col-7">{{ \Carbon\Carbon::parse($invoice->purchased_at)->format('d M Y, H:i') }}</dd>
+                        <dt class="col-5 text-muted fw-normal">Status</dt><dd class="col-7">{{ ucfirst($invoice->status) }}</dd>
+                        @if($invoice->ordered_at)
+                            <dt class="col-5 text-muted fw-normal">Ordered</dt><dd class="col-7">{{ $invoice->ordered_at->format('d M Y, H:i') }}</dd>
+                        @endif
+                        @if($invoice->status === \App\Models\PurchaseInvoice::RECEIVED)
+                            <dt class="col-5 text-muted fw-normal">Received</dt>
+                            <dd class="col-7">
+                                {{ \Carbon\Carbon::parse($invoice->received_at ?? $invoice->purchased_at)->format('d M Y, H:i') }}
+                                @if($invoice->receivedBy)<div class="text-muted">by {{ $invoice->receivedBy->name ?? '' }}</div>@endif
+                            </dd>
+                        @endif
                         <dt class="col-5 text-muted fw-normal">Shop / Store</dt><dd class="col-7">{{ $invoice->shop->name ?? 'N/A' }}</dd>
                         <dt class="col-5 text-muted fw-normal">Supplier</dt>
                         <dd class="col-7">
@@ -80,7 +105,9 @@
                 <div class="card-header bg-white fw-semibold">Payments to supplier</div>
                 <div class="card-body">
                     {{-- Cash purchases are paid at the time of purchase (no separate payment record). --}}
-                    @if(!$isCredit && (float) $invoice->amount_paid > 0)
+                    @if($isPending || $isCancelled)
+                        <p class="text-muted small mb-0">Payment is recorded when the order is received.</p>
+                    @elseif(!$isCredit && (float) $invoice->amount_paid > 0)
                         <div class="d-flex justify-content-between small {{ $invoice->payments->isNotEmpty() ? 'border-bottom pb-2 mb-2' : '' }}">
                             <span class="text-muted">{{ \Carbon\Carbon::parse($invoice->purchased_at)->format('d M Y') }} · Cash at purchase</span>
                             <span class="text-success text-nowrap">{{ $money($invoice->amount_paid) }}</span>
@@ -92,12 +119,12 @@
                             <span class="text-success text-nowrap">{{ $money($payment->amount) }}</span>
                         </div>
                     @empty
-                        @if($isCredit || (float) $invoice->amount_paid <= 0)
+                        @if(!$isPending && !$isCancelled && ($isCredit || (float) $invoice->amount_paid <= 0))
                             <p class="text-muted small mb-0">No payments recorded yet.</p>
                         @endif
                     @endforelse
 
-                    @if($isCredit && $owed > 0)
+                    @if($isCredit && $owed > 0 && !$isPending && !$isCancelled)
                         <form method="POST" action="{{ route('purchases.deposit') }}" class="d-flex gap-2 mt-3 pt-3 border-top no-print">
                             @csrf
                             <input type="hidden" name="purchase_invoice_id" value="{{ $invoice->id }}">
