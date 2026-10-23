@@ -107,7 +107,7 @@ class Shops extends Model
             'purchase_invoice_id', // Foreign key on PurchaseItem
             'id',                  // Local key on Shops
             'id'                   // Local key on PurchaseInvoice
-        );
+        )->where('purchase_invoices.status', PurchaseInvoice::RECEIVED); // Pending orders aren't purchases yet
     }
 
     // Credit payments through invoices

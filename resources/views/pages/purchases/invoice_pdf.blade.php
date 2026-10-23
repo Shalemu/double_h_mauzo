@@ -3,6 +3,11 @@
     $number = \App\Helpers\InvoiceNumber::for($invoice);
     $owed = (float) $invoice->remaining_amount;
     $isCredit = ($invoice->payment_type ?? null) === 'credit';
+    // A pending order shows what was ordered; a received purchase shows what arrived (and what was ordered when they differ).
+    $isOrder = $invoice->status !== \App\Models\PurchaseInvoice::RECEIVED;
+    $qty = fn ($item) => $isOrder ? (int) ($item->ordered_quantity ?? $item->quantity) : (int) $item->quantity;
+    $short = !$isOrder && $invoice->items->contains(fn ($item) => $item->ordered_quantity !== null && (int) $item->ordered_quantity !== (int) $item->quantity);
+    $docTitle = $isOrder ? 'Purchase Order' : 'Purchase Invoice';
     // $screen = shown in the browser (invoice page); otherwise rendered to PDF by DomPDF.
     $screen = $screen ?? false;
     $logoFile = public_path('assets/img/logo-pdf.png');
@@ -12,30 +17,8 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Purchase Invoice {{ $number }}</title>
-    <style>
-        @page { margin: 28px 32px; }
-        body { font-family: Helvetica, Arial, sans-serif; font-size: 11px; color: #222; }
-        @if($screen) body { margin: 0; padding: 28px 32px; background: #fff; } @endif
-        .brand { color: #831619; }
-        .head td { vertical-align: top; }
-        .logo { width: 70px; }
-        h1 { font-size: 20px; margin: 0; color: #831619; letter-spacing: 1px; }
-        .muted { color: #6b7280; }
-        .box { border: 1px solid #e5e7eb; border-radius: 6px; padding: 8px 10px; }
-        .label { font-size: 9px; text-transform: uppercase; color: #6b7280; letter-spacing: .5px; }
-        table { width: 100%; border-collapse: collapse; }
-        .items th { background: #831619; color: #fff; padding: 6px; font-size: 10px; text-align: left; }
-        .items td { border-bottom: 1px solid #eee; padding: 6px; }
-        .items tr:nth-child(even) td { background: #fafafa; }
-        .num { text-align: right; }
-        .totals td { padding: 4px 6px; }
-        .totals .grand td { font-size: 13px; font-weight: bold; border-top: 2px solid #831619; }
-        .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 9px; font-weight: bold; }
-        .paid { background: #dcfce7; color: #166534; }
-        .due { background: #fee2e2; color: #991b1b; }
-        .footer { margin-top: 30px; font-size: 9px; color: #9ca3af; text-align: center; }
-    </style>
+    <title>{{ $docTitle }} {{ $number }}</title>
+    @include('pages.purchases._invoice_pdf_styles')
 </head>
 <body>
     <table class="head">
@@ -48,11 +31,15 @@
                 <div class="muted">{{ $invoice->shop->name ?? '' }}{{ ($invoice->shop->location ?? null) ? ' · ' . $invoice->shop->location : '' }}</div>
             </td>
             <td style="text-align:right">
-                <h1>PURCHASE INVOICE</h1>
+                <h1>{{ strtoupper($docTitle) }}</h1>
                 <div style="font-size:13px; margin-top:4px;"><strong>{{ $number }}</strong></div>
                 <div class="muted">{{ \Carbon\Carbon::parse($invoice->purchased_at)->format('d M Y, H:i') }}</div>
                 <div style="margin-top:4px;">
-                    @if($isCredit && $owed > 0)
+                    @if($invoice->status === \App\Models\PurchaseInvoice::CANCELLED)
+                        <span class="badge due">CANCELLED</span>
+                    @elseif($isOrder)
+                        <span class="badge due">AWAITING DELIVERY</span>
+                    @elseif($isCredit && $owed > 0)
                         <span class="badge due">CREDIT · OWED Tsh {{ $money($owed) }}</span>
                     @else
                         <span class="badge paid">PAID</span>
@@ -75,7 +62,7 @@
             </td>
             <td style="width:50%; padding-left:6px;">
                 <div class="box">
-                    <div class="label">Delivered to</div>
+                    <div class="label">{{ $isOrder ? 'Deliver to' : 'Delivered to' }}</div>
                     <div style="font-weight:bold; font-size:12px;">{{ $invoice->shop->name ?? '—' }}</div>
                     <div class="muted">{{ $invoice->shop->location ?? '' }}</div>
                     <div>Payment: {{ $isCredit ? 'Credit' : 'Cash' }}</div>
@@ -90,7 +77,8 @@
                 <th style="width:24px">#</th>
                 <th>Product</th>
                 <th style="width:60px">Unit</th>
-                <th class="num" style="width:60px">Qty</th>
+                @if($short)<th class="num" style="width:60px">Ordered</th>@endif
+                <th class="num" style="width:60px">{{ $short ? 'Received' : 'Qty' }}</th>
                 <th class="num" style="width:95px">Unit price (Tsh)</th>
                 <th class="num" style="width:105px">Amount (Tsh)</th>
             </tr>
@@ -101,9 +89,10 @@
                     <td>{{ $loop->iteration }}</td>
                     <td>{{ $item->product->name ?? 'Deleted product' }}</td>
                     <td>{{ $item->product->unit->short_name ?? '—' }}</td>
-                    <td class="num">{{ number_format($item->quantity) }}</td>
+                    @if($short)<td class="num">{{ number_format($item->ordered_quantity) }}</td>@endif
+                    <td class="num">{{ number_format($qty($item)) }}</td>
                     <td class="num">{{ $money($item->purchase_price) }}</td>
-                    <td class="num">{{ $money($item->quantity * $item->purchase_price) }}</td>
+                    <td class="num">{{ $money($qty($item) * $item->purchase_price) }}</td>
                 </tr>
             @endforeach
         </tbody>
@@ -114,10 +103,14 @@
             <td style="width:55%"></td>
             <td>
                 <table class="totals">
-                    <tr><td class="muted">Items</td><td class="num">{{ number_format($invoice->items->sum('quantity')) }}</td></tr>
+                    <tr><td class="muted">Items</td><td class="num">{{ number_format($invoice->items->sum($qty)) }}</td></tr>
+                    @if($isOrder)
+                    <tr class="grand"><td>Order value</td><td class="num">Tsh {{ $money($invoice->items->sum(fn ($item) => $qty($item) * $item->purchase_price)) }}</td></tr>
+                    @else
                     <tr class="grand"><td>Total</td><td class="num">Tsh {{ $money($invoice->total_amount) }}</td></tr>
                     <tr><td class="muted">Paid</td><td class="num">{{ $money($invoice->amount_paid) }}</td></tr>
                     <tr><td class="{{ $owed > 0 ? 'brand' : 'muted' }}">Balance owed</td><td class="num {{ $owed > 0 ? 'brand' : '' }}">{{ $money($owed) }}</td></tr>
+                    @endif
                 </table>
             </td>
         </tr>

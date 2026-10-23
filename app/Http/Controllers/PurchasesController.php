@@ -11,7 +11,9 @@ use App\Models\Units;
 use App\Models\PurchaseInvoice;
 use App\Actions\Purchases\EmailInvoiceToSupplier;
 use App\Actions\Purchases\PaySupplierCredit;
-use App\Actions\Purchases\RecordPurchase;
+use App\Actions\Purchases\PlacePurchaseOrder;
+use App\Actions\Purchases\ReceivePurchaseOrder;
+use App\Enums\PaymentType;
 use App\DTO\Purchases\PurchaseData;
 use App\Exports\PurchaseInvoicePdf;
 use Illuminate\Support\Facades\DB;
@@ -78,9 +80,10 @@ class PurchasesController extends Controller
     }
 
     /**
-     * Store a purchase for existing products
+     * Place a purchase order for existing products. Stock comes in when the
+     * order is received.
      */
-    public function store(Request $request, RecordPurchase $recordPurchase, EmailInvoiceToSupplier $emailInvoice)
+    public function store(Request $request, PlacePurchaseOrder $placeOrder, EmailInvoiceToSupplier $emailInvoice)
     {
         $validated = $request->validate([
             'shop_id' => 'required|exists:shops,id',
@@ -96,13 +99,13 @@ class PurchasesController extends Controller
             return back()->with('error', 'Add at least one item.');
         }
 
-        $invoice = $recordPurchase->execute($data);
+        $invoice = $placeOrder->execute($data);
 
-        // Email is a bonus — the purchase is already saved even if mail fails.
+        // Email is a bonus — the order is already saved even if mail fails.
         [$emailed, $emailNote] = $emailInvoice->execute($invoice);
 
         return back()
-            ->with('success', 'Purchase invoice created successfully. ' . $emailNote)
+            ->with('success', 'Purchase order placed. Receive it when the goods arrive to add them to stock. ' . $emailNote)
             ->with('purchase_invoice_id', $invoice->id)
             ->with('purchase_invoice_emailed', $emailed)
             ->with('purchase_invoice_email_note', $emailNote);
@@ -139,9 +142,9 @@ class PurchasesController extends Controller
     }
 
     /**
-     * Store a new product and purchase it
+     * Create a new product and place a purchase order for it
      */
-    public function storeNewProduct(Request $request, RecordPurchase $recordPurchase)
+    public function storeNewProduct(Request $request, PlacePurchaseOrder $placeOrder)
     {
         $request->validate([
             'shop_id' => 'required|exists:shops,id',
@@ -175,20 +178,26 @@ class PurchasesController extends Controller
                 'admin_id' => auth()->id(),
             ]);
 
-            // Same purchase logic as an ordinary purchase (stock, cash paid in full, credit deposit).
-            $invoice = $recordPurchase->execute(PurchaseData::fromArray([
+            // Same as an ordinary purchase: a pending order, stocked when received.
+            $invoice = $placeOrder->execute(PurchaseData::fromArray([
                 'shop_id' => $request->shop_id,
                 'supplier_id' => $request->supplier_id,
                 'payment_type' => $request->payment_type,
                 'amount_paid' => $request->amount_paid,
-                'items' => [['product_id' => $product->id, 'quantity' => $request->quantity, 'price' => $request->purchase_price]],
+                'items' => [[
+                    'product_id' => $product->id,
+                    'quantity' => $request->quantity,
+                    'price' => $request->purchase_price,
+                    'selling_price' => $request->selling_price,
+                    'wholesale_price' => $request->wholesale_price,
+                ]],
             ]));
 
             return [$invoice, $product->fresh()];
         });
 
         return response()->json([
-            'success' => 'New product purchased successfully',
+            'success' => 'New product created and purchase order placed. Receive it when the goods arrive.',
             'invoice_id' => $invoice->id,
             'product_id' => $product->id,
             'product_name' => $product->name,
@@ -226,7 +235,77 @@ class PurchasesController extends Controller
             ])
             ->sortKeysDesc();
 
-        return view('pages.purchases.page', compact('shop', 'purchases', 'purchasesByDate'));
+        // Orders waiting for delivery — not in stock or totals yet.
+        $pendingOrders = PurchaseInvoice::pending()
+            ->with('supplier')
+            ->withCount('items')
+            ->withSum('items as ordered_units', 'ordered_quantity')
+            ->where('shop_id', $shop->id)
+            ->oldest('ordered_at')
+            ->get();
+
+        return view('pages.purchases.page', compact('shop', 'purchases', 'purchasesByDate', 'pendingOrders'));
+    }
+
+    /**
+     * Receiving form for a pending order: each line as ordered, to confirm
+     * the quantity that arrived and the actual prices.
+     */
+    public function receive(PurchaseInvoice $invoice)
+    {
+        if (!$invoice->isPending()) {
+            return redirect()->route('purchases.history', $invoice->id)->with('error', 'This order has already been ' . $invoice->status . '.');
+        }
+
+        $invoice->load('shop', 'supplier', 'items.product.unit');
+
+        return view('pages.purchases.receive', compact('invoice'));
+    }
+
+    /**
+     * Confirm a delivery: stock goes into the order's shop/store and the
+     * purchase is recorded at the received quantities and prices.
+     */
+    public function confirmReceive(Request $request, PurchaseInvoice $invoice, ReceivePurchaseOrder $receiveOrder)
+    {
+        $request->validate([
+            'payment_type' => 'required|in:cash,credit',
+            'amount_paid' => 'nullable|numeric|min:0',
+            'lines' => 'required|array',
+            'lines.*.quantity' => 'required|integer|min:0',
+            'lines.*.purchase_price' => 'required|numeric|min:0',
+            'lines.*.selling_price' => 'nullable|numeric|min:0',
+            'lines.*.wholesale_price' => 'nullable|numeric|min:0',
+        ]);
+
+        try {
+            $receiveOrder->execute(
+                $invoice,
+                $request->input('lines'),
+                PaymentType::from($request->payment_type),
+                (float) $request->input('amount_paid', 0),
+                auth()->id(),
+            );
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return back()->withInput()->with('error', $e->validator->errors()->first());
+        }
+
+        return redirect()->route('purchases.history', $invoice->id)
+            ->with('success', 'Order received. Stock has been added to ' . ($invoice->shop->name ?? 'the shop') . '.');
+    }
+
+    /**
+     * Cancel an order that will not be delivered. Nothing was stocked or paid.
+     */
+    public function cancel(PurchaseInvoice $invoice)
+    {
+        if (!$invoice->isPending()) {
+            return back()->with('error', 'Only pending orders can be cancelled.');
+        }
+
+        $invoice->update(['status' => PurchaseInvoice::CANCELLED]);
+
+        return back()->with('success', 'Purchase order cancelled.');
     }
 
     /**
@@ -276,13 +355,13 @@ class PurchasesController extends Controller
     {
         // Loaded into the Credit page's modal by AJAX = bare fragment.
         if (request()->ajax()) {
-            $invoice = PurchaseInvoice::with('payments')->findOrFail($invoiceId);
+            $invoice = PurchaseInvoice::withOrders()->with('payments')->findOrFail($invoiceId);
 
             return view('pages.purchases.history', compact('invoice'));
         }
 
         // Opened directly = full invoice page in the app layout.
-        $invoice = PurchaseInvoice::with('shop', 'supplier', 'items.product', 'payments')->findOrFail($invoiceId);
+        $invoice = PurchaseInvoice::withOrders()->with('shop', 'supplier', 'items.product', 'payments', 'receivedBy')->findOrFail($invoiceId);
         $returns = \App\Models\PurchaseReturn::with('product', 'processedBy')
             ->whereIn('purchase_item_id', $invoice->items->pluck('id'))
             ->latest()
@@ -297,7 +376,7 @@ class PurchasesController extends Controller
      */
     public function print($invoiceId)
     {
-        $invoice = PurchaseInvoice::with('items.product', 'supplier', 'shop')->findOrFail($invoiceId);
+        $invoice = PurchaseInvoice::withOrders()->with('items.product', 'supplier', 'shop')->findOrFail($invoiceId);
 
         return view('pages.purchases.print', compact('invoice'));
     }

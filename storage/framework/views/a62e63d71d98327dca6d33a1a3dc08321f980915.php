@@ -8,8 +8,6 @@
 ?>
 <style>
 .assign-panel { border:1px solid #f0dcdd; border-radius:.8rem; background:#fdf9f9; padding:1rem 1.15rem; }
-.assign-results { position:absolute; top:calc(100% + 4px); left:0; right:0; z-index:1060; max-height:300px; overflow:auto; display:none; }
-.assign-results.is-open { display:block; }
 .assign-stat { border:1px solid #e5e7eb; border-radius:.5rem; background:#fff; padding:.4rem .65rem; height:100%; }
 .assign-stat span { display:block; font-size:.72rem; color:#6b7280; }
 .assign-stat strong { font-size:.95rem; }
@@ -70,10 +68,21 @@
                                 <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                             </select>
                         </div>
-                        <div class="col-md-8 position-relative">
-                            <label class="form-label small" for="assignSearch">Product <span class="text-danger">*</span></label>
-                            <input type="search" id="assignSearch" class="form-control" autocomplete="off" placeholder="Type product name or scan barcode...">
-                            <div class="list-group shadow assign-results" id="assignResults"></div>
+                        <div class="col-md-3">
+                            <label class="form-label small" for="assignShop">Shop / Store <span class="text-danger">*</span></label>
+                            <select id="assignShop" class="form-select">
+                                <option value="">-- select shop / store --</option>
+                                <?php $__currentLoopData = $shops; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $shop): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                    <option value="<?php echo e($shop->id); ?>" <?php echo e((string) ($shopId ?: session('active_shop_id')) === (string) $shop->id ? 'selected' : ''); ?>><?php echo e($shop->name); ?></option>
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                            </select>
+                        </div>
+                        <div class="col-md-5">
+                            <label class="form-label small" for="assignProduct">Product <span class="text-danger">*</span></label>
+                            <select id="assignProduct" class="form-select" disabled>
+                                <option value="">Select a shop first</option>
+                            </select>
+                            <input type="search" id="assignSearch" class="form-control form-control-sm mt-1" autocomplete="off" placeholder="Filter the list or scan barcode..." aria-label="Filter products">
                         </div>
                     </div>
 
@@ -175,7 +184,7 @@
                                         <?php if($canAssign): ?>
                                             <button type="button" class="btn btn-sm btn-outline-primary js-edit-assignment" aria-label="Change price"
                                                     data-supplier="<?php echo e($row->supplier_id); ?>"
-                                                    data-product="<?php echo e(json_encode(['id' => $row->product_id, 'name' => $row->product, 'shop' => $row->shop, 'unit' => $row->unit, 'quantity' => (int) $row->in_stock, 'purchase_price' => $row->current_cost, 'selling_price' => $row->selling_price, 'wholesale_price' => $row->wholesale_price])); ?>"
+                                                    data-product="<?php echo e(json_encode(['id' => $row->product_id, 'name' => $row->product, 'shop_id' => $row->shop_id, 'shop' => $row->shop, 'unit' => $row->unit, 'quantity' => (int) $row->in_stock, 'purchase_price' => $row->current_cost, 'selling_price' => $row->selling_price, 'wholesale_price' => $row->wholesale_price])); ?>"
                                                     data-price="<?php echo e($row->supplier_price); ?>"><i class="bi bi-pencil"></i></button>
                                         <?php endif; ?>
                                         <?php if($canPrice && abs($diff) >= 0.01): ?>
@@ -251,124 +260,7 @@
 </div>
 
 <?php if($canAssign): ?>
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    const lookupUrl = <?php echo json_encode(route('procurement.supplierProducts.lookup'), 15, 512) ?>;
-    const priceManagerUrl = <?php echo json_encode(route('procurement.prices'), 15, 512) ?>;
-    const panel = document.getElementById('assignPanel');
-    const toggle = document.getElementById('toggleAssign');
-    const supplier = document.getElementById('assignSupplier');
-    const search = document.getElementById('assignSearch');
-    const results = document.getElementById('assignResults');
-    const productId = document.getElementById('assignProductId');
-    const details = document.getElementById('assignDetails');
-    const newPrice = document.getElementById('assignNewPrice');
-    const canPrice = <?php echo json_encode($canPrice, 15, 512) ?>;
-    const pmLink = document.getElementById('assignPriceManager');
-    const submit = document.getElementById('assignSubmit');
-    const summary = document.getElementById('assignSummary');
-    const money = n => (n === null || n === undefined || n === '') ? '—' : Number(n).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    let selected = null;
-    let timer = null;
-
-    function open(show) {
-        panel.hidden = !show;
-        toggle.setAttribute('aria-expanded', show ? 'true' : 'false');
-        if (show) (supplier.value ? search : supplier).focus();
-    }
-
-    function sync() {
-        details.hidden = !selected;
-        submit.disabled = !(selected && supplier.value);
-        const hasNew = newPrice.value !== '';
-        if (!selected) { summary.textContent = ''; return; }
-        const supplierName = supplier.value ? supplier.options[supplier.selectedIndex].text : 'the supplier';
-        const price = hasNew ? Number(newPrice.value) : Number(selected.purchase_price || 0);
-        summary.textContent = selected.name + ' will be linked to ' + supplierName + ' at Tsh ' + money(price)
-            + (canPrice && price !== Number(selected.purchase_price || 0) ? ', and its purchasing price changes from ' + money(selected.purchase_price) + ' to ' + money(price) + '.' : '.');
-    }
-
-    function pick(p) {
-        selected = p;
-        productId.value = p ? p.id : '';
-        results.classList.remove('is-open');
-        if (p) {
-            search.value = p.name;
-            document.getElementById('aShop').textContent = p.shop || '—';
-            document.getElementById('aUnit').textContent = p.unit || '—';
-            document.getElementById('aStock').textContent = Number(p.quantity || 0).toLocaleString();
-            document.getElementById('aCost').textContent = 'Tsh ' + money(p.purchase_price);
-            document.getElementById('aSell').textContent = money(p.selling_price) + ' / ' + money(p.wholesale_price);
-            if (pmLink) pmLink.href = priceManagerUrl + '?' + new URLSearchParams({ q: p.name });
-            newPrice.focus();
-        }
-        sync();
-    }
-
-    toggle.addEventListener('click', () => open(panel.hidden));
-    document.getElementById('closeAssign').addEventListener('click', () => open(false));
-    [supplier, newPrice].forEach(el => el.addEventListener('input', sync));
-
-    search.addEventListener('input', function () {
-        if (selected) pick(null);
-        clearTimeout(timer);
-        const term = search.value.trim();
-        if (term.length < 2) { results.classList.remove('is-open'); return; }
-        timer = setTimeout(function () {
-            fetch(lookupUrl + '?' + new URLSearchParams({ q: term }), { headers: { 'Accept': 'application/json' } })
-                .then(r => r.json())
-                .then(function (list) {
-                    results.replaceChildren();
-                    if (!list.length) {
-                        const empty = document.createElement('div');
-                        empty.className = 'list-group-item small text-muted';
-                        empty.textContent = 'No products match.';
-                        results.appendChild(empty);
-                    }
-                    list.forEach(function (p) {
-                        const btn = document.createElement('button');
-                        btn.type = 'button';
-                        btn.className = 'list-group-item list-group-item-action d-flex justify-content-between align-items-center gap-2';
-                        const left = document.createElement('div');
-                        const name = document.createElement('div');
-                        name.textContent = p.name;
-                        const meta = document.createElement('small');
-                        meta.className = 'text-muted';
-                        meta.textContent = (p.shop || '—') + ' · ' + (p.unit || '—') + ' · ' + Number(p.quantity || 0).toLocaleString() + ' in stock';
-                        left.append(name, meta);
-                        const cost = document.createElement('span');
-                        cost.className = 'badge bg-light text-dark border';
-                        cost.textContent = 'Tsh ' + money(p.purchase_price);
-                        btn.append(left, cost);
-                        btn.addEventListener('click', () => pick(p));
-                        results.appendChild(btn);
-                    });
-                    results.classList.add('is-open');
-                });
-        }, 250);
-    });
-
-    document.addEventListener('click', function (e) {
-        if (!search.parentElement.contains(e.target)) results.classList.remove('is-open');
-    });
-
-    // Edit = reopen the panel for that supplier/product with its supplier price as the new price.
-    document.querySelectorAll('.js-edit-assignment').forEach(function (btn) {
-        btn.addEventListener('click', function () {
-            supplier.value = btn.dataset.supplier;
-            pick(JSON.parse(btn.dataset.product));
-            newPrice.value = btn.dataset.price;
-            sync();
-            open(true);
-            newPrice.focus();
-            newPrice.select();
-            panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        });
-    });
-
-    sync();
-});
-</script>
+<?php echo $__env->make('pages.procurement._supplier_products_scripts', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
 <?php endif; ?>
 <?php $__env->stopSection(); ?>
 

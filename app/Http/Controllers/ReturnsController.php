@@ -179,6 +179,8 @@ class ReturnsController extends Controller
      */
     public function createPurchaseReturn(PurchaseInvoice $invoice)
     {
+        abort_unless($invoice->status === PurchaseInvoice::RECEIVED, 404); // Orders not yet received have nothing to return.
+
         $invoice->load('shop', 'supplier', 'items.product');
         $returned = PurchaseReturn::whereIn('purchase_item_id', $invoice->items->pluck('id'))
             ->groupBy('purchase_item_id')->selectRaw('purchase_item_id, sum(quantity) as qty')->pluck('qty', 'purchase_item_id');
@@ -194,6 +196,8 @@ class ReturnsController extends Controller
      */
     public function storePurchaseReturn(Request $request, PurchaseInvoice $invoice)
     {
+        abort_unless($invoice->status === PurchaseInvoice::RECEIVED, 404);
+
         $data = $request->validate([
             'reason'           => 'required|string|max:100',
             'note'             => 'nullable|string|max:255',
@@ -297,7 +301,7 @@ class ReturnsController extends Controller
         }
 
         return DB::table('purchase_items')
-            ->join('purchase_invoices', 'purchase_invoices.id', '=', 'purchase_items.purchase_invoice_id')
+            ->join('purchase_invoices', fn ($j) => $j->on('purchase_invoices.id', '=', 'purchase_items.purchase_invoice_id')->where('purchase_invoices.status', 'received'))
             ->join('products', 'products.id', '=', 'purchase_items.product_id')
             ->leftJoin('suppliers', 'suppliers.id', '=', 'purchase_invoices.supplier_id')
             ->leftJoin('shops', 'shops.id', '=', 'purchase_invoices.shop_id')

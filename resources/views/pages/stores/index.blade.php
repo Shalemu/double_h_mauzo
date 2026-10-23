@@ -4,38 +4,7 @@
 
 @section('content')
 
-<style>
-.active-store-banner {
-    background:linear-gradient(110deg, #0f766e 0%, #0e7490 100%);
-    border:0;
-    color:#fff;
-    padding:16px 18px;
-    box-shadow:0 6px 16px rgba(15,118,110,.16);
-}
-.active-store-banner strong,
-.active-store-banner i { color:#fff; }
-.active-store-banner .form-select {
-    min-width:240px !important;
-    min-height:44px;
-    border-radius:10px;
-    font-weight:600;
-}
-.active-store-banner .store-view-all-btn {
-    min-height:44px;
-    border-radius:10px;
-    border:1px solid #fff;
-    background:#fff;
-    color:#0f766e;
-    font-weight:600;
-    white-space:nowrap;
-}
-@media (max-width: 767px) {
-    .active-store-banner { align-items:stretch !important; }
-    .active-store-banner > div,
-    .active-store-banner form,
-    .active-store-banner .form-select { width:100%; }
-}
-</style>
+@include('pages.stores._index_styles')
 
 <div class="container-fluid py-4">
     <div class="row">
@@ -277,21 +246,5 @@
     </div>
 </div>
 
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    const addForm = document.getElementById('addStoreForm');
-    document.getElementById('toggleAddStore').addEventListener('click', function () {
-        addForm.style.display = addForm.style.display === 'none' ? 'block' : 'none';
-    });
-
-    document.getElementById('storeSearch').addEventListener('keyup', function () {
-        const filter = this.value.toUpperCase();
-        document.querySelectorAll('.store-table tbody tr').forEach(tr => {
-            if (tr.classList.contains('table-success')) return;
-            const nameCell = tr.querySelector('td:first-child');
-            tr.style.display = nameCell && nameCell.textContent.toUpperCase().includes(filter) ? '' : 'none';
-        });
-    });
-});
-</script>
+@include('pages.stores._index_scripts')
 @endsection

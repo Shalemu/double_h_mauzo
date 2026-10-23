@@ -22,7 +22,9 @@ class PurchaseInvoiceMail extends Mailable
     {
         $number = \App\Helpers\InvoiceNumber::for($this->invoice);
 
-        return $this->subject("Purchase Invoice {$number} — Double H Cosmetics")
+        $kind = $this->invoice->isPending() ? 'Purchase Order' : 'Purchase Invoice';
+
+        return $this->subject("{$kind} {$number} — Double H Cosmetics")
             ->view('emails.purchase_invoice', ['invoice' => $this->invoice, 'number' => $number])
             ->attachData($this->pdf, $this->filename, ['mime' => 'application/pdf']);
     }

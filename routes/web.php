@@ -387,6 +387,9 @@ Route::prefix('purchases')->name('purchases.')->group(function () {
     Route::post('/', [PurchasesController::class, 'store'])->name('store');
     Route::get('/shops/{shop}/purchases/{date}', [PurchasesController::class, 'detail'])->name('detail');
     Route::get('/history/{invoice}', [PurchasesController::class, 'history'])->name('history');
+    Route::get('/orders/{invoice}/receive', [PurchasesController::class, 'receive'])->name('receive');
+    Route::post('/orders/{invoice}/receive', [PurchasesController::class, 'confirmReceive'])->name('confirm_receive');
+    Route::post('/orders/{invoice}/cancel', [PurchasesController::class, 'cancel'])->name('cancel');
     Route::get('/print/{invoice}', [PurchasesController::class, 'print'])->name('print');
     Route::get('/invoice/{invoice}/pdf', [PurchasesController::class, 'invoicePdf'])->name('invoice_pdf');
     Route::get('/invoice/{invoice}/preview', [PurchasesController::class, 'invoicePreview'])->name('invoice_preview');

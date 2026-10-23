@@ -8,56 +8,7 @@ use Carbon\Carbon;
 <div class="container-fluid mt-4">
     <div class="container-fluid align-items-center px-0">
 
-        <style>
-            .credit-stat-card {
-                border: none;
-                border-radius: 1rem;
-                overflow: hidden;
-                transition: transform .18s ease, box-shadow .18s ease;
-                box-shadow: 0 .25rem .75rem rgba(0,0,0,.06);
-            }
-            .credit-stat-card:hover {
-                transform: translateY(-4px);
-                box-shadow: 0 .75rem 1.5rem rgba(0,0,0,.1);
-            }
-            .credit-stat-icon {
-                width: 52px;
-                height: 52px;
-                border-radius: 14px;
-                flex: 0 0 52px;
-            }
-            .credit-stat-label {
-                font-size: .72rem;
-                letter-spacing: .04em;
-            }
-            .credit-stat-value {
-                font-size: 1.3rem;
-            }
-            .credit-table-card {
-                border: none;
-                border-radius: 1rem;
-                overflow: hidden;
-                box-shadow: 0 .25rem .75rem rgba(0,0,0,.06);
-            }
-            .credit-table-card thead th {
-                font-size: .75rem;
-                letter-spacing: .04em;
-                text-transform: uppercase;
-                color: #6c757d;
-                border-bottom-width: 1px;
-            }
-            .credit-table-card tbody tr:hover {
-                background-color: #f8f9fb;
-            }
-            .credit-date-row td {
-                background: #eef1f6;
-                font-weight: 600;
-                color: #495057;
-            }
-            .remaining-credit-badge {
-                font-weight: 600;
-            }
-        </style>
+        @include('pages.credit._index_styles')
 
         <!-- HEADER -->
         <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
@@ -258,38 +209,4 @@ use Carbon\Carbon;
     </div>
 </div>
 
-<script>
-document.getElementById('supplierSelect').addEventListener('change', function () {
-    let supplierId = this.value;
-    let options = document.querySelectorAll('#purchaseSelect option');
-
-    options.forEach(option => {
-        if (!option.value) return; // skip default
-
-        if (!supplierId || option.dataset.supplier === supplierId) {
-            option.style.display = 'block';
-        } else {
-            option.style.display = 'none';
-        }
-    });
-
-    // reset selected value
-    document.getElementById('purchaseSelect').value = '';
-});
-
-// credit history
-document.addEventListener('DOMContentLoaded', function() {
-    document.querySelectorAll('.view-history').forEach(btn => {
-        btn.addEventListener('click', function() {
-            fetch(this.dataset.url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
-                .then(res => res.text())
-                .then(html => {
-                    const modal = document.getElementById('historyModal');
-                    modal.querySelector('.modal-body').innerHTML = html;
-                    new bootstrap.Modal(modal).show();
-                });
-        });
-    });
-});
-
-</script>
+@include('pages.credit._index_scripts')

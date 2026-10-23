@@ -362,13 +362,15 @@ public function update(Request $request, $id)
         $import = new ProductsImport($targetShopId);
         Excel::import($import, $request->file('excel_file'));
 
+        $summary = "{$import->created} product(s) added, {$import->updated} existing product(s) updated.";
+
         if (!empty($import->errors)) {
             return redirect()->back()
                 ->with('import_errors', $import->errors)
-                ->with('warning', 'Import finished with ' . count($import->errors) . ' issue(s). See details below.');
+                ->with('warning', 'Import finished: ' . $summary . ' ' . count($import->errors) . ' note(s) — see details below.');
         }
 
-        return redirect()->back()->with('success', 'Products imported successfully!');
+        return redirect()->back()->with('success', 'Import finished: ' . $summary);
     }
 
 
