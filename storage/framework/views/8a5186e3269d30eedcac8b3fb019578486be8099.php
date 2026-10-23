@@ -107,6 +107,10 @@
             </div>
             <div class="modal-body">
                 <p class="text-muted">You can <a href="<?php echo e(route('products.download.template')); ?>">download the sample Excel format</a> to fill in product data.</p>
+                <p class="text-muted small mb-0">
+                    <i class="bi bi-info-circle"></i> A product whose barcode (or name) is already in the shop is <strong>updated</strong>, not added again,
+                    so importing the same file twice is safe. Empty cells keep the product's current value; Quantity sets the stock count.
+                </p>
 
                 <?php if($globalMode): ?>
                 <div class="mb-3">
