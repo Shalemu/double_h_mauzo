@@ -360,7 +360,12 @@ public function update(Request $request, $id)
 
         $targetShopId = $activeShopId ?: ($request->shop_id ? (int) $request->shop_id : null);
         $import = new ProductsImport($targetShopId);
-        Excel::import($import, $request->file('excel_file'));
+        try {
+            Excel::import($import, $request->file('excel_file'));
+        } catch (\Maatwebsite\Excel\Exceptions\NoTypeDetectedException $e) {
+            return redirect()->back()->with('error', 'This file could not be read. It may be an Excel Binary Workbook (.xlsb) or a renamed file. '
+                . 'Open it in Excel, choose File > Save As > "Excel Workbook (*.xlsx)", then upload it again.');
+        }
 
         $summary = "{$import->created} product(s) added, {$import->updated} existing product(s) updated.";
 
