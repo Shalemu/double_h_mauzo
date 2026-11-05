@@ -234,7 +234,7 @@ class DashboardController extends Controller
         // first, out-of-stock pushed to the end) and let the cashier's
         // search box narrow down anything not in the initial set.
         $productsDisplayLimit = 500;
-        $productsQuery = Products::where('shop_id', $staff->shop_id);
+        $productsQuery = $this->posProductsQuery($staff->shop_id);
         $productsTotal = (clone $productsQuery)->count();
         $products = $productsQuery->orderByDesc('quantity')->orderBy('name')
             ->limit($productsDisplayLimit)->get();
@@ -269,7 +269,7 @@ class DashboardController extends Controller
         }
 
         $productsDisplayLimit = 500;
-        $productsQuery = Products::where('shop_id', $shop->id);
+        $productsQuery = $this->posProductsQuery($shop->id);
         $productsTotal = (clone $productsQuery)->count();
         $products = $productsQuery->orderByDesc('quantity')->orderBy('name')
             ->limit($productsDisplayLimit)->get();
@@ -279,5 +279,64 @@ class DashboardController extends Controller
         return view('pages.admin.pos', compact(
             'shop', 'shops', 'products', 'customers', 'productsTotal', 'productsDisplayLimit'
         ));
+    }
+
+    /**
+     * Products for a POS page, optionally narrowed by a search term (name,
+     * barcode or product ID) so items beyond the display limit can be found.
+     */
+    private function posProductsQuery($shopId, ?string $search = null)
+    {
+        $query = Products::where('shop_id', $shopId);
+        $search = trim((string) $search);
+
+        if ($search !== '') {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', '%' . $search . '%')
+                  ->orWhere('barcode', 'like', '%' . $search . '%');
+                if (ctype_digit($search)) {
+                    $q->orWhere('id', (int) $search);
+                }
+            });
+        }
+
+        return $query;
+    }
+
+    /**
+     * POS search (staff): matching product cards from the staff member's shop,
+     * for products beyond the ones loaded with the page.
+     */
+    public function staffPosSearch(Request $request)
+    {
+        $staff = Auth::guard('staff')->user();
+        abort_unless($staff, 403);
+
+        return $this->posSearchResults($staff->shop_id, $request->query('q'));
+    }
+
+    /**
+     * POS search (admin): matching product cards from the chosen shop.
+     */
+    public function adminPosSearch(Request $request)
+    {
+        abort_unless(Auth::user()->isAdminTier(), 403);
+        $shop = Shops::sellingShops()->findOrFail($request->query('shop'));
+
+        return $this->posSearchResults($shop->id, $request->query('q'));
+    }
+
+    private function posSearchResults($shopId, $search)
+    {
+        $search = trim((string) $search);
+        if (mb_strlen($search) < 2 && !ctype_digit($search)) {
+            return response('');
+        }
+
+        $products = $this->posProductsQuery($shopId, $search)
+            ->orderByDesc('quantity')->orderBy('name')
+            ->limit(100)->get();
+
+        return response()->view('components.pos_product_cards', compact('products'));
     }
 }

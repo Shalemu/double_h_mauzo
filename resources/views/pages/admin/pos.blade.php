@@ -37,6 +37,7 @@
     'checkoutUrl' => route('admin.pos.checkout', ['shop' => $shop->id]),
     'customerStoreUrl' => route('admin.pos.customers.store'),
     'customerStoreShopId' => $shop->id,
+    'productSearchUrl' => route('admin.pos.search', ['shop' => $shop->id]),
 ])
 
 @endsection
