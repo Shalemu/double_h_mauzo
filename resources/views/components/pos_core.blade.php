@@ -6,6 +6,7 @@
     $customers = $customers ?? collect();
     $productsTotal = $productsTotal ?? $products->count();
     $productsDisplayLimit = $productsDisplayLimit ?? null;
+    $productsTruncated = $productsTotal > $products->count();
 @endphp
 
 <div class="container-fluid mt-4">
@@ -38,49 +39,30 @@
         </label>
     </div><br>
 
-                        <input type="text" id="product-search" class="form-control form-control-sm mb-3" placeholder="Search by name, ID or barcode...">
+                        <input type="text" id="product-search" class="form-control form-control-sm mb-2" placeholder="Search by name, ID or barcode..."
+                               data-truncated="{{ $productsTruncated ? 1 : 0 }}">
+
+                        @if($productsTruncated)
+                            <div class="small text-muted mb-3">
+                                {{ number_format($products->count()) }} of {{ number_format($productsTotal) }} products listed.
+                                Press <strong>Enter</strong> in the search box to search all of them.
+                            </div>
+                        @else
+                            <div class="mb-3"></div>
+                        @endif
 
                         <h6 class="mb-3">Sales</h6>
 
+                        <div id="product-list" data-search-url="{{ $productSearchUrl ?? '' }}">
                         @if($products->count())
                             @foreach($products as $product)
-                                <div class="card mb-2 product-card"
-                                     data-id="{{ $product->id }}"
-                                     data-name="{{ strtolower($product->name) }}"
-                                     data-barcode="{{ $product->barcode }}"
-                                     data-retail-price="{{ $product->selling_price ?? 0 }}"
-                                     data-wholesale-price="{{ $product->wholesale_price ?? 0 }}"
-                                     data-price="{{ $product->selling_price ?? 0 }}"
-                                     data-stock="{{ $product->quantity ?? 0 }}">
-
-                                    <div class="card-body py-2">
-                                        <div class="row align-items-center gy-2">
-                                            <div class="col-3 col-sm-2">
-                                                <img src="{{ $product->image ? asset('storage/'.$product->image) : asset('assets/img/product-placeholder.png') }}" class="img-fluid rounded">
-                                            </div>
-                                            <div class="col-9 col-sm-4">
-                                                <strong>{{ $product->name }}</strong><br>
-                                                <small class="text-muted product-price-label">Tsh {{ number_format($product->selling_price ?? 0) }}</small><br>
-                                                <small class="text-muted">Stock: {{ $product->quantity ?? 0 }} | Barcode: {{ $product->barcode ?? 'N/A' }}</small>
-                                            </div>
-                                            <div class="col-12 col-sm-3 d-flex align-items-center">
-                                                <button class="btn btn-sm btn-outline-secondary qty-minus">−</button>
-                                                <input type="number" class="form-control form-control-sm mx-1 qty-input" value="0" min="0" style="width:60px;">
-                                                <button class="btn btn-sm btn-outline-secondary qty-plus">+</button>
-                                            </div>
-                                            <div class="col-12 col-sm-3">
-                                                <input type="number" class="form-control form-control-sm discount-input" placeholder="Discount" value="0">
-                                                <button class="btn btn-sm btn-primary mt-1 w-100 add-to-cart d-none">Add to Cart</button>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                </div>
-
+                                @include('components.pos_product_card', ['product' => $product])
                             @endforeach
                         @else
                             <div class="alert alert-warning text-center">No products available for this shop</div>
                         @endif
+                        </div>
+                        <div id="product-search-status" class="small text-muted mb-2 d-none"></div>
                              <div class="d-flex justify-content-end mt-2">
                                     <nav>
                                         <ul class="pagination pagination-sm mb-0" id="product-pagination">
@@ -400,14 +382,18 @@ $(document).ready(function() {
     }
 
     function updateProducts() {
-        const query = $('#product-search').val().toLowerCase();
+        const query = String($('#product-search').val() || '').trim().toLowerCase();
 
         // Filter products
+        // Read attributes as strings: jQuery's .data() turns numeric
+        // barcodes/names into numbers, and .includes() then throws.
         const filtered = $('.product-card').filter(function() {
-            const name = $(this).data('name') || '';
-            const barcode = $(this).data('barcode') || '';
+            if (!query) return true;
+            const name = String($(this).attr('data-name') || '').toLowerCase();
+            const barcode = String($(this).attr('data-barcode') || '').toLowerCase();
+            const id = String($(this).attr('data-id') || '');
 
-            return name.toLowerCase().includes(query) || barcode.includes(query);
+            return name.includes(query) || barcode.includes(query) || id === query;
         });
 
         $('.product-card').hide();
@@ -459,9 +445,67 @@ $(document).ready(function() {
     updateProducts();
 
     // Search/filter
-    $('#product-search, #sale-type-filter').on('keyup change', function() {
+    $('#product-search, #sale-type-filter').on('input change', function() {
         currentPage = 1;
         updateProducts();
+    });
+
+    // Only part of a big shop's products is on the page, so also ask the
+    // server (in the background — a reload would empty the cart) and add any
+    // matching cards that aren't loaded yet.
+    const searchInput = $('#product-search');
+    const productList = document.getElementById('product-list');
+    const searchUrl = productList ? productList.dataset.searchUrl : '';
+    const searchStatus = $('#product-search-status');
+    const needsServerSearch = searchUrl && searchInput.attr('data-truncated') === '1';
+    const searchedTerms = new Set();
+    let searchTimer = null;
+    let searchRequest = null;
+
+    function serverSearch(term) {
+        term = String(term || '').trim();
+        if (!needsServerSearch || term.length < 2 || searchedTerms.has(term.toLowerCase())) return;
+
+        if (searchRequest) searchRequest.abort();
+        searchStatus.removeClass('d-none').text('Searching all products…');
+
+        searchRequest = $.ajax({ url: searchUrl, data: { q: term }, dataType: 'html' })
+            .done(function(html) {
+                searchedTerms.add(term.toLowerCase());
+                const wrapper = document.createElement('div');
+                wrapper.innerHTML = html;
+                const added = [];
+                wrapper.querySelectorAll('.product-card').forEach(function(card) {
+                    if (productList.querySelector('.product-card[data-id="' + card.dataset.id + '"]')) return;
+                    productList.querySelector('.alert')?.remove();
+                    productList.appendChild(card);
+                    added.push(card);
+                });
+                if (added.length) {
+                    document.dispatchEvent(new CustomEvent('pos:cards-added', { detail: added }));
+                    applySaleTypePricing();
+                    updateProducts();
+                }
+                searchStatus.addClass('d-none').text('');
+            })
+            .fail(function(xhr, status) {
+                if (status === 'abort') return;
+                searchStatus.removeClass('d-none').text('Could not search all products. Check your connection and try again.');
+            })
+            .always(function() { searchRequest = null; });
+    }
+
+    searchInput.on('input', function() {
+        clearTimeout(searchTimer);
+        const term = $(this).val();
+        searchTimer = setTimeout(function() { serverSearch(term); }, 400);
+    });
+
+    searchInput.on('keydown', function(e) {
+        if (e.key !== 'Enter') return;
+        e.preventDefault();
+        clearTimeout(searchTimer);
+        serverSearch($(this).val());
     });
 
     // Switching between Retail / Wholesale updates the displayed price for every product
@@ -505,12 +549,6 @@ document.addEventListener('DOMContentLoaded', () => {
     let receivedEdited = false; // cashier typed their own "Received" amount
     const stockMap = {};
 
-    // Initialize stock map
-    document.querySelectorAll('.product-card').forEach(card => {
-        const id = card.dataset.id;
-        stockMap[id] = parseInt(card.dataset.stock);
-        card.dataset.stockOriginal = card.dataset.stock;
-    });
 
     // --- CART DISPLAY ---
     function updateCartDisplay() {
@@ -569,7 +607,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- ADD TO CART ---
-    document.querySelectorAll('.product-card').forEach(card => {
+    // Set up one product card (also used for cards added by the search).
+    function bindProductCard(card) {
+        if (card.dataset.bound) return;
+        card.dataset.bound = '1';
+        stockMap[card.dataset.id] = parseInt(card.dataset.stock) || 0;
+        card.dataset.stockOriginal = card.dataset.stock;
+
         const qtyInput = card.querySelector('.qty-input');
         const discountInput = card.querySelector('.discount-input');
         const addBtn = card.querySelector('.add-to-cart');
@@ -635,7 +679,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
             updateCartDisplay();
         });
-    });
+    }
+
+    document.querySelectorAll('.product-card').forEach(bindProductCard);
+    document.addEventListener('pos:cards-added', e => e.detail.forEach(bindProductCard));
 
     // --- CART ACTIONS (remove/plus/minus/qty-input) ---
     cartItemsEl?.addEventListener('click', e => {

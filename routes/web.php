@@ -100,6 +100,7 @@ Route::prefix('dashboard/staff')
 
         // Dashboard
         Route::get('/', [DashboardController::class, 'staff'])->name('dashboard');
+        Route::get('/pos/search', [DashboardController::class, 'staffPosSearch'])->name('pos.search');
 
         // Products
         Route::get('/products', [ProductController::class, 'index'])
@@ -207,6 +208,7 @@ Route::middleware(['web', 'auth', 'panel.permission'])->group(function () {
         ->name('admin.pos.')
         ->group(function () {
             Route::get('/', [DashboardController::class, 'adminPos'])->name('index');
+            Route::get('/search', [DashboardController::class, 'adminPosSearch'])->name('search');
             Route::post('/checkout/{shop}', [SaleController::class, 'checkout'])->name('checkout');
             Route::post('/customers', [CustomerController::class, 'store'])->name('customers.store');
         });

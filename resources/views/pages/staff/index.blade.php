@@ -22,6 +22,7 @@
     'checkoutUrl' => route('staff.sales.checkout', ['shop' => $shop->id]),
     'customerStoreUrl' => route('staff.customers.store'),
     'customerStoreShopId' => null,
+    'productSearchUrl' => route('staff.pos.search'),
 ])
 
 @endsection
