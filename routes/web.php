@@ -248,6 +248,9 @@ Route::middleware(['web', 'auth', 'panel.permission'])->group(function () {
             Route::delete('/{user}/reject', [SuperAdminController::class, 'reject'])->name('reject');
             Route::put('/{user}/role', [SuperAdminController::class, 'updateRole'])->name('role');
             Route::put('/{user}/super-user', [SuperAdminController::class, 'toggleSuperUser'])->name('superUser');
+            Route::get('/{user}', [SuperAdminController::class, 'show'])->name('show');
+            Route::put('/{user}', [SuperAdminController::class, 'update'])->name('update');
+            Route::delete('/{user}', [SuperAdminController::class, 'destroy'])->name('destroy');
         });
 
     /*

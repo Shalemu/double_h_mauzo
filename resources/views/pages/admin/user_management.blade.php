@@ -96,6 +96,7 @@ $shops = $shops ?? collect();
                                     <th>Role</th>
                                     <th>Super Admin</th>
                                     <th>Created</th>
+                                    <th>Details</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -133,10 +134,15 @@ $shops = $shops ?? collect();
                                             @endif
                                         </td>
                                         <td>{{ $user->created_at->format('Y-m-d') }}</td>
+                                        <td class="text-nowrap">
+                                            <a href="{{ route('users.manage.show', $user->id) }}" class="btn btn-sm btn-primary" title="View details">
+                                                <i class="bi bi-eye"></i> View
+                                            </a>
+                                        </td>
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="5" class="text-muted">No approved users yet.</td>
+                                        <td colspan="6" class="text-muted">No approved users yet.</td>
                                     </tr>
                                 @endforelse
                             </tbody>
@@ -147,7 +153,5 @@ $shops = $shops ?? collect();
             </div>
     </div>
 
-    <!-- REQUIRED BOOTSTRAP JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
 @endsection
