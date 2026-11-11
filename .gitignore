@@ -1,0 +1,25 @@
+# Environment / secrets — each machine keeps its own
+.env
+.env.backup
+.env.production
+.phpunit.result.cache
+
+# Dependencies (vendor/ is still committed on purpose for deployment)
+/node_modules
+
+# Build output
+/public/hot
+/public/build
+
+# Uploaded files (public/storage is a symlink to storage/app/public)
+/public/storage
+/storage/*.key
+
+# IDE / OS
+/.idea
+/.vscode
+/.fleet
+.DS_Store
+Thumbs.db
+npm-debug.log
+yarn-error.log

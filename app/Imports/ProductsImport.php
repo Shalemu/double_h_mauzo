@@ -14,10 +14,13 @@ use Illuminate\Support\Facades\DB;
 /**
  * Product list import (see ProductsTemplateExport for the columns).
  *
- * A row updates the product that already exists in the target shop — same
- * barcode, or else same name — instead of creating a copy, so importing the
- * same file twice is safe. Only cells that are filled in overwrite what the
- * product has; Quantity sets the stock to that number.
+ * A row updates the product that already exists in the target shop instead
+ * of creating a copy, so importing the same file twice is safe. "Same
+ * product" means same name plus the same barcode, or (without a barcode
+ * match) the same name, brand, size and colour — so variants that share a
+ * name (e.g. COCOA BUTTER 100ML and 400ML) stay separate products. Only
+ * cells that are filled in overwrite what the product has; Quantity sets
+ * the stock to that number.
  */
 class ProductsImport implements ToCollection, WithHeadingRow
 {
@@ -30,6 +33,9 @@ class ProductsImport implements ToCollection, WithHeadingRow
     public int $updated = 0;
 
     protected ?int $shopId;
+
+    /** product id => first row number in this file that matched/created it */
+    protected array $rowsByProduct = [];
 
     public function __construct(?int $shopId = null)
     {
@@ -68,7 +74,11 @@ class ProductsImport implements ToCollection, WithHeadingRow
         $label .= " ({$name})";
 
         $barcode = $text('barcode');
-        $product = $this->findExisting($name, $barcode);
+        $product = $this->findExisting($name, $barcode, $text('brand'), $text('size'), $text('color'));
+
+        if ($product && isset($this->rowsByProduct[$product->id])) {
+            $this->errors[] = "{$label}: same product as Row {$this->rowsByProduct[$product->id]} (same name, barcode, brand, size and colour) — merged, this row's values were used.";
+        }
 
         $unitValue = $text('unit');
         if ($unitValue === '' && !$product) {
@@ -124,11 +134,12 @@ class ProductsImport implements ToCollection, WithHeadingRow
 
         if ($product) {
             $product->fill($values)->save();
+            $this->rowsByProduct[$product->id] ??= $rowNumber;
             $this->updated++;
             return;
         }
 
-        Products::create($values + [
+        $product = Products::create($values + [
             'name' => $name,
             'quantity' => 0,
             'min_quantity' => 0,
@@ -139,19 +150,43 @@ class ProductsImport implements ToCollection, WithHeadingRow
             'shop_id' => $this->shopId,
             'sync_status' => 0,
         ]);
+        $this->rowsByProduct[$product->id] = $rowNumber;
         $this->created++;
     }
 
-    /** The product this row is about in the target shop: same barcode first, then same name. */
-    protected function findExisting(string $name, string $barcode): ?Products
+    /**
+     * The product this row is about in the target shop, or null to create one.
+     *
+     * 1. Same name and same barcode.
+     * 2. Otherwise same name, brand, size and colour, where the product has
+     *    no barcode or the same one (a different barcode = different product).
+     */
+    protected function findExisting(string $name, string $barcode, string $brand, string $size, string $color): ?Products
     {
-        $inShop = fn () => Products::where('shop_id', $this->shopId);
+        $norm = fn ($v) => mb_strtolower(trim((string) $v));
 
-        if ($barcode !== '' && ($product = $inShop()->where('barcode', $barcode)->oldest('id')->first())) {
-            return $product;
+        $candidates = Products::where('shop_id', $this->shopId)
+            ->whereRaw('LOWER(TRIM(name)) = ?', [$norm($name)])
+            ->orderBy('id')
+            ->get();
+
+        if ($barcode !== '') {
+            $byBarcode = $candidates->first(fn ($p) => $norm($p->barcode) === $norm($barcode));
+            if ($byBarcode) {
+                return $byBarcode;
+            }
         }
 
-        return $inShop()->whereRaw('LOWER(TRIM(name)) = ?', [mb_strtolower($name)])->oldest('id')->first();
+        return $candidates->first(function ($p) use ($norm, $barcode, $brand, $size, $color) {
+            $productBarcode = $norm($p->barcode);
+            if ($barcode !== '' && $productBarcode !== '' && $productBarcode !== $norm($barcode)) {
+                return false;
+            }
+
+            return $norm($p->brand) === $norm($brand)
+                && $norm($p->size) === $norm($size)
+                && $norm($p->color) === $norm($color);
+        });
     }
 
     protected function unit(string $value, string $label): Unit

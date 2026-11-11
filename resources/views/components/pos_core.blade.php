@@ -554,8 +554,11 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateCartDisplay() {
         if (!cartItemsEl) return;
 
+        Object.values(cart).forEach(item => {
+            item.discount = Math.min(Math.max(item.discount || 0, 0), item.qty * item.price);
+        });
+
         cartItemsEl.innerHTML = '';
-        let total = 0;
         const cartIds = Object.keys(cart);
 
         if (cartIds.length === 0) {
@@ -564,7 +567,6 @@ document.addEventListener('DOMContentLoaded', () => {
             cartIds.forEach(id => {
                 const item = cart[id];
                 const rowTotal = item.qty * item.price - item.discount;
-                total += rowTotal;
 
                 const tr = document.createElement('tr');
                 tr.dataset.id = id;
@@ -579,7 +581,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     </td>
                     <td class="text-end">${item.price.toFixed(2)}</td>
                     <td>
-                        <input type="number" class="form-control form-control-sm cart-discount text-end" value="${item.discount}">
+                        <input type="number" class="form-control form-control-sm cart-discount text-end" value="${item.discount}" min="0" step="any" title="Discount amount (Tsh) off this line">
                     </td>
                     <td class="text-end item-total">${rowTotal.toFixed(2)}</td>
                     <td class="text-center">
@@ -589,6 +591,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 cartItemsEl.appendChild(tr);
             });
         }
+
+        updateTotals();
+    }
+
+    // Recalculate every total from the cart (rows are left as they are).
+    function updateTotals() {
+        let total = 0;
+        Object.values(cart).forEach(item => { total += item.qty * item.price - item.discount; });
 
         const billDiscount = parseFloat(billDiscountEl?.value) || 0;
         const shipping = parseFloat(shippingEl?.value) || 0;
@@ -727,6 +737,35 @@ document.addEventListener('DOMContentLoaded', () => {
 
         cart[id].qty = newQty;
         updateCartDisplay();
+    });
+
+    // --- PER-ITEM DISCOUNT IN THE CART ---
+    // Discount is an amount (Tsh) off that line, between 0 and the line value.
+    cartItemsEl?.addEventListener('input', e => {
+        if (!e.target.classList.contains('cart-discount')) return;
+        const row = e.target.closest('tr');
+        const item = cart[row.dataset.id];
+        if (!item) return;
+
+        const lineValue = item.qty * item.price;
+        let discount = parseFloat(e.target.value) || 0;
+        const tooBig = discount > lineValue;
+        discount = Math.min(Math.max(discount, 0), lineValue);
+
+        item.discount = discount;
+        e.target.classList.toggle('is-invalid', tooBig);
+        row.querySelector('.item-total').textContent = (lineValue - discount).toFixed(2);
+        updateTotals();
+    });
+
+    // Leaving the box shows the value actually applied (e.g. capped).
+    cartItemsEl?.addEventListener('change', e => {
+        if (!e.target.classList.contains('cart-discount')) return;
+        const item = cart[e.target.closest('tr').dataset.id];
+        if (item) {
+            e.target.value = item.discount;
+            e.target.classList.remove('is-invalid');
+        }
     });
 
     // --- DISCOUNT & SHIPPING INPUT ---
