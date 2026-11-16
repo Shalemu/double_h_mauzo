@@ -265,6 +265,12 @@ class DashboardController extends Controller
         $shop = $shopId ? Shops::sellingShops()->find($shopId) : null;
 
         if (!$shop) {
+            // A little context on each shop card: how many products, sales today.
+            $shops->loadCount([
+                'products',
+                'sales as sales_today_count' => fn ($q) => $q->whereDate('created_at', today()),
+            ]);
+
             return view('pages.admin.pos_select_shop', compact('shops'));
         }
 
@@ -293,7 +299,9 @@ class DashboardController extends Controller
         if ($search !== '') {
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', '%' . $search . '%')
-                  ->orWhere('barcode', 'like', '%' . $search . '%');
+                  ->orWhere('brand', 'like', '%' . $search . '%')
+                  ->orWhere('barcode', 'like', '%' . $search . '%')
+                  ->orWhereRaw("CONCAT_WS(' ', brand, name) LIKE ?", ['%' . $search . '%']);
                 if (ctype_digit($search)) {
                     $q->orWhere('id', (int) $search);
                 }

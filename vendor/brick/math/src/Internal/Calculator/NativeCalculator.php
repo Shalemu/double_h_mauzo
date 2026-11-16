@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Brick\Math\Internal\Calculator;
 
+use Brick\Math\Exception\PlatformException;
 use Brick\Math\Internal\Calculator;
 use Override;
 
@@ -47,7 +48,8 @@ final readonly class NativeCalculator extends Calculator
     {
         $this->maxDigits = match (PHP_INT_SIZE) {
             4 => 9,
-            8 => 18,
+            8 => 18, // @phpstan-ignore match.alwaysTrue
+            default => throw PlatformException::unsupportedIntSize(),
         };
     }
 
@@ -230,10 +232,8 @@ final readonly class NativeCalculator extends Calculator
     #[Override]
     public function modPow(string $base, string $exp, string $mod): string
     {
-        // special case: the algorithm below fails with 0 power 0 mod 1 (returns 1 instead of 0)
-        if ($base === '0' && $exp === '0' && $mod === '1') {
-            return '0';
-        }
+        // normalize to Euclidean representative so modPow() stays consistent with mod()
+        $base = $this->mod($base, $mod);
 
         // special case: the algorithm below fails with power 0 mod 1 (returns 1 instead of 0)
         if ($exp === '0' && $mod === '1') {

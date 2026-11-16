@@ -39,7 +39,7 @@
         </label>
     </div><br>
 
-                        <input type="text" id="product-search" class="form-control form-control-sm mb-2" placeholder="Search by name, ID or barcode..."
+                        <input type="text" id="product-search" class="form-control form-control-sm mb-2" placeholder="Search by name, brand, ID or barcode..."
                                data-truncated="{{ $productsTruncated ? 1 : 0 }}">
 
                         @if($productsTruncated)
@@ -391,9 +391,11 @@ $(document).ready(function() {
             if (!query) return true;
             const name = String($(this).attr('data-name') || '').toLowerCase();
             const barcode = String($(this).attr('data-barcode') || '').toLowerCase();
+            const brand = String($(this).attr('data-brand') || '');
             const id = String($(this).attr('data-id') || '');
 
-            return name.includes(query) || barcode.includes(query) || id === query;
+            return name.includes(query) || barcode.includes(query) || brand.includes(query)
+                || (brand + ' ' + name).includes(query) || id === query;
         });
 
         $('.product-card').hide();

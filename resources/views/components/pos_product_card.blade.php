@@ -2,6 +2,7 @@
                                 <div class="card mb-2 product-card"
                                      data-id="{{ $product->id }}"
                                      data-name="{{ strtolower($product->name) }}"
+     data-brand="{{ strtolower($product->brand ?? '') }}"
                                      data-barcode="{{ $product->barcode }}"
                                      data-retail-price="{{ $product->selling_price ?? 0 }}"
                                      data-wholesale-price="{{ $product->wholesale_price ?? 0 }}"

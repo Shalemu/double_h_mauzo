@@ -8,6 +8,9 @@ use App\Models\Shops;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
+use App\Exports\Writers\SimpleXlsx;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 /**
  * Admin "Sales & Revenue" section: sales list, sold items and the
@@ -20,9 +23,7 @@ class SalesRevenueController extends Controller
     {
         [$shopId, $from, $to] = $this->filters($request);
 
-        $query = Sale::query()
-            ->when($shopId, fn ($q) => $q->where('shop_id', $shopId))
-            ->whereBetween('created_at', [$from, $to]);
+        $query = $this->salesQuery($shopId, $from, $to);
 
         $totals = (clone $query)->selectRaw('count(*) as count, coalesce(sum(total), 0) as total, coalesce(sum(remaining_amount), 0) as credit')
             ->toBase()->first();
@@ -140,6 +141,106 @@ class SalesRevenueController extends Controller
             ->get();
 
         return view('pages.sales_revenue.revenue', $this->shared($shopId, $from, $to) + compact('rows', 'totals', 'daily'));
+    }
+
+    /** Sales for the shop/date filters (shared by the page and its exports). */
+    private function salesQuery($shopId, Carbon $from, Carbon $to)
+    {
+        return Sale::query()
+            ->when($shopId, fn ($q) => $q->where('shop_id', $shopId))
+            ->whereBetween('created_at', [$from, $to]);
+    }
+
+    /** One export row per sale, matching the columns on the Sales page. */
+    private function saleExportRow(Sale $sale): array
+    {
+        return [
+            'id' => $sale->id,
+            'date' => $sale->created_at->format('Y-m-d H:i'),
+            'shop' => $sale->shop->name ?? 'N/A',
+            'sold_by' => $sale->staff->full_name ?? ($sale->admin->name ?? 'N/A'),
+            'customer' => $sale->customer->name ?? 'Walk-in',
+            'items' => (int) $sale->items_count,
+            'payment' => ucfirst($sale->payment_type ?? $sale->payment_method ?? '—'),
+            'total' => (float) $sale->total,
+            'paid' => (float) $sale->total - (float) ($sale->remaining_amount ?? 0),
+            'balance' => (float) ($sale->remaining_amount ?? 0),
+        ];
+    }
+
+    private function exportFileName($shopId, Carbon $from, Carbon $to, string $ext): string
+    {
+        $shop = $shopId ? Str::slug(Shops::find($shopId)->name ?? 'shop', '_') : 'all_shops';
+
+        return "sales_{$shop}_{$from->toDateString()}_to_{$to->toDateString()}.{$ext}";
+    }
+
+    /**
+     * All sales for the current filters → .xlsx (not just the page on screen).
+     * Streamed row by row so a long period doesn't run out of memory.
+     */
+    public function exportSalesExcel(Request $request)
+    {
+        [$shopId, $from, $to] = $this->filters($request);
+        set_time_limit(300);
+
+        $xlsx = new SimpleXlsx([
+            'Sale #', 'Date', 'Shop', 'Sold by', 'Customer', 'Items', 'Payment',
+            'Total (Tsh)', 'Paid (Tsh)', 'Balance (Tsh)',
+        ]);
+
+        $sum = ['count' => 0, 'items' => 0, 'total' => 0, 'paid' => 0, 'balance' => 0];
+        $this->salesQuery($shopId, $from, $to)
+            ->with('shop', 'customer', 'staff', 'admin')->withCount('items')
+            ->orderBy('created_at')
+            ->chunk(500, function ($sales) use ($xlsx, &$sum) {
+                foreach ($sales as $sale) {
+                    $row = $this->saleExportRow($sale);
+                    $xlsx->addRow(array_values($row));
+                    $sum['count']++;
+                    foreach (['items', 'total', 'paid', 'balance'] as $k) {
+                        $sum[$k] += $row[$k];
+                    }
+                }
+            });
+
+        $xlsx->addRow(['TOTAL', $sum['count'] . ' sale(s)', null, null, null, $sum['items'], null,
+            $sum['total'], $sum['paid'], $sum['balance']], true);
+
+        return response()->download($xlsx->save(), $this->exportFileName($shopId, $from, $to, 'xlsx'), [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ])->deleteFileAfterSend();
+    }
+
+    /** Above this many sales the PDF is too slow to build — Excel is offered instead. */
+    private const SALES_PDF_LIMIT = 2000;
+
+    public function exportSalesPdf(Request $request)
+    {
+        [$shopId, $from, $to] = $this->filters($request);
+        $query = $this->salesQuery($shopId, $from, $to);
+
+        $count = (clone $query)->count();
+        if ($count > self::SALES_PDF_LIMIT) {
+            return back()->with('error', 'PDF export is limited to ' . number_format(self::SALES_PDF_LIMIT)
+                . ' sales, but this period has ' . number_format($count) . '. Pick a shorter period or a single shop, or use Export Excel.');
+        }
+
+        set_time_limit(180);
+        ini_set('memory_limit', '768M');
+
+        $rows = $query->with('shop', 'customer', 'staff', 'admin')->withCount('items')
+            ->orderBy('created_at')->get()
+            ->map(fn ($sale) => $this->saleExportRow($sale));
+
+        $pdf = Pdf::loadView('pages.sales_revenue.sales_pdf', [
+            'rows' => $rows,
+            'shopName' => $shopId ? (Shops::find($shopId)->name ?? 'Shop') : 'All shops',
+            'from' => $from,
+            'to' => $to,
+        ])->setPaper('a4', 'landscape');
+
+        return $pdf->download($this->exportFileName($shopId, $from, $to, 'pdf'));
     }
 
     private function filters(Request $request): array

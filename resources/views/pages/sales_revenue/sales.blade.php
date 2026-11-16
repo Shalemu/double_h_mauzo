@@ -17,7 +17,18 @@
     </div>
 
     <div class="card shadow-sm">
-        <div class="card-header bg-white"><h5 class="mb-0"><i class="bi bi-receipt me-2"></i>Sales</h5></div>
+        <div class="card-header bg-white d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <h5 class="mb-0"><i class="bi bi-receipt me-2"></i>Sales</h5>
+            @php $exportParams = ['shop' => $shopId ?? '', 'from' => $from->toDateString(), 'to' => $to->toDateString()]; @endphp
+            <div class="d-flex gap-2">
+                <a href="{{ route('admin.sales.export.excel', $exportParams) }}" class="btn btn-sm btn-success">
+                    <i class="bi bi-file-earmark-excel"></i> Export Excel
+                </a>
+                <a href="{{ route('admin.sales.export.pdf', $exportParams) }}" class="btn btn-sm btn-danger">
+                    <i class="bi bi-file-earmark-pdf"></i> Export PDF
+                </a>
+            </div>
+        </div>
         <div class="card-body">
             @include('pages.sales_revenue._filters')
 

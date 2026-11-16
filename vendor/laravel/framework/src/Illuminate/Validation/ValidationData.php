@@ -3,7 +3,7 @@
 namespace Illuminate\Validation;
 
 use Illuminate\Support\Arr;
-use Illuminate\Support\Str;
+use Illuminate\Support\UndefinedValue;
 
 class ValidationData
 {
@@ -36,7 +36,7 @@ class ValidationData
 
         $data = static::extractDataFromPath($explicitPath, $masterData);
 
-        if (! Str::contains($attribute, '*') || Str::endsWith($attribute, '*')) {
+        if (! str_contains($attribute, '*') || str_ends_with($attribute, '*')) {
             return $data;
         }
 
@@ -55,7 +55,7 @@ class ValidationData
     {
         $keys = [];
 
-        $pattern = str_replace('\*', '[^\.]+', preg_quote($attribute));
+        $pattern = str_replace('\*', '[^\.]*', preg_quote($attribute, '/'));
 
         foreach ($data as $key => $value) {
             if ((bool) preg_match('/^'.$pattern.'/', $key, $matches)) {
@@ -87,9 +87,9 @@ class ValidationData
     {
         $results = [];
 
-        $value = Arr::get($masterData, $attribute, '__missing__');
+        $value = Arr::get($masterData, $attribute, new UndefinedValue);
 
-        if ($value !== '__missing__') {
+        if (! $value instanceof UndefinedValue) {
             Arr::set($results, $attribute, $value);
         }
 

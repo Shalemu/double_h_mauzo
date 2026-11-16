@@ -14,6 +14,8 @@ namespace Symfony\Component\VarDumper\Cloner;
 /**
  * Represents the main properties of a PHP variable.
  *
+ * Stub classes meant to be extended should not declare private properties: they are not serialized with child classes.
+ *
  * @author Nicolas Grekas <p@tchwork.com>
  */
 class Stub
@@ -23,6 +25,7 @@ class Stub
     public const TYPE_ARRAY = 3;
     public const TYPE_OBJECT = 4;
     public const TYPE_RESOURCE = 5;
+    public const TYPE_SCALAR = 6;
 
     public const STRING_BINARY = 1;
     public const STRING_UTF8 = 2;
@@ -30,38 +33,46 @@ class Stub
     public const ARRAY_ASSOC = 1;
     public const ARRAY_INDEXED = 2;
 
-    public $type = self::TYPE_REF;
-    public $class = '';
-    public $value;
-    public $cut = 0;
-    public $handle = 0;
-    public $refCount = 0;
-    public $position = 0;
-    public $attr = [];
-
-    private static $defaultProperties = [];
+    public int $type = self::TYPE_REF;
+    public string|int|null $class = '';
+    public mixed $value = null;
+    public int $cut = 0;
+    public int $handle = 0;
+    public int $refCount = 0;
+    public int $position = 0;
+    public array $attr = [];
 
     /**
      * @internal
      */
-    public function __sleep(): array
+    protected static array $propertyDefaults = [];
+
+    public function __serialize(): array
     {
-        $properties = [];
+        static $noDefault = new \stdClass();
 
-        if (!isset(self::$defaultProperties[$c = static::class])) {
-            self::$defaultProperties[$c] = get_class_vars($c);
-
-            foreach ((new \ReflectionClass($c))->getStaticProperties() as $k => $v) {
-                unset(self::$defaultProperties[$c][$k]);
+        if (self::class === static::class) {
+            $data = [];
+            foreach ($this as $k => $v) {
+                $default = self::$propertyDefaults[$this::class][$k] ??= ($p = new \ReflectionProperty($this, $k))->hasDefaultValue() ? $p->getDefaultValue() : ($p->hasType() ? $noDefault : null);
+                if ($noDefault === $default || $default !== $v) {
+                    $data[$k] = $v;
+                }
             }
+
+            return $data;
         }
 
-        foreach (self::$defaultProperties[$c] as $k => $v) {
-            if ($this->$k !== $v) {
-                $properties[] = $k;
+        return \Closure::bind(function () use ($noDefault) {
+            $data = [];
+            foreach ($this as $k => $v) {
+                $default = self::$propertyDefaults[$this::class][$k] ??= ($p = new \ReflectionProperty($this, $k))->hasDefaultValue() ? $p->getDefaultValue() : ($p->hasType() ? $noDefault : null);
+                if ($noDefault === $default || $default !== $v) {
+                    $data[$k] = $v;
+                }
             }
-        }
 
-        return $properties;
+            return $data;
+        }, $this, $this::class)();
     }
 }

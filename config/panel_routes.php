@@ -45,6 +45,7 @@ return [
     'admin.sales.index'             => 'sales.list',
     'admin.sales.items'             => 'sales.list',
     'admin.sales.show'              => 'sales.list',
+    'admin.sales.export.*'          => 'sales.list',
     'admin.sales.detail'            => 'sales.list',
     'sales.index'                   => 'sales.list',
     'sales.show'                    => 'sales.list',

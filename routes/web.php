@@ -470,6 +470,8 @@ Route::prefix('purchases')->name('purchases.')->group(function () {
     */
     Route::prefix('dashboard/admin')->middleware('admin')->group(function () {
         Route::get('/sales', [SalesRevenueController::class, 'sales'])->name('admin.sales.index');
+        Route::get('/sales/export/excel', [SalesRevenueController::class, 'exportSalesExcel'])->name('admin.sales.export.excel');
+        Route::get('/sales/export/pdf', [SalesRevenueController::class, 'exportSalesPdf'])->name('admin.sales.export.pdf');
         Route::get('/sales/{sale}', [SalesRevenueController::class, 'show'])->name('admin.sales.show');
         Route::get('/sale-items', [SalesRevenueController::class, 'items'])->name('admin.sales.items');
         Route::get('/revenue', [SalesRevenueController::class, 'revenue'])->name('admin.revenue');

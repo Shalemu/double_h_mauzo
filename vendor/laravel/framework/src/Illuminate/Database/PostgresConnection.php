@@ -2,9 +2,8 @@
 
 namespace Illuminate\Database;
 
-use Doctrine\DBAL\Driver\PDOPgSql\Driver as DoctrineDriver;
-use Doctrine\DBAL\Version;
-use Illuminate\Database\PDO\PostgresDriver;
+use DateTimeInterface;
+use Exception;
 use Illuminate\Database\Query\Grammars\PostgresGrammar as QueryGrammar;
 use Illuminate\Database\Query\Processors\PostgresProcessor;
 use Illuminate\Database\Schema\Grammars\PostgresGrammar as SchemaGrammar;
@@ -12,33 +11,151 @@ use Illuminate\Database\Schema\PostgresBuilder;
 use Illuminate\Database\Schema\PostgresSchemaState;
 use Illuminate\Filesystem\Filesystem;
 use PDO;
+use RuntimeException;
 
 class PostgresConnection extends Connection
 {
     /**
-     * Bind values to their parameters in the given statement.
-     *
-     * @param  \PDOStatement  $statement
-     * @param  array  $bindings
-     * @return void
+     * {@inheritdoc}
      */
-    public function bindValues($statement, $bindings)
+    public function getDriverTitle()
     {
+        return 'PostgreSQL';
+    }
+
+    /**
+     * Prepare the query bindings for execution.
+     *
+     * @param  array  $bindings
+     * @return array
+     */
+    public function prepareBindings(array $bindings)
+    {
+        $grammar = $this->getQueryGrammar();
+
         foreach ($bindings as $key => $value) {
-            if (is_int($value)) {
-                $pdoParam = PDO::PARAM_INT;
-            } elseif (is_resource($value)) {
-                $pdoParam = PDO::PARAM_LOB;
-            } else {
-                $pdoParam = PDO::PARAM_STR;
+            if ($value instanceof DateTimeInterface) {
+                $bindings[$key] = $value->format($grammar->getDateFormat());
+            } elseif (is_bool($value)) {
+                $bindings[$key] = $this->usesEmulatedPrepares()
+                    ? ($value ? 'true' : 'false')
+                    : (int) $value;
+            }
+        }
+
+        return $bindings;
+    }
+
+    /**
+     * Escape a binary value for safe SQL embedding.
+     *
+     * @param  string  $value
+     * @return string
+     */
+    protected function escapeBinary($value)
+    {
+        $hex = bin2hex($value);
+
+        return "'\x{$hex}'::bytea";
+    }
+
+    /**
+     * Escape a bool value for safe SQL embedding.
+     *
+     * @param  bool  $value
+     * @return string
+     */
+    protected function escapeBool($value)
+    {
+        return $value ? 'true' : 'false';
+    }
+
+    /**
+     * Determine if the given database exception was caused by a unique constraint violation.
+     *
+     * @param  \Exception  $exception
+     * @return bool
+     */
+    protected function isUniqueConstraintError(Exception $exception)
+    {
+        return '23505' === $exception->getCode();
+    }
+
+    /**
+     * Extract the index and columns that caused a unique constraint violation.
+     *
+     * @param  Exception  $exception
+     * @return array{index: string|null, columns: list<string>}
+     */
+    protected function parseUniqueConstraintViolation(Exception $exception): array
+    {
+        [$index, $columns] = [null, []];
+
+        if (preg_match('#unique constraint "([^"]+)"#i', $message = $exception->getMessage(), $matches)) {
+            $index = $matches[1];
+        }
+
+        if (preg_match('#Key \(([^)]+)\)=#i', $message, $matches)) {
+            $columns = array_map(trim(...), explode(',', $matches[1]));
+        }
+
+        return ['columns' => $columns, 'index' => $index];
+    }
+
+    /**
+     * Get the ID of the last committed transaction.
+     *
+     * @return string
+     */
+    public function getLastCommitId()
+    {
+        // Avoid pg_current_wal_insert_lsn() since it may point to a position a replica can never reach...
+        return $this->usingWritePdo(fn () => $this->scalar('select pg_current_wal_lsn()'));
+    }
+
+    /**
+     * Calculate the commit ID for a set of commit IDs that includes all of them.
+     *
+     * @param  string[]  $values
+     * @return string
+     *
+     * @throws \RuntimeException
+     */
+    public function mergeCommitIds(array $values)
+    {
+        if ($values === []) {
+            throw new RuntimeException("The list of commit IDs can't be empty.");
+        }
+
+        // LSNs are linear, so the newest one includes all older ones...
+        return $this->scalar('select value::pg_lsn from json_array_elements_text(?) order by 1 desc limit 1', [json_encode($values)]);
+    }
+
+    /**
+     * Determine if the given commit ID has been applied.
+     *
+     * @param  string  $value
+     * @param  int  $wait
+     * @return bool
+     *
+     * @throws \RuntimeException
+     */
+    public function hasCommitId(string $value, int $wait = 0)
+    {
+        if ($wait > 0) {
+            if (version_compare($this->getServerVersion(), '19', '<')) {
+                throw new RuntimeException('The PostgreSQL version does not support waiting for a commit ID. PostgreSQL 19 or newer is required.');
             }
 
-            $statement->bindValue(
-                is_string($key) ? $key : $key + 1,
-                $value,
-                $pdoParam
-            );
+            $status = $this->scalar("wait for lsn {$this->escapeString($value)} with (timeout {$this->escapeString("{$wait}s")}, no_throw)");
+
+            // A primary can't wait for its own LSNs, so fall back to the immediate check...
+            if ($status !== 'not in recovery') {
+                return $status === 'success';
+            }
         }
+
+        return $this->scalar('select case when pg_is_in_recovery() then pg_last_wal_replay_lsn() else pg_current_wal_insert_lsn() end >= ?::pg_lsn', [$value]);
     }
 
     /**
@@ -48,7 +165,7 @@ class PostgresConnection extends Connection
      */
     protected function getDefaultQueryGrammar()
     {
-        return $this->withTablePrefix(new QueryGrammar);
+        return new QueryGrammar($this);
     }
 
     /**
@@ -72,7 +189,7 @@ class PostgresConnection extends Connection
      */
     protected function getDefaultSchemaGrammar()
     {
-        return $this->withTablePrefix(new SchemaGrammar);
+        return new SchemaGrammar($this);
     }
 
     /**
@@ -82,7 +199,7 @@ class PostgresConnection extends Connection
      * @param  callable|null  $processFactory
      * @return \Illuminate\Database\Schema\PostgresSchemaState
      */
-    public function getSchemaState(Filesystem $files = null, callable $processFactory = null)
+    public function getSchemaState(?Filesystem $files = null, ?callable $processFactory = null)
     {
         return new PostgresSchemaState($this, $files, $processFactory);
     }
@@ -98,12 +215,19 @@ class PostgresConnection extends Connection
     }
 
     /**
-     * Get the Doctrine DBAL driver.
+     * Determine if the active PDO configuration uses emulated prepares.
      *
-     * @return \Doctrine\DBAL\Driver\PDOPgSql\Driver|\Illuminate\Database\PDO\PostgresDriver
+     * @return bool
      */
-    protected function getDoctrineDriver()
+    protected function usesEmulatedPrepares()
     {
-        return class_exists(Version::class) ? new DoctrineDriver : new PostgresDriver;
+        // Binding preparation runs after query routing has selected the PDO variant...
+        $config = match ($this->latestReadWriteTypeUsed()) {
+            'read' => $this->readPdoConfig,
+            'direct' => $this->directPdoConfig,
+            default => $this->config,
+        };
+
+        return (bool) ($config['options'][PDO::ATTR_EMULATE_PREPARES] ?? false);
     }
 }
