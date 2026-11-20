@@ -10,6 +10,7 @@ class Sale extends Model
     use HasFactory;
 
 protected $fillable = [
+    'client_reference',
     'shop_id',
     'staff_id',
     'admin_id',
@@ -19,6 +20,7 @@ protected $fillable = [
     'total',
     'payment_method',
     'payment_type',
+    'payment_method_id',
     'received_amount',
     'remaining_amount',
     'change_amount'
@@ -27,7 +29,12 @@ protected $fillable = [
 
 public function staff()
 {
-    return $this->belongsTo(Staff::class);
+    return $this->belongsTo(Staff::class)->withTrashed(); // keep history of removed staff
+}
+
+public function paymentMethodSetting()
+{
+    return $this->belongsTo(PaymentMethod::class, 'payment_method_id');
 }
 
 public function admin()

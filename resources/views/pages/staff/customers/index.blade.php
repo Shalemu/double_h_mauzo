@@ -50,6 +50,7 @@
                             <th>S/N</th>
                             <th>Name</th>
                             <th>Phone</th>
+                            <th>Birthday</th>
                             <th>Email</th>
                             <th>Address</th>
                             <th>Actions</th>
@@ -66,6 +67,7 @@
                         </td>
 
                             <td>{{ $customer->phone ?? '-' }}</td>
+                            <td>{{ $customer->date_of_birth?->format('d M') ?? '-' }}</td>
                             <td>{{ $customer->email ?? '-' }}</td>
                             <td>{{ $customer->address ?? '-' }}</td>
                             <td>
@@ -84,7 +86,7 @@
 
 <!-- Add Customer Modal -->
 <div class="modal fade" id="addCustomerModal" tabindex="-1">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
         <form method="POST" action="{{ route('staff.customers.store') }}" class="modal-content">
             @csrf
             <div class="modal-header">
@@ -92,25 +94,28 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
 
-            <div class="modal-body">
-                <div class="mb-2">
-                    <label>Name *</label>
-                    <input type="text" name="name" class="form-control" required>
-                </div>
-
-                <div class="mb-2">
-                    <label>Phone</label>
-                    <input type="text" name="phone" class="form-control">
-                </div>
-
-                <div class="mb-2">
-                    <label>Email</label>
-                    <input type="email" name="email" class="form-control">
-                </div>
-
-                <div class="mb-2">
-                    <label>Address</label>
-                    <input type="text" name="address" class="form-control">
+            <div class="modal-body py-3">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label mb-1">Name <span class="text-danger">*</span></label>
+                        <input type="text" name="name" class="form-control" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label mb-1">Phone</label>
+                        <input type="text" name="phone" class="form-control">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label mb-1">Date of Birth </label>
+                        <input type="date" name="date_of_birth" class="form-control" max="{{ now()->subDay()->toDateString() }}">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label mb-1">Email</label>
+                        <input type="email" name="email" class="form-control">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label mb-1">Address</label>
+                        <input type="text" name="address" class="form-control">
+                    </div>
                 </div>
             </div>
 

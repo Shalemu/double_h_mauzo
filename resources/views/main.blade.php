@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>@yield('title') - DOUBLE H COSMETICS Admin Panel</title>
+    <title>@yield('title') - {{ strtoupper(\App\Models\Setting::businessName()) }} Admin Panel</title>
 
     @include('components.header')
 
@@ -301,7 +301,7 @@
                     </div>
                     <div class="col-sm-6">
                         <ol class="breadcrumb float-sm-end mb-0">
-                            <li class="breadcrumb-item"><a href="{{ Auth::guard('staff')->check() ? route('staff.dashboard') : route('dashboard.admin') }}">Home</a></li>
+                            <li class="breadcrumb-item"><a href="{{ \App\Models\Staff::current() ? route('staff.dashboard') : route('dashboard.admin') }}">Home</a></li>
                             <li class="breadcrumb-item active">@yield('title')</li>
                         </ol>
                     </div>

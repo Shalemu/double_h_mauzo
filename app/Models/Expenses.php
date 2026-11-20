@@ -52,7 +52,7 @@ class Expenses extends Model
      */
     public function staff()
     {
-        return $this->belongsTo(\App\Models\Staff::class, 'staff_id');
+        return $this->belongsTo(\App\Models\Staff::class, 'staff_id')->withTrashed(); // keep history of removed staff
     }
 
     /**

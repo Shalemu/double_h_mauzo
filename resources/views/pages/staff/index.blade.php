@@ -5,7 +5,7 @@
 @section('content')
 
 @php
-    $staffUser = auth('staff')->user();
+    $staffUser = \App\Models\Staff::current();
     $shop = $shop ?? $staffUser->shop;
     $products = $products ?? collect();
     $customers = $customers ?? collect();

@@ -29,7 +29,7 @@
                     <div class="col-md-6">
                         <label class="form-label">Shop</label>
                         <input type="text" class="form-control"
-                            value="{{ auth()->guard('staff')->user()->shop->name ?? 'N/A' }}" disabled>
+                            value="{{ \App\Models\Staff::current()->shop->name ?? 'N/A' }}" disabled>
                     </div>
                 </div>
 

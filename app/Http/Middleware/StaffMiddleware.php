@@ -10,14 +10,14 @@ class StaffMiddleware
 {
     public function handle(Request $request, Closure $next)
     {
-        // Check if staff is logged in using the staff guard
-        if (!Auth::guard('staff')->check()) {
+        $user = Auth::user();
+
+        if (!$user) {
             return redirect()->route('login');
         }
 
-        // Optional: ensure it's NOT admin (role_id > 2)
-        $staff = Auth::guard('staff')->user();
-        if ($staff->role_id <= 2) {
+        // Admins have their own panel; the POS pages are for shop staff only.
+        if (!$user->isStaff()) {
             abort(403, 'Unauthorized access.');
         }
 

@@ -222,14 +222,14 @@
         @if($globalMode)
         <td><input type="checkbox" class="product-checkbox" value="{{ $product->id }}"></td>
         @endif
-        <td>
+        <td data-col="image">
             @if($product->image)
                 <img src="{{ asset('storage/' . $product->image) }}" alt="Product Image">
             @else
                 <img src="https://via.placeholder.com/50" alt="No Image">
             @endif
         </td>
-        <td class="fw-semibold">{{ $product->name }}</td>
+        <td class="fw-semibold" data-col="name">{{ $product->name }}</td>
         @if($globalMode)
         <td>
             @if($product->shop)
@@ -239,17 +239,18 @@
             @endif
         </td>
         @endif
-        <td class="text-center">{{ $product->quantity ?? 0 }}</td>
-        <td class="text-center">{{ $product->unit ? $product->unit->name : '-' }}</td>
-        <td class="text-end">{{ $product->purchase_price ? number_format($product->purchase_price) : '-' }}</td>
-        <td class="text-end">{{ $product->selling_price ? number_format($product->selling_price) : '-' }}</td>
-        <td class="text-end">{{ $product->wholesale_price ? number_format($product->wholesale_price) : '-' }}</td>
-        <td class="text-center">{{ $product->expire_date ? \Carbon\Carbon::parse($product->expire_date)->format('Y-m-d') : '-' }}</td>
+        <td class="text-center" data-col="quantity">{{ $product->quantity ?? 0 }}</td>
+        <td class="text-center" data-col="unit_name">{{ $product->unit ? $product->unit->name : '-' }}</td>
+        <td class="text-end" data-col="purchase_price">{{ $product->purchase_price ? number_format($product->purchase_price) : '-' }}</td>
+        <td class="text-end" data-col="selling_price">{{ $product->selling_price ? number_format($product->selling_price) : '-' }}</td>
+        <td class="text-end" data-col="wholesale_price">{{ $product->wholesale_price ? number_format($product->wholesale_price) : '-' }}</td>
+        <td class="text-center" data-col="expire_date">{{ $product->expire_date ? \Carbon\Carbon::parse($product->expire_date)->format('Y-m-d') : '-' }}</td>
         <td class="text-center">
             <div class="btn-group">
                <button class="btn btn-primary btn-sm edit-product-btn"
         data-id="{{ $product->id }}"
         data-name="{{ $product->name }}"
+        data-barcode="{{ $product->barcode }}"
         data-brand="{{ $product->brand }}"
         data-category="{{ $product->category_id }}"
         data-shop="{{ $product->shop_id }}"
@@ -314,6 +315,13 @@
             <div class="col-lg-4 col-md-6">
               <label for="edit_name" class="form-label">Name <span class="text-danger">*</span></label>
               <input type="text" class="form-control" id="edit_name" name="name" required>
+            </div>
+
+            <!-- Barcode -->
+            <div class="col-lg-4 col-md-6">
+              <label for="edit_barcode" class="form-label">Barcode <span class="text-muted">(optional)</span></label>
+              <input type="text" class="form-control" id="edit_barcode" name="barcode" placeholder="Scan barcode"
+                     onkeydown="if (event.key === 'Enter') event.preventDefault();">
             </div>
 
             <!-- Brand -->

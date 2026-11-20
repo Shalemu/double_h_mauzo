@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const summary = document.getElementById('assignSummary');
     const money = n => (n === null || n === undefined || n === '') ? '—' : Number(n).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     let selected = null;
-    const shopLimit = @json(\App\Http\Controllers\ProcurementController::SHOP_PRODUCT_LIMIT);
+    const shopLimit = @json(\App\Http\Controllers\Web\ProcurementController::SHOP_PRODUCT_LIMIT);
     let shopProducts = [];  // the selected shop's products as first loaded
     let products = [];      // what the dropdown currently lists (shop list, or server search results)
     let truncated = false;  // shop has more products than one load lists

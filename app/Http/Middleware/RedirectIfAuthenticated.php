@@ -7,20 +7,12 @@ use Illuminate\Support\Facades\Auth;
 
 class RedirectIfAuthenticated
 {
-public function handle($request, Closure $next, $guard = null)
-{
-    // Admin only
-    if (Auth::guard('web')->check()) {
-        return redirect()->route('dashboard.admin');
+    public function handle($request, Closure $next, ...$guards)
+    {
+        if ($user = Auth::user()) {
+            return redirect()->route($user->isStaff() ? 'staff.dashboard' : 'dashboard.admin');
+        }
+
+        return $next($request);
     }
-
-    // Staff only
-    if (Auth::guard('staff')->check()) {
-        return redirect()->route('staff.dashboard');
-    }
-
-    return $next($request);
-}
-
-
 }

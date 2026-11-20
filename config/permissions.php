@@ -127,6 +127,11 @@ return [
         'sms.view'                 => 'View SMS & History',
         'sms.send'                 => 'Send SMS',
     ],
+    'Settings' => [
+        'settings.business'        => 'Edit Business Profile',
+        'settings.payment-methods' => 'Manage Payment Methods',
+        'settings.financial-years' => 'Manage Financial Years',
+    ],
 
     // ---------------- Staff POS app ----------------
     'POS Selling' => [

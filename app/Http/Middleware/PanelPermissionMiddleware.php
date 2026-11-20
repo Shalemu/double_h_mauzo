@@ -15,8 +15,19 @@ class PanelPermissionMiddleware
 {
     public function handle(Request $request, Closure $next)
     {
-        $user = Auth::guard('web')->user();
+        $user = Auth::user();
         $routeName = optional($request->route())->getName();
+
+        // Staff log in through the same guard but never get the admin panel.
+        if ($user?->isStaff()) {
+            if ($request->expectsJson()) {
+                return response()->json(['message' => 'Staff accounts cannot use the admin panel.'], 403);
+            }
+
+            return $request->isMethod('get')
+                ? redirect()->route('staff.dashboard')
+                : abort(403, 'Staff accounts cannot use the admin panel.');
+        }
 
         if (!$user || !$routeName || $user->hasFullAccess()) {
             return $next($request);
