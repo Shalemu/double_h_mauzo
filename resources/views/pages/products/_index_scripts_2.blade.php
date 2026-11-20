@@ -1,10 +1,12 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const editButtons = document.querySelectorAll('.edit-product-btn');
     const editForm = document.getElementById('editProductForm');
 
-    editButtons.forEach(button => {
-        button.addEventListener('click', function() {
+    // Delegated: DataTables keeps rows of other pages out of the DOM, so bind once on the document.
+    document.addEventListener('click', function (e) {
+        const button = e.target.closest('.edit-product-btn');
+        if (!button) return;
+        (function () {
             const id = this.dataset.id;
             const name = this.dataset.name;
             const brand = this.dataset.brand;
@@ -21,6 +23,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Fill form fields
             editForm.dataset.id = id; // save ID for AJAX
             document.getElementById('edit_name').value = name;
+            document.getElementById('edit_barcode').value = this.dataset.barcode || '';
             // Older products may carry a brand typed in before the list existed — keep it selectable.
             const brandSelect = document.getElementById('edit_brand');
             if (brand && !Array.from(brandSelect.options).some(o => o.value === brand)) {
@@ -46,9 +49,8 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             // Show modal
-            const modal = new bootstrap.Modal(document.getElementById('editProductModal'));
-            modal.show();
-        });
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('editProductModal')).show();
+        }).call(button);
     });
 
     // Preview uploaded image
@@ -76,41 +78,63 @@ document.addEventListener('DOMContentLoaded', function() {
         fetch(`/products/${id}`, {
             method: 'POST',
             headers: {
+                'Accept': 'application/json',
                 'X-Requested-With': 'XMLHttpRequest',
                 'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value
             },
             body: formData
         })
-        .then(response => response.json())
-        .then(data => {
-            if(data.success){
-                // Close modal
-                const modalEl = document.getElementById('editProductModal');
-                const modal = bootstrap.Modal.getInstance(modalEl);
-                modal.hide();
-
-                // Optionally: update table row without reloading
-                const row = document.querySelector(`#productTable tr[data-id='${id}']`);
-                if(row){
-                    row.querySelector('td:nth-child(2)').innerText = data.product.name;
-                    row.querySelector('td:nth-child(3)').innerText = data.product.quantity ?? 0;
-                    row.querySelector('td:nth-child(4)').innerText = data.product.unit_name ?? '-';
-                    row.querySelector('td:nth-child(5)').innerText = data.product.purchase_price ?? '-';
-                    row.querySelector('td:nth-child(6)').innerText = data.product.selling_price ?? '-';
-                    row.querySelector('td:nth-child(7)').innerText = data.product.wholesale_price ?? '-';
-                    row.querySelector('td:nth-child(8)').innerText = data.product.expire_date ?? '-';
-                    if(data.product.image){
-                        row.querySelector('td:nth-child(1) img').src = data.product.image;
-                    }
-                }
-
-                // Show success message
-                alert(data.success);
+        .then(async response => {
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok) {
+                // Validation (422) → first field error; anything else → generic message.
+                const firstError = data.errors ? Object.values(data.errors)[0][0] : null;
+                throw new Error(firstError || data.message || 'Failed to update product.');
             }
+            return data;
+        })
+        .then(data => {
+            if (!data.success) return;
+
+            bootstrap.Modal.getInstance(document.getElementById('editProductModal')).hide();
+
+            // Refresh the edit button's stored values so reopening this product shows what was just saved.
+            const btn = document.querySelector(`.edit-product-btn[data-id='${id}']`);
+            if (btn) {
+                const val = (field) => formData.get(field) ?? '';
+                btn.dataset.name      = val('name');
+                btn.dataset.barcode   = val('barcode');
+                btn.dataset.brand     = val('brand');
+                btn.dataset.category  = val('category_id');
+                btn.dataset.unit      = val('unit_id');
+                btn.dataset.quantity  = val('quantity');
+                btn.dataset.purchase  = val('purchase_price');
+                btn.dataset.selling   = val('selling_price');
+                btn.dataset.wholesale = val('wholesale_price');
+                btn.dataset.expire    = val('expire_date');
+                if (formData.has('shop_id')) btn.dataset.shop = val('shop_id');
+                if (data.product.image) btn.dataset.image = data.product.image;
+            }
+
+            // Update the table row in place.
+            const row = document.querySelector(`#productTable tr[data-id='${id}']`);
+            if (row) {
+                const setCol = (col, value) => {
+                    const cell = row.querySelector(`td[data-col='${col}']`);
+                    if (cell) cell.innerText = value ?? '-';
+                };
+                ['name', 'quantity', 'unit_name', 'purchase_price', 'selling_price', 'wholesale_price', 'expire_date']
+                    .forEach(col => setCol(col, data.product[col]));
+                const img = row.querySelector("td[data-col='image'] img");
+                if (img && data.product.image) img.src = data.product.image;
+            }
+
+            imageInput.value = '';
+            notify('success', data.success, data.product.name);
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('Failed to update product.');
+            notify('error', 'Update failed', error.message);
         });
     });
 });

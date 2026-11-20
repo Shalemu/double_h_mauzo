@@ -21,8 +21,8 @@ class ProductsExportTable extends DataTable
     public function shop(): ?Shops
     {
         if (!$this->resolved) {
-            $shopId = Auth::guard('staff')->check()
-                ? Auth::guard('staff')->user()->shop_id
+            $shopId = \App\Models\Staff::current()
+                ? \App\Models\Staff::current()->shop_id
                 : (session('active_shop_id') ?: $this->request->query('shop'));
             $this->shop = $shopId ? Shops::find($shopId) : null;
             $this->resolved = true;

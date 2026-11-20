@@ -1,6 +1,6 @@
 @php
-    $isStaff = Auth::guard('staff')->check();
-    $staffUser = $isStaff ? Auth::guard('staff')->user() : null;
+    $isStaff = \App\Models\Staff::current();
+    $staffUser = $isStaff ? \App\Models\Staff::current() : null;
     $adminUser = $isStaff ? null : Auth::user();
     $activeShop = (!$isStaff && $adminUser)
         ? (session('active_shop_id') ? \App\Models\Shops::find(session('active_shop_id')) : null)
@@ -23,6 +23,10 @@
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
 
 <style>
+/* A little wider than AdminLTE's 250px so labels like "Product Management"
+   fit on one line. AdminLTE uses this variable for the page offset too. */
+:root, [data-bs-theme=light] { --lte-sidebar-width: 270px; }
+
 /* Dark slate sidebar: bold Outfit labels, roomy rows, soft highlight with a logo-red
    icon on the current page. The logo stays pinned; the menu scrolls
    and its scrollbar only shows while the mouse is over the sidebar. */
@@ -55,6 +59,9 @@
 .premium-sidebar .brand-image-wrap { width:64px; height:64px; border-radius:14px; background:#fff; display:flex; align-items:center; justify-content:center; padding:8px; box-shadow:0 4px 14px rgba(0,0,0,.25); }
 .premium-sidebar .brand-image { width:100%; height:100%; object-fit:contain; }
 .premium-sidebar .brand-text { color:#fff !important; font-weight:700; font-size:17px; letter-spacing:.01em; text-align:center; }
+.premium-sidebar .fy-chip { display:inline-flex; align-items:center; gap:6px; font-size:12px; font-weight:600; color:#cbd5e1;
+    background:rgba(255,255,255,.08); border-radius:999px; padding:3px 10px; }
+.premium-sidebar .fy-chip-warn { color:#fde68a; background:rgba(245,158,11,.18); }
 
 /* Menu */
 .premium-sidebar .sidebar-wrapper { flex:0 0 auto; height:auto !important; overflow:visible !important; padding:14px 14px 24px !important; }
@@ -69,6 +76,11 @@
 .premium-sidebar .nav-link.active { background:var(--sidebar-active) !important; }
 .premium-sidebar .nav-link[aria-expanded="true"] { background:var(--sidebar-hover) !important; }
 .premium-sidebar .nav-icon { font-size:20px; width:24px; margin:0 !important; text-align:center; color:#fff; flex-shrink:0; }
+/* Every label on one line (e.g. "Product Management", "Manage Business"); a
+   label too long for the sidebar ends in "…" instead of wrapping. */
+.premium-sidebar .nav-link { gap:12px; }
+.premium-sidebar .nav-link > span:not(.nav-badge) { flex:1 1 auto; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.premium-sidebar .nav-badge { flex-shrink:0; }
 .premium-sidebar .nav-link.active .nav-icon,
 .premium-sidebar .nav-link[aria-expanded="true"] .nav-icon { color:var(--sidebar-accent); }
 .premium-sidebar .nav-link .bi-chevron-down { font-size:14px; margin-left:auto; transition:transform .2s; }
@@ -90,9 +102,16 @@
 <aside class="app-sidebar premium-sidebar shadow" data-bs-theme="dark">
     <div class="sidebar-brand">
         <div class="brand-image-wrap">
-            <img src="{{ asset('assets/img/logo.png') }}" alt="Logo" class="brand-image">
+            <img src="{{ \App\Models\Setting::logoUrl() }}" alt="Logo" class="brand-image">
         </div>
-        <span class="brand-text">Double H Cosmetics</span>
+        <span class="brand-text">{{ \App\Models\Setting::businessName() }}</span>
+        @php $currentFy = \App\Models\FinancialYear::current(); @endphp
+        @if($currentFy)
+            <span class="fy-chip {{ $currentFy->contains(now()) ? '' : 'fy-chip-warn' }}"
+                  title="{{ $currentFy->contains(now()) ? 'Current financial year: ' . $currentFy->period() : 'Today is outside the current financial year (' . $currentFy->period() . ')' }}">
+                <i class="bi bi-calendar-range"></i> {{ $currentFy->name }}
+            </span>
+        @endif
     </div>
 
 

@@ -27,6 +27,7 @@
                     <div class="card-body customer-profile-body">
                         <div class="row g-3">
                             <div class="col-sm-6 col-xl-3"><div class="customer-contact-item"><div class="small text-muted mb-1">Phone</div><strong>{{ $customer->phone ?? '-' }}</strong></div></div>
+                            <div class="col-sm-6 col-xl-3"><div class="customer-contact-item"><div class="small text-muted mb-1">Date of Birth</div><strong>{{ $customer->date_of_birth?->format('d M Y') ?? '-' }}</strong></div></div>
                             <div class="col-sm-6 col-xl-3"><div class="customer-contact-item"><div class="small text-muted mb-1">Email</div><strong>{{ $customer->email ?? '-' }}</strong></div></div>
                             <div class="col-sm-6 col-xl-3"><div class="customer-contact-item"><div class="small text-muted mb-1">Address</div><strong>{{ $customer->address ?? '-' }}</strong></div></div>
                             <div class="col-sm-6 col-xl-3"><div class="customer-contact-item"><div class="small text-muted mb-1">Shop</div><strong>{{ $customer->shop->name ?? '-' }}</strong></div></div>

@@ -1,6 +1,6 @@
 @php
-    $isStaff = Auth::guard('staff')->check();
-    $staffUser = $isStaff ? Auth::guard('staff')->user() : null;
+    $isStaff = \App\Models\Staff::current();
+    $staffUser = $isStaff ? \App\Models\Staff::current() : null;
     $adminUser = $isStaff ? null : Auth::user();
     $displayName = $isStaff
         ? trim($staffUser->first_name . ' ' . $staffUser->last_name)

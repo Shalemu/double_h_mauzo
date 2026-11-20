@@ -45,6 +45,7 @@ return [
     'admin.sales.index'             => 'sales.list',
     'admin.sales.items'             => 'sales.list',
     'admin.sales.show'              => 'sales.list',
+    'admin.sales.export.*'          => 'sales.list',
     'admin.sales.detail'            => 'sales.list',
     'sales.index'                   => 'sales.list',
     'sales.show'                    => 'sales.list',
@@ -150,4 +151,9 @@ return [
     'distributions.settle'          => 'distributions.settle',
     'distributions.pay'             => 'distributions.settle',
     'distributions.*'               => 'distributions.create',
+
+    // Settings (settings.index just forwards to the first tab you may open)
+    'settings.business*'            => 'settings.business',
+    'settings.payment-methods.*'    => 'settings.payment-methods',
+    'settings.financial-years.*'    => 'settings.financial-years',
 ];

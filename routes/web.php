@@ -4,62 +4,65 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 
 // Auth Controllers
-use App\Http\Controllers\Auth\LoginController;
-use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\Web\Auth\LoginController;
+use App\Http\Controllers\Web\Auth\RegisterController;
 
 // Core Controllers
-use App\Http\Controllers\HomeController;
-use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\UserController;
+use App\Http\Controllers\Web\HomeController;
+use App\Http\Controllers\Web\DashboardController;
+use App\Http\Controllers\Web\UserController;
 
 // Business Controllers
-use App\Http\Controllers\ShopsController;
-use App\Http\Controllers\ProductController;
-use App\Http\Controllers\ProductCategoryController;
-use App\Http\Controllers\UnitController;
-use App\Http\Controllers\BrandController;
+use App\Http\Controllers\Web\ShopsController;
+use App\Http\Controllers\Web\ProductController;
+use App\Http\Controllers\Web\ProductCategoryController;
+use App\Http\Controllers\Web\UnitController;
+use App\Http\Controllers\Web\BrandController;
 
 // Management Controllers
-use App\Http\Controllers\StaffController;
-use App\Http\Controllers\RoleController;
-use App\Http\Controllers\SuperAdminController;
+use App\Http\Controllers\Web\StaffController;
+use App\Http\Controllers\Web\RoleController;
+use App\Http\Controllers\Web\SuperAdminController;
 
 // Transactions & Cart
-use App\Http\Controllers\TransactionController;
-use App\Http\Controllers\CartController;
+use App\Http\Controllers\Web\TransactionController;
+use App\Http\Controllers\Web\CartController;
 
 // Customer & Sales
-use App\Http\Controllers\CustomerController;
-use App\Http\Controllers\SaleController;
+use App\Http\Controllers\Web\CustomerController;
+use App\Http\Controllers\Web\SaleController;
 
 // Expenses
-use App\Http\Controllers\ExpensesController;
-use App\Http\Controllers\FixedExpensesController;
+use App\Http\Controllers\Web\ExpensesController;
+use App\Http\Controllers\Web\FixedExpensesController;
 
 // Purchases & Supplier
-use App\Http\Controllers\PurchasesController;
-use App\Http\Controllers\SupplierController;
+use App\Http\Controllers\Web\PurchasesController;
+use App\Http\Controllers\Web\SupplierController;
 
 // Sale return
-use App\Http\Controllers\SaleReturnController;
+use App\Http\Controllers\Web\SaleReturnController;
 
 // Purchase return
-use App\Http\Controllers\PurchaseReturnController;
+use App\Http\Controllers\Web\PurchaseReturnController;
 
-use App\Http\Controllers\PurchaseInvoiceController;
+use App\Http\Controllers\Web\PurchaseInvoiceController;
 
-use App\Http\Controllers\OrdersController;
+use App\Http\Controllers\Web\OrdersController;
 
-use App\Http\Controllers\FeedbackController;
+use App\Http\Controllers\Web\FeedbackController;
 
-use App\Http\Controllers\SalesRevenueController;
-use App\Http\Controllers\ProcurementController;
-use App\Http\Controllers\ReturnsController;
-use App\Http\Controllers\AdminOverviewController;
-use App\Http\Controllers\StockTransferController;
-use App\Http\Controllers\DistributionController;
-use App\Http\Controllers\StoreController;
-use App\Http\Controllers\SmsController;
+use App\Http\Controllers\Web\SalesRevenueController;
+use App\Http\Controllers\Web\ProcurementController;
+use App\Http\Controllers\Web\ReturnsController;
+use App\Http\Controllers\Web\AdminOverviewController;
+use App\Http\Controllers\Web\StockTransferController;
+use App\Http\Controllers\Web\DistributionController;
+use App\Http\Controllers\Web\SettingsController;
+use App\Http\Controllers\Web\PaymentMethodController;
+use App\Http\Controllers\Web\FinancialYearController;
+use App\Http\Controllers\Web\StoreController;
+use App\Http\Controllers\Web\SmsController;
 
 /*
 |--------------------------------------------------------------------------
@@ -71,7 +74,7 @@ use App\Http\Controllers\SmsController;
 Route::get('/', fn() => redirect()->route('login'));
 
 // Authentication
-Route::middleware('guest:web,staff')->group(function () {
+Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
     Route::post('/login', [LoginController::class, 'login'])->name('login.submit');
 
@@ -82,7 +85,7 @@ Route::middleware('guest:web,staff')->group(function () {
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
 // In-app notifications (admins and staff)
-Route::middleware('auth:web,staff')->prefix('notifications')->name('notifications.')->group(function () {
+Route::middleware('auth')->prefix('notifications')->name('notifications.')->group(function () {
     Route::get('/{id}', [OrdersController::class, 'openNotification'])->name('open');
     Route::post('/read-all', [OrdersController::class, 'readAllNotifications'])->name('readAll');
 });
@@ -190,7 +193,7 @@ Route::middleware(['web', 'auth', 'panel.permission'])->group(function () {
 
     // Redirect /dashboard
     Route::get('/dashboard', function () {
-        if (Auth::guard('staff')->check()) return redirect()->route('staff.dashboard');
+        if (\App\Models\Staff::current()) return redirect()->route('staff.dashboard');
         return redirect()->route('dashboard.admin');
     })->name('dashboard');
 
@@ -414,6 +417,29 @@ Route::prefix('purchases')->name('purchases.')->group(function () {
 
     /*
     |--------------------------------------------------------------------------
+    | Settings — Business Profile, Payment Methods, Financial Years
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('settings')->name('settings.')->group(function () {
+        Route::get('/', [SettingsController::class, 'index'])->name('index');
+        Route::get('/business', [SettingsController::class, 'business'])->name('business');
+        Route::put('/business', [SettingsController::class, 'updateBusiness'])->name('business.update');
+
+        Route::get('/payment-methods', [PaymentMethodController::class, 'index'])->name('payment-methods.index');
+        Route::post('/payment-methods', [PaymentMethodController::class, 'store'])->name('payment-methods.store');
+        Route::put('/payment-methods/{paymentMethod}', [PaymentMethodController::class, 'update'])->name('payment-methods.update');
+        Route::patch('/payment-methods/{paymentMethod}/toggle', [PaymentMethodController::class, 'toggle'])->name('payment-methods.toggle');
+        Route::delete('/payment-methods/{paymentMethod}', [PaymentMethodController::class, 'destroy'])->name('payment-methods.destroy');
+
+        Route::get('/financial-years', [FinancialYearController::class, 'index'])->name('financial-years.index');
+        Route::post('/financial-years', [FinancialYearController::class, 'store'])->name('financial-years.store');
+        Route::put('/financial-years/{financialYear}', [FinancialYearController::class, 'update'])->name('financial-years.update');
+        Route::patch('/financial-years/{financialYear}/current', [FinancialYearController::class, 'makeCurrent'])->name('financial-years.current');
+        Route::delete('/financial-years/{financialYear}', [FinancialYearController::class, 'destroy'])->name('financial-years.destroy');
+    });
+
+    /*
+    |--------------------------------------------------------------------------
     | Customers (Admin view — all shops, credit/debt tracking)
     |--------------------------------------------------------------------------
     */
@@ -470,6 +496,8 @@ Route::prefix('purchases')->name('purchases.')->group(function () {
     */
     Route::prefix('dashboard/admin')->middleware('admin')->group(function () {
         Route::get('/sales', [SalesRevenueController::class, 'sales'])->name('admin.sales.index');
+        Route::get('/sales/export/excel', [SalesRevenueController::class, 'exportSalesExcel'])->name('admin.sales.export.excel');
+        Route::get('/sales/export/pdf', [SalesRevenueController::class, 'exportSalesPdf'])->name('admin.sales.export.pdf');
         Route::get('/sales/{sale}', [SalesRevenueController::class, 'show'])->name('admin.sales.show');
         Route::get('/sale-items', [SalesRevenueController::class, 'items'])->name('admin.sales.items');
         Route::get('/revenue', [SalesRevenueController::class, 'revenue'])->name('admin.revenue');

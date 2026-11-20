@@ -39,7 +39,7 @@
         </label>
     </div><br>
 
-                        <input type="text" id="product-search" class="form-control form-control-sm mb-2" placeholder="Search by name, ID or barcode..."
+                        <input type="text" id="product-search" class="form-control form-control-sm mb-2" placeholder="Search by name, brand, ID or barcode..."
                                data-truncated="{{ $productsTruncated ? 1 : 0 }}">
 
                         @if($productsTruncated)
@@ -78,11 +78,13 @@
                 <div class="col-lg-5">
                     <div class="border rounded p-3 h-100">
                         <h6 class="mb-3">Cart</h6>
-                        <table class="table table-bordered align-middle table-sm">
+                        {{-- Scrolls sideways on narrow screens instead of spilling out of the card. --}}
+                        <div class="table-responsive">
+                        <table class="table table-bordered align-middle table-sm mb-0">
                         <thead class="table-warning">
                             <tr>
                                 <th>Product</th>
-                                <th width="120">Qty</th>
+                                <th class="text-nowrap">Qty</th>
                                 <th>Price</th>
                                 <th width="90">Discount</th>
                                 <th>Total</th>
@@ -96,6 +98,7 @@
                             </tr>
                         </tbody>
                     </table>
+                        </div>
 
                     <div class="text-end mt-3 fs-5 fw-bold">
                         Total: Tsh <span id="cart-total">0.00</span>
@@ -139,12 +142,23 @@
 
                          <div class="form-group mb-3">
                          <label class="font-weight-semibold">Payment Method</label>
-                             <select class="form-control form-control-sm" id="payment-method">
-                            <option value="cash">Cash</option>
-                            <option value="mobile">Mobile</option>
-                            <option value="bank">Bank</option>
-                            <option value="credit">Credit</option>
-                          </select>
+                            {{-- From Settings › Payment Methods. data-category drives the POS rules (cash / mobile / bank / credit). --}}
+                            @php
+                                $posPaymentMethods = \App\Models\PaymentMethod::active()->ordered()->get();
+                                $posPaymentGroups = $posPaymentMethods->groupBy('category');
+                            @endphp
+                            <select class="form-control form-control-sm" id="payment-method">
+                                @foreach(\App\Models\PaymentMethod::CATEGORIES as $category => $categoryLabel)
+                                    @continue(!$posPaymentGroups->has($category))
+                                    <optgroup label="{{ \Illuminate\Support\Str::before($categoryLabel, ' (') }}">
+                                        @foreach($posPaymentGroups[$category] as $method)
+                                            <option value="{{ $method->id }}" data-category="{{ $method->category }}"
+                                                    data-account="{{ $method->accountLine() }}">{{ $method->name }}</option>
+                                        @endforeach
+                                    </optgroup>
+                                @endforeach
+                            </select>
+                            <div class="small text-muted mt-1" id="payment-account" hidden></div>
 
                             </div>
 
@@ -221,31 +235,6 @@
                     </td>
                 </tr>
 
-<tr id="bank-row" style="display:none;">
-    <td class="fw-semibold">Select Bank</td>
-    <td>
-        <select class="form-control form-control-sm" id="bank-name">
-            <option value="">-- Select Bank --</option>
-            <option value="CRDB">CRDB</option>
-            <option value="NMB">NMB</option>
-            <option value="NBC">NBC</option>
-            <option value="Equity">Equity</option>
-        </select>
-    </td>
-</tr>
-
-<tr id="mobile-row" style="display:none;">
-    <td class="fw-semibold">Select Mobile</td>
-    <td>
-        <select class="form-control form-control-sm" id="mobile-name">
-            <option value="">-- Select Mobile --</option>
-            <option value="mpesa">M-Pesa</option>
-            <option value="mixx">Mixx by Yas</option>
-            <option value="airtel">Airtel Money</option>
-            <option value="halopesa">HaloPesa</option>
-        </select>
-    </td>
-</tr>
 
 
                                 </tbody>
@@ -267,8 +256,8 @@
 </div>
 
 <!-- CUSTOMER MODAL -->
-<div class="modal fade" id="addCustomerModal" tabindex="-1" aria-hidden="true" style="margin-top: 200px;">
-    <div class="modal-dialog modal-sm">
+<div class="modal fade" id="addCustomerModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">Add Customer</h5>
@@ -288,14 +277,21 @@
                 @if(!empty($customerStoreShopId))
                     <input type="hidden" name="shop_id" value="{{ $customerStoreShopId }}">
                 @endif
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label>Name</label>
-                        <input type="text" name="name" class="form-control" value="{{ old('name') }}" required>
-                    </div>
-                    <div class="mb-3">
-                        <label>Phone</label>
-                        <input type="text" name="phone" class="form-control" value="{{ old('phone') }}">
+                <div class="modal-body py-3">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label mb-1">Name <span class="text-danger">*</span></label>
+                            <input type="text" name="name" class="form-control" value="{{ old('name') }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label mb-1">Phone</label>
+                            <input type="text" name="phone" class="form-control" value="{{ old('phone') }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label mb-1">Date of Birth</label>
+                            <input type="date" name="date_of_birth" class="form-control" value="{{ old('date_of_birth') }}"
+                                   max="{{ now()->subDay()->toDateString() }}">
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -391,9 +387,11 @@ $(document).ready(function() {
             if (!query) return true;
             const name = String($(this).attr('data-name') || '').toLowerCase();
             const barcode = String($(this).attr('data-barcode') || '').toLowerCase();
+            const brand = String($(this).attr('data-brand') || '');
             const id = String($(this).attr('data-id') || '');
 
-            return name.includes(query) || barcode.includes(query) || id === query;
+            return name.includes(query) || barcode.includes(query) || brand.includes(query)
+                || (brand + ' ' + name).includes(query) || id === query;
         });
 
         $('.product-card').hide();
@@ -530,6 +528,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const cartTotalEl = document.getElementById('cart-total');
     const subTotalEl = document.getElementById('sub-total');
     const grandTotalEl = document.getElementById('summary-grand-total');
+    const headerGrandTotalEl = document.getElementById('grand-total');
     const billDiscountEl = document.getElementById('bill-discount');
     const shippingEl = document.getElementById('shipping');
     const summaryShippingEl = document.getElementById('summary-shipping');
@@ -542,20 +541,62 @@ document.addEventListener('DOMContentLoaded', () => {
     const receivedRow = document.getElementById('received-row');
     const changeRow = document.getElementById('change-row');
     const remainingRow = document.getElementById('remaining-row');
-    const bankRow = document.getElementById('bank-row');
-    const mobileRow = document.getElementById('mobile-row');
+    const paymentAccountEl = document.getElementById('payment-account');
+
+    // The chosen payment method's type: cash | mobile | bank | credit.
+    const paymentCategory = () => paymentMethodEl?.selectedOptions[0]?.dataset.category || 'cash';
+    // Back to the first cash method (the default for every new sale).
+    const selectDefaultPayment = () => {
+        const cash = paymentMethodEl?.querySelector('option[data-category="cash"]');
+        if (cash) paymentMethodEl.value = cash.value;
+    };
+    selectDefaultPayment();
 
     let cart = {};
     let receivedEdited = false; // cashier typed their own "Received" amount
     const stockMap = {};
 
 
+    // --- NO SELLING BELOW THE BUYING PRICE ---
+    // A discount may only eat into the profit: the line can't go below
+    // qty × purchase price. (No purchase price recorded = no limit but 0.)
+    // The server enforces the same rule at checkout.
+    function maxItemDiscount(item) {
+        const lineValue = item.qty * item.price;
+        return item.cost > 0 ? Math.max(0, lineValue - item.qty * item.cost) : lineValue;
+    }
+
+    // Bill discount: the whole sale can't go below the items' total buying price.
+    function maxBillDiscount() {
+        let total = 0, cost = 0;
+        Object.values(cart).forEach(item => {
+            total += item.qty * item.price - item.discount;
+            cost += item.qty * (item.cost || 0);
+        });
+        return Math.max(0, total - cost);
+    }
+
+
+    // Shown the moment a typed discount would sell at a loss. It never shows
+    // the limit (that would give away the buying price to staff), and the box
+    // goes back to its last allowed value rather than to the limit.
+    // One popup at a time, so typing more digits doesn't stack them.
+    function warnDiscountTooHigh() {
+        if (Swal.isVisible()) return;
+        Swal.fire({
+            icon: 'warning',
+            title: 'Discount too high',
+            text: 'This would sell at a loss.',
+            confirmButtonColor: '#3085d6',
+        });
+    }
+
     // --- CART DISPLAY ---
     function updateCartDisplay() {
         if (!cartItemsEl) return;
 
         Object.values(cart).forEach(item => {
-            item.discount = Math.min(Math.max(item.discount || 0, 0), item.qty * item.price);
+            item.discount = Math.min(Math.max(item.discount || 0, 0), maxItemDiscount(item));
         });
 
         cartItemsEl.innerHTML = '';
@@ -610,8 +651,11 @@ document.addEventListener('DOMContentLoaded', () => {
         summaryShippingEl && (summaryShippingEl.textContent = shipping.toFixed(2));
         document.getElementById('bill-discount-value') && (document.getElementById('bill-discount-value').textContent = billDiscount.toFixed(2));
         // A discount can't push the total below zero.
-        grandTotalEl && (grandTotalEl.textContent = Math.max(0, total - billDiscount + shipping).toFixed(2));
-        billDiscountEl && billDiscountEl.classList.toggle('is-invalid', billDiscount > total + shipping);
+        const grandTotal = Math.max(0, total - billDiscount + shipping).toFixed(2);
+        grandTotalEl && (grandTotalEl.textContent = grandTotal);
+        // Same figure in the card header, so the total is visible without scrolling.
+        headerGrandTotalEl && (headerGrandTotalEl.textContent = grandTotal);
+        billDiscountEl && billDiscountEl.classList.toggle('is-invalid', billDiscount > Math.min(total + shipping, maxBillDiscount()));
 
         calculatePaymentEffects();
     }
@@ -625,7 +669,6 @@ document.addEventListener('DOMContentLoaded', () => {
         card.dataset.stockOriginal = card.dataset.stock;
 
         const qtyInput = card.querySelector('.qty-input');
-        const discountInput = card.querySelector('.discount-input');
         const addBtn = card.querySelector('.add-to-cart');
         const productId = card.dataset.id;
         const productName = card.dataset.name;
@@ -653,8 +696,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         addBtn.addEventListener('click', () => {
             const qty = parseInt(qtyInput.value) || 0;
-            const discount = parseFloat(discountInput.value) || 0;
             const price = parseFloat(card.dataset.price) || 0;
+            const cost = parseFloat(card.dataset.cost) || 0;
             const saleType = $('input[name="sale-type"]:checked').val() || 'retail';
 
             if (qty <= 0) {
@@ -666,23 +709,25 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            if (cart[productId]) {
-                const newQty = cart[productId].qty + qty;
-                if (newQty > parseInt(card.dataset.stockOriginal)) {
-                    Swal.fire({ icon: 'warning', title: 'Stock Limit Reached', text: 'Not enough stock for total quantity', confirmButtonColor: '#f39c12' });
-                    return;
-                }
-                cart[productId].qty = newQty;
-                cart[productId].discount += discount;
-                cart[productId].price = price;
-                cart[productId].sale_type = saleType;
-            } else {
-                cart[productId] = { name: productName, qty, price, discount, sale_type: saleType };
+            if (cart[productId] && cart[productId].qty + qty > parseInt(card.dataset.stockOriginal)) {
+                Swal.fire({ icon: 'warning', title: 'Stock Limit Reached', text: 'Not enough stock for total quantity', confirmButtonColor: '#f39c12' });
+                return;
             }
+
+            // Discounts are given in the cart (right side); adding more of an
+            // item keeps the discount it already has there.
+            const inCart = cart[productId];
+            cart[productId] = {
+                name: productName,
+                qty: (inCart?.qty || 0) + qty,
+                price,
+                cost,
+                discount: inCart?.discount || 0,
+                sale_type: saleType,
+            };
 
             stockMap[productId] -= qty;
             qtyInput.value = 0;
-            discountInput.value = 0;
             addBtn.classList.add('d-none');
 
             Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: productName + ' added to cart', showConfirmButton: false, timer: 1500 });
@@ -748,28 +793,43 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!item) return;
 
         const lineValue = item.qty * item.price;
-        let discount = parseFloat(e.target.value) || 0;
-        const tooBig = discount > lineValue;
-        discount = Math.min(Math.max(discount, 0), lineValue);
+        let discount = Math.max(parseFloat(e.target.value) || 0, 0);
+        const max = maxItemDiscount(item);
+
+        // Price left after the discount would be below the buying price:
+        // keep the last allowed discount and say why.
+        if (discount > max) {
+            discount = item.discount;
+            e.target.value = item.discount;
+            warnDiscountTooHigh();
+        }
 
         item.discount = discount;
-        e.target.classList.toggle('is-invalid', tooBig);
         row.querySelector('.item-total').textContent = (lineValue - discount).toFixed(2);
         updateTotals();
     });
 
-    // Leaving the box shows the value actually applied (e.g. capped).
+    // Leaving the box shows the value actually applied (e.g. empty -> 0).
     cartItemsEl?.addEventListener('change', e => {
         if (!e.target.classList.contains('cart-discount')) return;
         const item = cart[e.target.closest('tr').dataset.id];
-        if (item) {
-            e.target.value = item.discount;
-            e.target.classList.remove('is-invalid');
-        }
+        if (item) e.target.value = item.discount;
     });
 
     // --- DISCOUNT & SHIPPING INPUT ---
-    billDiscountEl?.addEventListener('input', updateCartDisplay);
+    // Bill discount is checked as it is typed, like the item discounts.
+    let lastOkBillDiscount = billDiscountEl?.value || '0';
+    billDiscountEl?.addEventListener('input', () => {
+        const max = maxBillDiscount();
+        if ((parseFloat(billDiscountEl.value) || 0) > max) {
+            // The cart may have changed since, so fall back to 0 if needed.
+            billDiscountEl.value = (parseFloat(lastOkBillDiscount) || 0) <= max ? lastOkBillDiscount : '0';
+            warnDiscountTooHigh();
+        } else {
+            lastOkBillDiscount = billDiscountEl.value;
+        }
+        updateCartDisplay();
+    });
     shippingEl?.addEventListener('input', updateCartDisplay);
 
     // --- CLEAR CART ---
@@ -801,14 +861,21 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!paymentMethodEl || !receivedInput) return;
 
         const total = parseFloat(grandTotalEl?.textContent) || 0;
-        const method = paymentMethodEl.value;
+        const method = paymentCategory();
+
+        // Show the account/till number so the cashier can tell the customer where to pay.
+        const account = paymentMethodEl.selectedOptions[0]?.dataset.account || '';
+        if (paymentAccountEl) {
+            paymentAccountEl.textContent = account ? 'Pay to: ' + account : '';
+            paymentAccountEl.hidden = !account;
+        }
 
         if (method === 'cash' && !receivedEdited) {
             receivedInput.value = total.toFixed(2);
         }
         let received = parseFloat(receivedInput.value) || 0;
 
-        [receivedRow, changeRow, remainingRow, bankRow, mobileRow].forEach(el => el && (el.style.display = 'none'));
+        [receivedRow, changeRow, remainingRow].forEach(el => el && (el.style.display = 'none'));
 
         if (method === 'cash') {
             receivedRow && (receivedRow.style.display = '');
@@ -827,22 +894,19 @@ document.addEventListener('DOMContentLoaded', () => {
         if (method === 'credit') {
             if (!customerSelect?.value) {
                 Swal.fire({ icon: 'warning', title: 'Customer Required', text: 'Please select a customer for credit sale', confirmButtonColor: '#3085d6' });
-                paymentMethodEl.value = 'cash';
+                selectDefaultPayment();
                 return calculatePaymentEffects();
             }
             receivedRow && (receivedRow.style.display = '');
             remainingRow && (remainingRow.style.display = '');
             remainingAmountEl && (remainingAmountEl.textContent = Math.max(total - received, 0).toFixed(2));
         }
-
-        if (method === 'mobile') mobileRow && (mobileRow.style.display = '');
-        if (method === 'bank') bankRow && (bankRow.style.display = '');
     }
 
     paymentMethodEl?.addEventListener('change', function () {
         // Cash starts at the full total; credit starts at no deposit.
         receivedEdited = false;
-        if (receivedInput && paymentMethodEl.value !== 'cash') receivedInput.value = 0;
+        if (receivedInput && paymentCategory() !== 'cash') receivedInput.value = 0;
         calculatePaymentEffects();
     });
     receivedInput?.addEventListener('input', function () {
@@ -907,16 +971,15 @@ document.addEventListener('DOMContentLoaded', () => {
     function resetSaleForm() {
         receivedEdited = false;
         if (customerSelect) customerSelect.value = '';
-        if (paymentMethodEl) paymentMethodEl.value = 'cash';
+        selectDefaultPayment();
         if (billDiscountEl) billDiscountEl.value = 0;
         if (shippingEl) shippingEl.value = 0;
-        ['bank-name', 'mobile-name'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
         const saleDate = document.getElementById('sale-date');
         if (saleDate) {
             const d = new Date(), pad = n => String(n).padStart(2, '0');
             saleDate.value = d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); // local date, not UTC
         }
-        document.querySelectorAll('.product-card .qty-input, .product-card .discount-input').forEach(el => { el.value = 0; });
+        document.querySelectorAll('.product-card .qty-input').forEach(el => { el.value = 0; });
         document.querySelectorAll('.product-card .add-to-cart').forEach(el => el.classList.add('d-none'));
     }
 
@@ -927,10 +990,12 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        const paymentMethod = paymentMethodEl?.value || 'cash';
-        const paymentType = paymentMethod === 'bank' ? document.getElementById('bank-name')?.value
-            : paymentMethod === 'mobile' ? document.getElementById('mobile-name')?.value
-            : null;
+        const paymentMethod = paymentCategory();
+        const paymentMethodId = paymentMethodEl?.value || null;
+        if (!paymentMethodId) {
+            Swal.fire({ icon: 'warning', title: 'No payment method', text: 'Add a payment method in Settings › Payment Methods first.', confirmButtonColor: '#831619' });
+            return;
+        }
         const receivedAmount = parseFloat(receivedInput?.value) || 0;
         const grandTotal = parseFloat(grandTotalEl?.textContent) || 0;
         const itemsTotal = parseFloat(subTotalEl?.textContent) || 0;
@@ -958,8 +1023,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 sale_type: item.sale_type || 'retail'
             })),
             customer_id: customerSelect?.value || null,
-            payment_method: paymentMethod,
-            payment_type: paymentType,
+            payment_method_id: paymentMethodId,
             received_amount: receivedAmount,
             bill_discount: parseFloat(billDiscountEl?.value) || 0,
             shipping: parseFloat(shippingEl?.value) || 0,
@@ -983,7 +1047,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            Swal.fire({ icon: 'success', title: 'Sale Completed', text: data.message || 'Sale submitted successfully!', confirmButtonColor: '#3085d6' });
+            const sale = data.data || data;
+
+            const receiptChoice = await Swal.fire({
+                icon: 'success',
+                title: 'Sale Completed',
+                text: data.message || 'Sale submitted successfully!',
+                showDenyButton: true,
+                showCancelButton: false,
+                confirmButtonText: '<i class="fa fa-print me-1"></i> Print Receipt',
+                denyButtonText: 'Not Now',
+                confirmButtonColor: '#198754',
+                denyButtonColor: '#6c757d'
+            });
+
+            if (receiptChoice.isConfirmed) {
+                printThermalReceipt(sale);
+            }
 
             cart = {};
             resetSaleForm();
@@ -993,7 +1073,116 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    updateCartDisplay();
+    // --- RECEIPT PRINTING ---
+    const escapeHtml = (value) => String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    const receiptMoney = (value) => Number(value || 0).toLocaleString('en-TZ', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
+
+    // Receipt header: Settings › Business Profile, plus this shop's name and location.
+    @php
+        $receiptShopLine = trim(($shop->name ?? '') . (($shop->location ?? '') ? ' — ' . $shop->location : ''));
+        $receiptBusiness = [
+            'name' => \App\Models\Setting::businessName(),
+            'shopLine' => strcasecmp($receiptShopLine, \App\Models\Setting::businessName()) === 0 ? '' : $receiptShopLine,
+            'address' => \App\Models\Setting::get('address', ''),
+            'phone' => \App\Models\Setting::get('phone', ''),
+            'tin' => \App\Models\Setting::get('tin', ''),
+            'vrn' => \App\Models\Setting::get('vrn', ''),
+        ];
+    @endphp
+    const receiptBusiness = @json($receiptBusiness);
+
+    function printThermalReceipt(sale) {
+        if (!sale) return;
+
+        const receiptDate = sale.date ? new Date(sale.date) : new Date();
+        const dateText = Number.isNaN(receiptDate.getTime())
+            ? String(sale.date || '')
+            : receiptDate.toLocaleString();
+        const items = Array.isArray(sale.items) ? sale.items : [];
+        const itemRows = items.map(item => `
+            <div class="item-name">${escapeHtml(item.name)}</div>
+            <div class="item-line">
+                <span>${escapeHtml(item.quantity)} x ${receiptMoney(item.price)}</span>
+                <span>${receiptMoney(item.total)}</span>
+            </div>
+            ${Number(item.discount || 0) > 0 ? `<div class="discount-line">Discount: -${receiptMoney(item.discount)}</div>` : ''}
+        `).join('');
+
+        const receiptHtml = `<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Receipt #${escapeHtml(sale.reference || sale.id)}</title>
+<style>
+    @page { size: 80mm auto; margin: 0; }
+    * { box-sizing: border-box; }
+    body { width: 80mm; margin: 0; padding: 4mm 5mm; color: #000; background: #fff; font-family: "Courier New", monospace; font-size: 12px; line-height: 1.35; }
+    .center { text-align: center; }
+    .shop-name { font-size: 17px; font-weight: bold; }
+    .muted { font-size: 10px; }
+    .rule { border-top: 1px dashed #000; margin: 7px 0; }
+    .row, .item-line { display: flex; justify-content: space-between; gap: 8px; }
+    .row span:last-child { text-align: right; white-space: nowrap; }
+    .item-name { font-weight: bold; margin-top: 5px; }
+    .discount-line { text-align: right; font-size: 10px; }
+    .total { font-size: 15px; font-weight: bold; }
+    @media print { html, body { width: 80mm; } }
+</style>
+</head>
+<body>
+    <div class="center shop-name">${escapeHtml(receiptBusiness.name)}</div>
+    ${receiptBusiness.shopLine ? `<div class="center">${escapeHtml(receiptBusiness.shopLine)}</div>` : ''}
+    ${receiptBusiness.address ? `<div class="center muted">${escapeHtml(receiptBusiness.address)}</div>` : ''}
+    ${receiptBusiness.phone ? `<div class="center muted">Tel: ${escapeHtml(receiptBusiness.phone)}</div>` : ''}
+    ${receiptBusiness.tin ? `<div class="center muted">TIN: ${escapeHtml(receiptBusiness.tin)}${receiptBusiness.vrn ? ' · VRN: ' + escapeHtml(receiptBusiness.vrn) : ''}</div>` : ''}
+    <div class="center"><strong>SALES RECEIPT</strong></div>
+    <div class="rule"></div>
+    <div class="row"><span>Receipt</span><span>#${escapeHtml(sale.reference || sale.id)}</span></div>
+    <div class="row"><span>Date</span><span>${escapeHtml(dateText)}</span></div>
+    ${sale.seller?.name ? `<div class="row"><span>Cashier</span><span>${escapeHtml(sale.seller.name)}</span></div>` : ''}
+    ${sale.customer?.name ? `<div class="row"><span>Customer</span><span>${escapeHtml(sale.customer.name)}</span></div>` : ''}
+    <div class="rule"></div>
+    ${itemRows || '<div class="center">No items</div>'}
+    <div class="rule"></div>
+    <div class="row"><span>Subtotal</span><span>Tsh ${receiptMoney(sale.subtotal)}</span></div>
+    ${Number(sale.bill_discount || 0) > 0 ? `<div class="row"><span>Bill discount</span><span>- Tsh ${receiptMoney(sale.bill_discount)}</span></div>` : ''}
+    ${Number(sale.shipping || 0) > 0 ? `<div class="row"><span>Shipping</span><span>Tsh ${receiptMoney(sale.shipping)}</span></div>` : ''}
+    <div class="row total"><span>TOTAL</span><span>Tsh ${receiptMoney(sale.total)}</span></div>
+    <div class="rule"></div>
+    <div class="row"><span>Payment</span><span>${escapeHtml(String(sale.payment_method || '').toUpperCase())}${sale.payment_type ? ' - ' + escapeHtml(sale.payment_type) : ''}</span></div>
+    ${Number(sale.received || 0) > 0 ? `<div class="row"><span>Received</span><span>Tsh ${receiptMoney(sale.received)}</span></div>` : ''}
+    ${Number(sale.change || 0) > 0 ? `<div class="row"><span>Change</span><span>Tsh ${receiptMoney(sale.change)}</span></div>` : ''}
+    ${Number(sale.balance || 0) > 0 ? `<div class="row"><span>Balance due</span><span>Tsh ${receiptMoney(sale.balance)}</span></div>` : ''}
+    <div class="rule"></div>
+    <div class="center"><strong>THANK YOU!</strong></div>
+    <div class="center muted">Please keep this receipt</div>
+</body>
+</html>`;
+
+        const iframe = document.createElement('iframe');
+        iframe.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;';
+        iframe.title = 'Sales receipt';
+        document.body.appendChild(iframe);
+
+        const frameDocument = iframe.contentWindow.document;
+        frameDocument.open();
+        frameDocument.write(receiptHtml);
+        frameDocument.close();
+        iframe.onload = () => {
+            iframe.contentWindow.focus();
+            iframe.contentWindow.print();
+            setTimeout(() => iframe.remove(), 1000);
+        };
+    }
+
 });
 </script>
 
@@ -1029,12 +1218,28 @@ document.addEventListener('DOMContentLoaded', () => {
     color: #fff;
     box-shadow: 0 2px 6px rgba(0,0,0,0.15);
 }
-.qty-control button{
-    width:32px;
+/* − qty + always stay on one line, and the number keeps enough room to be read. */
+.qty-control{
+    flex-wrap:nowrap;
+    width:max-content;
 }
-
+.qty-control button{
+    width:30px;
+    padding-left:0;
+    padding-right:0;
+}
 .cart-qty{
-    max-width:60px;
+    flex:0 0 46px !important;
+    width:46px !important;
+    padding-left:2px;
+    padding-right:2px;
+    -moz-appearance:textfield;
+}
+/* No spinner arrows: they ate the space the number needs (− and + do the job). */
+.cart-qty::-webkit-outer-spin-button,
+.cart-qty::-webkit-inner-spin-button{
+    -webkit-appearance:none;
+    margin:0;
 }
 
 #cart-items tr{

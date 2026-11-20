@@ -4,7 +4,6 @@ namespace Illuminate\Validation;
 
 use Closure;
 use Illuminate\Database\ConnectionResolverInterface;
-use Illuminate\Support\Str;
 
 class DatabasePresenceVerifier implements DatabasePresenceVerifierInterface
 {
@@ -18,7 +17,7 @@ class DatabasePresenceVerifier implements DatabasePresenceVerifierInterface
     /**
      * The database connection to use.
      *
-     * @var string
+     * @var string|null
      */
     protected $connection;
 
@@ -26,7 +25,6 @@ class DatabasePresenceVerifier implements DatabasePresenceVerifierInterface
      * Create a new database presence verifier.
      *
      * @param  \Illuminate\Database\ConnectionResolverInterface  $db
-     * @return void
      */
     public function __construct(ConnectionResolverInterface $db)
     {
@@ -39,7 +37,7 @@ class DatabasePresenceVerifier implements DatabasePresenceVerifierInterface
      * @param  string  $collection
      * @param  string  $column
      * @param  string  $value
-     * @param  int|null  $excludeId
+     * @param  int|string|null  $excludeId
      * @param  string|null  $idColumn
      * @param  array  $extra
      * @return int
@@ -107,7 +105,7 @@ class DatabasePresenceVerifier implements DatabasePresenceVerifierInterface
             $query->whereNull($key);
         } elseif ($extraValue === 'NOT_NULL') {
             $query->whereNotNull($key);
-        } elseif (Str::startsWith($extraValue, '!')) {
+        } elseif (str_starts_with($extraValue, '!')) {
             $query->where($key, '!=', mb_substr($extraValue, 1));
         } else {
             $query->where($key, $extraValue);
@@ -128,7 +126,7 @@ class DatabasePresenceVerifier implements DatabasePresenceVerifierInterface
     /**
      * Set the connection to be used.
      *
-     * @param  string  $connection
+     * @param  string|null  $connection
      * @return void
      */
     public function setConnection($connection)

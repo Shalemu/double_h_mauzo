@@ -13,6 +13,7 @@
         </select>
     </div>
     @isset($from)
+        @include('components.financial_year_picker')
         <div class="col-6 col-md-2">
             <label class="form-label small mb-1">From</label>
             <input type="date" name="from" value="{{ $from->toDateString() }}" class="form-control form-control-sm">

@@ -13,28 +13,14 @@ return [
             'provider' => 'users',
         ],
 
-        'api' => [
-            'driver' => 'token',
-            'provider' => 'users',
-        ],
-
-        // NEW: staff guard
-        'staff' => [
-            'driver' => 'session',
-            'provider' => 'staff',
-        ],
+        // Admins and staff are both in `users` (staff: user_type = 'staff'),
+        // so one session guard serves both. Mobile apps use auth:sanctum.
     ],
 
     'providers' => [
         'users' => [
             'driver' => 'eloquent',
             'model' => App\Models\Users::class,
-        ],
-
-        // NEW: staff provider
-        'staff' => [
-            'driver' => 'eloquent',
-            'model' => App\Models\Staff::class,
         ],
     ],
 

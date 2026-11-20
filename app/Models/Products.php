@@ -64,6 +64,28 @@ class Products extends Model
         return $this->belongsTo(Shops::class, 'shop_id');
     }
 
+    /**
+     * POS product search, shared by the web POS and the mobile API so both
+     * find the same products: name, brand, barcode, "brand name", or id.
+     */
+    public function scopeSearch($query, ?string $term)
+    {
+        $term = trim((string) $term);
+        if ($term === '') {
+            return $query;
+        }
+
+        return $query->where(function ($q) use ($term) {
+            $q->where('name', 'like', '%' . $term . '%')
+              ->orWhere('brand', 'like', '%' . $term . '%')
+              ->orWhere('barcode', 'like', '%' . $term . '%')
+              ->orWhereRaw("CONCAT_WS(' ', brand, name) LIKE ?", ['%' . $term . '%']);
+            if (ctype_digit($term)) {
+                $q->orWhere('id', (int) $term);
+            }
+        });
+    }
+
     protected static function booted()
     {
         // Typing a new brand on a product adds it to the Brands list.

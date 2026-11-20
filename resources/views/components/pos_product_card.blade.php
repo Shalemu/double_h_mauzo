@@ -2,10 +2,12 @@
                                 <div class="card mb-2 product-card"
                                      data-id="{{ $product->id }}"
                                      data-name="{{ strtolower($product->name) }}"
+     data-brand="{{ strtolower($product->brand ?? '') }}"
                                      data-barcode="{{ $product->barcode }}"
                                      data-retail-price="{{ $product->selling_price ?? 0 }}"
                                      data-wholesale-price="{{ $product->wholesale_price ?? 0 }}"
                                      data-price="{{ $product->selling_price ?? 0 }}"
+                                     data-cost="{{ $product->purchase_price ?? 0 }}"
                                      data-stock="{{ $product->quantity ?? 0 }}">
 
                                     <div class="card-body py-2">
@@ -18,14 +20,14 @@
                                                 <small class="text-muted product-price-label">Tsh {{ number_format($product->selling_price ?? 0) }}</small><br>
                                                 <small class="text-muted">Stock: {{ $product->quantity ?? 0 }} | Barcode: {{ $product->barcode ?? 'N/A' }}</small>
                                             </div>
-                                            <div class="col-12 col-sm-3 d-flex align-items-center">
-                                                <button class="btn btn-sm btn-outline-secondary qty-minus">−</button>
-                                                <input type="number" class="form-control form-control-sm mx-1 qty-input" value="0" min="0" style="width:60px;">
-                                                <button class="btn btn-sm btn-outline-secondary qty-plus">+</button>
-                                            </div>
-                                            <div class="col-12 col-sm-3">
-                                                <input type="number" class="form-control form-control-sm discount-input" placeholder="Discount" value="0">
-                                                <button class="btn btn-sm btn-primary mt-1 w-100 add-to-cart d-none">Add to Cart</button>
+                                            {{-- Quantity and Add to Cart share one row; gap keeps them apart. --}}
+                                            <div class="col-12 col-sm-6 d-flex align-items-center gap-3">
+                                                <div class="d-flex align-items-center gap-1 flex-shrink-0">
+                                                    <button class="btn btn-sm btn-outline-secondary qty-minus">−</button>
+                                                    <input type="number" class="form-control form-control-sm qty-input" value="0" min="0" style="width:60px;">
+                                                    <button class="btn btn-sm btn-outline-secondary qty-plus">+</button>
+                                                </div>
+                                                <button class="btn btn-sm btn-primary flex-grow-1 add-to-cart d-none">Add to Cart</button>
                                             </div>
                                         </div>
                                     </div>

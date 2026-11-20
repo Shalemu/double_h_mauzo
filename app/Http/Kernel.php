@@ -37,6 +37,7 @@ class Kernel extends HttpKernel
         ],
 
         'api' => [
+            \App\Http\Middleware\ForceJsonResponse::class, // mobile app always gets JSON
             'throttle:60,1',
             'bindings',
         ],
@@ -61,5 +62,11 @@ class Kernel extends HttpKernel
         'superadmin' => \App\Http\Middleware\SuperAdminMiddleware::class,
         'permission' => \App\Http\Middleware\PermissionMiddleware::class,
         'panel.permission' => \App\Http\Middleware\PanelPermissionMiddleware::class,
+
+        // API tokens (Sanctum). Every token is created with one ability:
+        // 'staff' or 'admin'. abilities:staff = token must have ALL listed;
+        // ability:staff,admin = token needs ANY one of them.
+        'abilities' => \Laravel\Sanctum\Http\Middleware\CheckAbilities::class,
+        'ability' => \Laravel\Sanctum\Http\Middleware\CheckForAnyAbility::class,
     ];
 }

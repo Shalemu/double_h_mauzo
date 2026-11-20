@@ -4,6 +4,7 @@ namespace App\DTO\Sales;
 
 use App\DTO\DataTransferObject;
 use App\Enums\PaymentMethod;
+use App\Models\PaymentMethod as PaymentMethodSetting;
 
 /**
  * A POS sale: who sold it, the cart, and how it was paid.
@@ -24,22 +25,30 @@ class SaleData extends DataTransferObject
         public readonly ?string $paymentType = null,
         public readonly ?int $staffId = null,
         public readonly ?int $adminId = null,
+        // Mobile app's unique id for this sale (stops a retried request
+        // recording it twice). Null for web POS sales.
+        public readonly ?string $clientReference = null,
+        // Settings › Payment Methods entry used (null for older app versions).
+        public readonly ?int $paymentMethodId = null,
     ) {
     }
 
     public static function fromArray(int $shopId, array $data, ?int $staffId = null, ?int $adminId = null): self
     {
+        [$category, $label, $methodId] = PaymentMethodSetting::resolveForSale($data);
+
         return new self(
             shopId: $shopId,
             items: array_map([SaleItemData::class, 'fromArray'], $data['cart'] ?? []),
-            paymentMethod: PaymentMethod::tryFrom((string) $data['payment_method']) ?? PaymentMethod::Cash,
+            paymentMethod: $category,
             received: (float) ($data['received_amount'] ?? 0),
             billDiscount: (float) ($data['bill_discount'] ?? 0),
             shipping: (float) ($data['shipping'] ?? 0),
             customerId: !empty($data['customer_id']) ? (int) $data['customer_id'] : null,
-            paymentType: ($data['payment_type'] ?? null) ?: null,
+            paymentType: $label,
             staffId: $staffId,
             adminId: $adminId,
+            paymentMethodId: $methodId,
         );
     }
 

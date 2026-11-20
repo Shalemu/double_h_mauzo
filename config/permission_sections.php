@@ -9,6 +9,7 @@
 return [
     'Main Menu'       => ['Dashboard'],
     'Administration'  => ['Manage Business', 'Human Resource', 'Reported Issues'],
+    'Configuration'   => ['Settings'],
     'Sales & Revenue' => ['Point of Sale', 'Sales', 'Sales Returns', 'Credit & Customers', 'Revenue', 'Expenses', 'Fixed Expenses'],
     'Procurement'     => ['Order Requests', 'Products', 'Categories, Brands & Units', 'Suppliers', 'Price Manager', 'Purchases', 'Purchase Returns'],
     'Inventory'       => ['Stock Transfers'],
