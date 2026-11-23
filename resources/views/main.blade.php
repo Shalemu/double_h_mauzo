@@ -328,6 +328,8 @@
 @stack('scripts')
 
 @include('components.dashboard_scripts')
+{{-- Every dropdown becomes searchable. --}}
+@include('components.searchable_selects')
 
 </body>
 </html>

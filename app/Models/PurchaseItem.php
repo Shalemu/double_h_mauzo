@@ -23,7 +23,12 @@ class PurchaseItem extends Model
         'purchase_price',
         'selling_price',
         'wholesale_price',
+        'expire_date',
         'total',
+    ];
+
+    protected $casts = [
+        'expire_date' => 'date',
     ];
 
     public function invoice() {

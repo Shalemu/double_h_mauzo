@@ -15,6 +15,12 @@
             ->when($activeShop, fn ($q) => $q->where('shop_id', $activeShop->id))
             ->count()
         : 0;
+    // Purchase orders waiting to be received (Purchases › Receive Orders).
+    $pendingPurchases = (!$isStaff && $adminUser && $adminUser->hasPermission('purchases.receive'))
+        ? \App\Models\PurchaseInvoice::pending()
+            ->when($activeShop, fn ($q) => $q->where('shop_id', $activeShop->id))
+            ->count()
+        : 0;
     $can =fn ($permission) => $staffUser && $staffUser->hasPermission($permission);
 @endphp
 
@@ -120,7 +126,7 @@
             @php
                 // Menu definition lives in config/sidebar.php.
                 $user = $staffUser ?? $adminUser;
-                $badges = ['pending_orders' => $pendingOrders, 'open_issues' => $openIssues];
+                $badges = ['pending_orders' => $pendingOrders, 'open_issues' => $openIssues, 'pending_purchases' => $pendingPurchases];
 
                 $allowed = function (array $item) use ($isStaff, $can, $adminUser) {
                     if (!empty($item['super_user']) && !($adminUser && $adminUser->super_user)) return false;
@@ -168,18 +174,27 @@
                             @php
                                 $groupId = \Illuminate\Support\Str::camel($item['title']) . 'Submenu';
                                 $open = collect($item['children'])->contains($isActive);
+                                // Closed group: show its sub-links' counters on the group itself.
+                                $groupBadge = collect($item['children'])->sum(fn ($c) => isset($c['badge']) ? (int) ($badges[$c['badge']] ?? 0) : 0);
                             @endphp
                             <li class="nav-item mb-1">
                                 <a href="#{{ $groupId }}" class="nav-link d-flex align-items-center px-3 py-2 {{ $open ? 'active' : '' }}"
                                    data-bs-toggle="collapse" role="button" aria-expanded="{{ $open ? 'true' : 'false' }}">
-                                    <i class="nav-icon bi {{ $item['icon'] ?? '' }}"></i><span class="flex-grow-1">{{ $item['title'] }}</span><i class="bi bi-chevron-down"></i>
+                                    <i class="nav-icon bi {{ $item['icon'] ?? '' }}"></i><span class="flex-grow-1">{{ $item['title'] }}</span>
+                                    @if($groupBadge && !$open)<span class="nav-badge me-1" aria-label="{{ $groupBadge }} waiting">{{ $groupBadge }}</span>@endif
+                                    <i class="bi bi-chevron-down"></i>
                                 </a>
                                 <div class="collapse {{ $open ? 'show' : '' }}" id="{{ $groupId }}" data-bs-parent="#sidebarAccordion">
                                     <ul class="nav-submenu">
                                         @foreach($item['children'] as $child)
                                             <li>
-                                                <a href="{{ route($child['route'], $params($child)) }}" class="nav-link d-flex align-items-center py-2 {{ $isActive($child) ? 'active' : '' }}">
+                                                @php $childBadge = isset($child['badge']) ? ($badges[$child['badge']] ?: null) : null; @endphp
+                                                <a href="{{ route($child['route'], $params($child)) }}" class="nav-link d-flex align-items-center py-2 {{ $isActive($child) ? 'active' : '' }}"
+                                                   @if($isActive($child)) aria-current="page" @endif>
                                                     <span>{{ $child['title'] }}</span>
+                                                    @if($childBadge)
+                                                        <span class="nav-badge" aria-label="{{ $childBadge }} waiting">{{ $childBadge }}</span>
+                                                    @endif
                                                 </a>
                                             </li>
                                         @endforeach

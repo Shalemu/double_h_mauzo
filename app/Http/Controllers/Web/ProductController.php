@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Products;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use App\Models\ProductCategory;
 use App\Models\Unit;
 use App\Actions\Products\CreateProduct;
@@ -203,6 +204,11 @@ public function create()
      */
 public function store(Request $request, CreateProduct $createProduct)
 {
+    // Add Product page: a list of products saved together.
+    if (is_array($request->input('products'))) {
+        return $this->storeMany($request, $createProduct);
+    }
+
     $request->validate([
         'name' => 'required|string|max:255',
         'unit_id' => 'required|integer',
@@ -235,6 +241,8 @@ public function store(Request $request, CreateProduct $createProduct)
         return back()->withInput()->with('error', 'This user has no shop assigned.');
     }
 
+    Products::ensureBarcodeFree($shopId, $request->barcode);
+
     $product = $createProduct->execute(ProductData::fromArray((int) $shopId, $request->all(), $request->file('image'), $admin->id));
 
     if ($request->expectsJson()) {
@@ -246,6 +254,105 @@ public function store(Request $request, CreateProduct $createProduct)
         ->with('success', "Product \"{$product->name}\" created successfully.");
 }
 
+
+/**
+ * Add Product page: every product on the list is created in one go (all or
+ * none). Shop and invoice number are shared; each row has its own photo,
+ * stored under the row's own key (rows can be removed, leaving gaps).
+ */
+private function storeMany(Request $request, CreateProduct $createProduct)
+{
+    $request->validate([
+        'invoice_number' => 'nullable|string|max:100',
+        'products' => 'required|array|min:1|max:200',
+        'products.*.name' => 'required|string|max:255',
+        'products.*.unit_id' => 'required|integer|exists:units,id',
+        'products.*.category_id' => 'nullable|integer',
+        'products.*.brand' => 'nullable|string|max:255',
+        'products.*.barcode' => 'nullable|string|max:100',
+        'products.*.size' => 'nullable|string|max:100',
+        'products.*.color' => 'nullable|string|max:100',
+        'products.*.purchase_price' => 'required|numeric|min:0',
+        'products.*.selling_price' => 'nullable|numeric|min:0',
+        'products.*.wholesale_price' => 'nullable|numeric|min:0',
+        'products.*.quantity' => 'nullable|integer|min:0',
+        'products.*.min_quantity' => 'nullable|integer|min:0',
+        'products.*.expire_date' => 'nullable|date',
+        'products.*.image' => 'nullable|image|max:2048',
+    ], [
+        'products.required' => 'Add at least one product to the list.',
+        'products.*.name.required' => 'Product :position: enter the name.',
+        'products.*.unit_id.required' => 'Product :position: choose a unit.',
+        'products.*.purchase_price.required' => 'Product :position: enter the purchasing price.',
+        'products.*.image.max' => 'Product :position: the photo must be 2 MB or smaller.',
+    ]);
+
+    // Same shop rules as a single product.
+    $admin = Auth::user();
+    $activeShopId = session('active_shop_id');
+    if ($admin->isAdminTier() && $activeShopId) {
+        $shopId = $activeShopId;
+    } elseif ($admin->isAdminTier()) {
+        $request->validate(['shop_id' => 'required|exists:shops,id'], ['shop_id.required' => 'Choose the shop or store.']);
+        $shopId = $request->shop_id;
+    } elseif ($admin->shop) {
+        $shopId = $admin->shop->id;
+    } else {
+        return back()->withInput()->with('error', 'This user has no shop assigned.');
+    }
+
+    $rows = $request->input('products');
+
+    // The same product (name + brand + size + colour) twice on the list, or already in the shop.
+    $identity = fn ($row) => implode('|', array_map(fn ($f) => mb_strtolower(trim((string) ($row[$f] ?? ''))), ['name', 'brand', 'size', 'color']));
+    $keys = array_map($identity, $rows);
+    if (count($keys) !== count(array_unique($keys))) {
+        return back()->withInput()->with('error', 'The same product is on the list twice. Remove one of them.');
+    }
+    foreach ($rows as $row) {
+        $exists = Products::where('shop_id', $shopId)
+            ->whereRaw('LOWER(TRIM(name)) = ?', [mb_strtolower(trim($row['name']))])
+            ->whereRaw("LOWER(TRIM(COALESCE(brand, ''))) = ?", [mb_strtolower(trim((string) ($row['brand'] ?? '')))])
+            ->whereRaw("LOWER(TRIM(COALESCE(size, ''))) = ?", [mb_strtolower(trim((string) ($row['size'] ?? '')))])
+            ->whereRaw("LOWER(TRIM(COALESCE(color, ''))) = ?", [mb_strtolower(trim((string) ($row['color'] ?? '')))])
+            ->exists();
+        if ($exists) {
+            return back()->withInput()->with('error', "\"{$row['name']}\" is already in this shop (same name, brand, size and colour).");
+        }
+    }
+
+    // A barcode belongs to one product per shop.
+    $barcodes = array_filter(array_map(fn ($row) => trim((string) ($row['barcode'] ?? '')), $rows));
+    if (count($barcodes) !== count(array_unique($barcodes))) {
+        $repeated = array_unique(array_diff_assoc($barcodes, array_unique($barcodes)));
+        return back()->withInput()->with('error', 'Barcode ' . implode(', ', $repeated) . ' is on more than one product. Each product needs its own barcode.');
+    }
+    foreach ($barcodes as $key => $barcode) {
+        if ($owner = Products::barcodeOwner($shopId, $barcode)) {
+            return back()->withInput()->with('error', "Barcode {$barcode} (\"{$rows[$key]['name']}\") is already used by \"{$owner->name}\" in this shop. Each product needs its own barcode.");
+        }
+    }
+
+    $created = DB::transaction(function () use ($request, $rows, $shopId, $admin, $createProduct) {
+        $names = [];
+        foreach ($rows as $key => $row) {
+            $row['invoice_number'] = $request->invoice_number;
+            // Blank fields: leave them out so the column defaults apply (e.g. quantity 0).
+            $row = array_filter($row, fn ($value) => $value !== null && $value !== '');
+            $product = $createProduct->execute(ProductData::fromArray(
+                (int) $shopId, $row, $request->file("products.{$key}.image"), $admin->id
+            ));
+            $names[] = $product->name;
+        }
+        return $names;
+    });
+
+    $count = count($created);
+
+    return redirect()->route('products.index')->with('success', $count === 1
+        ? "Product \"{$created[0]}\" created successfully."
+        : "{$count} products created successfully.");
+}
 
 public function show($id)
 {
@@ -285,6 +392,8 @@ public function update(Request $request, $id)
         'image' => 'nullable|image|max:2048',
         'shop_id' => 'nullable|exists:shops,id',
     ]);
+
+    Products::ensureBarcodeFree($request->shop_id ?: $product->shop_id, $request->barcode, $product->id);
 
     $data = $request->all();
 
