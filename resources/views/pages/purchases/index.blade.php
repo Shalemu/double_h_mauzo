@@ -8,9 +8,17 @@
                 Purchases Report for {{ $shop->name ?? 'Shop' }}
             </h5>
 
-            <button id="show-add-purchase" class="btn btn-primary btn-sm">
-                + New Purchase Order
-            </button>
+            <div class="d-flex flex-wrap gap-2">
+                <a href="{{ route('purchases.create', ['shop' => $shop->id ?? null]) }}" class="btn btn-primary btn-sm">
+                    <i class="bi bi-cart-plus"></i> New Purchase Order
+                </a>
+                <a href="{{ route('purchases.new_product', ['shop' => $shop->id ?? null]) }}" class="btn btn-info btn-sm">
+                    <i class="bi bi-plus-circle"></i> New Item Purchase
+                </a>
+                <a href="{{ route('purchases.receiving', ['shop' => $shop->id ?? null]) }}" class="btn btn-success btn-sm">
+                    <i class="bi bi-box-arrow-in-down"></i> Receive Orders
+                </a>
+            </div>
         </div>
 
         <div class="card-body">
@@ -20,12 +28,6 @@
                 <input type="text" id="purchases-table-search" class="form-control form-control-sm"
                        placeholder="Search date..." style="width:250px;">
             </div>
-
-            <!-- AJAX FORM -->
-            <div id="add-purchase-container" style="display:none;"></div>
-
-            <!-- NEW PRODUCT FORM -->
-            <div id="newProductContainer" style="display:none;"></div>
 
             <!-- TABLE -->
             <div id="purchases-table-container">

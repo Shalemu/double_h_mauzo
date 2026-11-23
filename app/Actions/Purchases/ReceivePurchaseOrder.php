@@ -6,6 +6,7 @@ use App\Enums\PaymentType;
 use App\Models\CreditPayment;
 use App\Models\Products;
 use App\Models\PurchaseInvoice;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -19,7 +20,7 @@ use Illuminate\Validation\ValidationException;
 class ReceivePurchaseOrder
 {
     /**
-     * @param array<int, array{quantity: int|float, purchase_price: float, selling_price?: ?float, wholesale_price?: ?float}> $lines
+     * @param array<int, array{quantity: int|float, purchase_price: float, selling_price?: ?float, wholesale_price?: ?float, min_quantity?: ?int, expire_date?: ?string}> $lines
      *        keyed by purchase_items.id
      */
     public function execute(PurchaseInvoice $order, array $lines, PaymentType $paymentType, float $amountPaid, ?int $receivedBy): PurchaseInvoice
@@ -44,23 +45,44 @@ class ReceivePurchaseOrder
                 $price = (float) $line['purchase_price'];
                 $selling = self::price($line['selling_price'] ?? null);
                 $wholesale = self::price($line['wholesale_price'] ?? null);
+                $minQuantity = isset($line['min_quantity']) && $line['min_quantity'] !== '' ? (int) $line['min_quantity'] : null;
+                $expiry = !empty($line['expire_date']) ? Carbon::parse($line['expire_date'])->startOfDay() : null;
 
                 $item->update([
                     'quantity' => $quantity,
                     'purchase_price' => $price,
                     'selling_price' => $selling,
                     'wholesale_price' => $wholesale,
+                    'expire_date' => $quantity > 0 ? $expiry : null,
                     'total' => $quantity * $price,
                 ]);
                 $total += $quantity * $price;
                 $received += $quantity;
 
+                $product = Products::lockForUpdate()->findOrFail($item->product_id);
+
+                // Min stock is a product setting: it applies even if this line didn't arrive.
+                if ($minQuantity !== null) {
+                    $product->min_quantity = $minQuantity;
+                }
+
                 if ($quantity <= 0) {
-                    continue; // Nothing arrived on this line: stock and prices stay as they are.
+                    $product->save();
+                    continue; // Nothing arrived on this line: stock, prices and expiry stay as they are.
+                }
+
+                // Expiry: the product shows the earliest expiry among the stock it holds.
+                // Older stock still on the shelf that expires sooner keeps its date;
+                // otherwise (no stock left, no date, or it expires later) the new one applies.
+                if ($expiry) {
+                    $current = $product->expire_date ? Carbon::parse($product->expire_date)->startOfDay() : null;
+                    $olderStockExpiresFirst = $product->quantity > 0 && $current && $current->lt($expiry) && $current->gte(now()->startOfDay());
+                    if (!$olderStockExpiresFirst) {
+                        $product->expire_date = $expiry->toDateString();
+                    }
                 }
 
                 // Stock goes up; the confirmed buying price (and any new selling prices) apply.
-                $product = Products::lockForUpdate()->findOrFail($item->product_id);
                 $product->quantity += $quantity;
                 $product->purchase_price = $price;
                 if ($selling !== null) {

@@ -86,6 +86,36 @@ class Products extends Model
         });
     }
 
+    /**
+     * A barcode belongs to one product per shop (scanning it must find exactly
+     * one). The same barcode in another shop is fine: that's the same product's
+     * copy there, and stock transfers match on it.
+     *
+     * @return static|null the product in $shopId that already has this barcode
+     */
+    public static function barcodeOwner($shopId, ?string $barcode, $ignoreId = null): ?self
+    {
+        $barcode = trim((string) $barcode);
+        if ($barcode === '' || !$shopId) {
+            return null;
+        }
+
+        return static::where('shop_id', $shopId)
+            ->where('barcode', $barcode)
+            ->when($ignoreId, fn ($q) => $q->whereKeyNot($ignoreId))
+            ->first(['id', 'name', 'barcode']);
+    }
+
+    /** Throws a validation error on `$field` when the barcode is taken in this shop. */
+    public static function ensureBarcodeFree($shopId, ?string $barcode, $ignoreId = null, string $field = 'barcode'): void
+    {
+        if ($owner = static::barcodeOwner($shopId, $barcode, $ignoreId)) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                $field => "Barcode {$owner->barcode} is already used by \"{$owner->name}\" in this shop. Each product needs its own barcode.",
+            ]);
+        }
+    }
+
     protected static function booted()
     {
         // Typing a new brand on a product adds it to the Brands list.

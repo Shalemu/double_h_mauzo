@@ -19,7 +19,8 @@
 |   patterns    Route name pattern(s) that highlight the item (default: route).
 |   params      Route parameters, as attribute names of the signed-in user
 |               (e.g. ['shop_id']).
-|   badge       Counter key: 'pending_orders' or 'open_issues'.
+|   badge       Counter key: 'pending_orders', 'open_issues' or 'pending_purchases'
+|               (also on sub-links).
 |   permission  Staff: permission(s) required, any one is enough (default: none).
 |               Admin: defaults to the route's entry in config/panel_routes.php.
 |   super_user  true = only super users see it.
@@ -71,8 +72,19 @@ return [
         [
             'title' => 'Procurement',
             'items' => [
-                ['title' => 'Purchases', 'route' => 'purchases.index', 'icon' => 'bi-cart-check', 'patterns' => 'purchases.*'],
-                ['title' => 'Purchase Returns', 'route' => 'returns.purchases', 'icon' => 'bi-box-arrow-left', 'patterns' => ['returns.purchases', 'admin.purchase_returns.detail']],
+                [
+                    'title' => 'Purchases',
+                    'icon' => 'bi-cart-check',
+                    'children' => [
+                        ['title' => 'Purchase List', 'route' => 'purchases.index', 'patterns' => [
+                            'purchases.index', 'purchases.detail', 'purchases.history', 'purchases.print', 'purchases.invoice_*',
+                        ]],
+                        ['title' => 'New Purchase Order', 'route' => 'purchases.create'],
+                        ['title' => 'New Item Purchase', 'route' => 'purchases.new_product'],
+                        ['title' => 'Receive Orders', 'route' => 'purchases.receiving', 'patterns' => ['purchases.receiving', 'purchases.receive'], 'badge' => 'pending_purchases'],
+                        ['title' => 'Purchase Returns', 'route' => 'returns.purchases', 'patterns' => ['returns.purchases*', 'admin.purchase_returns.detail']],
+                    ],
+                ],
                 ['title' => 'Suppliers', 'route' => 'suppliers.index', 'icon' => 'bi-truck', 'patterns' => 'suppliers.*'],
                 ['title' => 'Supplier Products', 'route' => 'procurement.supplierProducts', 'icon' => 'bi-diagram-3'],
                 ['title' => 'Price Manager', 'route' => 'procurement.prices', 'icon' => 'bi-tags', 'patterns' => 'procurement.prices*'],

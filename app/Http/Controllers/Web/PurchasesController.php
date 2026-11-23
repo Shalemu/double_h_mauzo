@@ -11,6 +11,7 @@ use App\Models\Shops;
 use App\Models\ProductCategory;
 use App\Models\Units;
 use App\Models\PurchaseInvoice;
+use App\Models\SupplierProduct;
 use App\Actions\Purchases\EmailInvoiceToSupplier;
 use App\Actions\Purchases\PaySupplierCredit;
 use App\Actions\Purchases\PlacePurchaseOrder;
@@ -24,11 +25,12 @@ use Carbon\Carbon;
 class PurchasesController extends Controller
 {
     /**
-     * Show form to create a purchase for existing products
+     * Purchases › New Purchase Order: order existing products from a supplier.
+     * ?shop= preselects the shop (e.g. coming from a shop's page).
      */
-    public function create()
+    public function create(Request $request)
     {
-        $activeShopId = session('active_shop_id');
+        $activeShopId = $request->query('shop') ?: session('active_shop_id');
 
         $products = Products::when($activeShopId, fn($q) => $q->where('shop_id', $activeShopId))
             ->orderByDesc('quantity')
@@ -41,7 +43,7 @@ class PurchasesController extends Controller
         $units = Units::all();
         $activeShopIdForView = $activeShopId;
 
-        return view('pages.purchases.create', compact(
+        return view('pages.purchases.create_page', compact(
             'products', 'suppliers', 'shops', 'categories', 'units', 'activeShopIdForView'
         ));
     }
@@ -67,18 +69,96 @@ class PurchasesController extends Controller
     }
 
     /**
-     * Show form to create a new product and purchase it
+     * New Purchase Order: find a product in the shop by its barcode (scanned
+     * or typed), with everything the item row needs. When a supplier is
+     * chosen, their price is used if the product is assigned to them.
      */
-    public function newProduct()
+    public function productByBarcode(Request $request)
     {
-        $suppliers = Supplier::all();
-        $shops = Shops::all();
-        $categories = ProductCategory::all();
-        $units = Units::all();
+        $request->validate([
+            'code' => 'required|string|max:100',
+            'shop' => 'required|integer',
+            'supplier' => 'nullable|integer',
+        ], ['shop.required' => 'Choose the shop first.']);
 
-        return view('pages.purchases.new_product', compact(
-            'units', 'categories', 'shops', 'suppliers'
+        $product = Products::with('unit:id,name,short_name')
+            ->where('shop_id', $request->shop)
+            ->where('barcode', trim($request->code))
+            ->first();
+
+        if (!$product) {
+            return response()->json([
+                'message' => 'No product with barcode ' . trim($request->code) . ' in this shop. If it is new, use New Item Purchase.',
+            ], 404);
+        }
+
+        $assignment = $request->supplier
+            ? SupplierProduct::where('supplier_id', $request->supplier)->where('product_id', $product->id)->first()
+            : null;
+
+        // When it was last received, and at what price.
+        $last = \App\Models\PurchaseItem::where('product_id', $product->id)
+            ->where('quantity', '>', 0)
+            ->latest('id')
+            ->first(['purchase_price', 'created_at']);
+
+        return response()->json([
+            'id'              => $product->id,
+            'name'            => $product->name,
+            'barcode'         => $product->barcode,
+            'unit'            => $product->unit->short_name ?? $product->unit->name ?? null,
+            'quantity'        => (int) $product->quantity,
+            'min_quantity'    => (int) $product->min_quantity,
+            'purchase_price'  => (float) $product->purchase_price,
+            'selling_price'   => (float) $product->selling_price,
+            'wholesale_price' => (float) $product->wholesale_price,
+            'supplier_price'  => $assignment ? (float) $assignment->supplier_price : null,
+            'assigned'        => (bool) $assignment,
+            'last_price'      => $last ? (float) $last->purchase_price : null,
+            'last_date'       => $last ? $last->created_at->format('d M Y') : null,
+        ]);
+    }
+
+    /**
+     * Purchases › New Item Purchase: products that aren't in the system yet,
+     * bought from one supplier. "Add item" repeats a row per product.
+     */
+    public function newProduct(Request $request)
+    {
+        $suppliers = Supplier::orderBy('name')->get();
+        $shops = Shops::orderBy('name')->get();
+        $categories = ProductCategory::whereNull('parent_id')->orderBy('name')->get();
+        $units = Units::orderBy('name')->get();
+        $activeShopId = $request->query('shop') ?: session('active_shop_id');
+
+        return view('pages.purchases.new_items', compact(
+            'units', 'categories', 'shops', 'suppliers', 'activeShopId'
         ));
+    }
+
+    /**
+     * Purchases › Receive Orders: every order still waiting for delivery,
+     * across all shops, ready to be received.
+     */
+    public function receiving(Request $request)
+    {
+        $shopId = $request->has('shop') ? $request->query('shop') : session('active_shop_id');
+        $supplierId = $request->query('supplier');
+
+        $orders = PurchaseInvoice::pending()
+            ->with('supplier', 'shop')
+            ->withCount('items')
+            ->withSum('items as ordered_units', 'ordered_quantity')
+            ->when($shopId, fn ($q) => $q->where('shop_id', $shopId))
+            ->when($supplierId, fn ($q) => $q->where('supplier_id', $supplierId))
+            ->oldest('ordered_at')
+            ->paginate(20)
+            ->withQueryString();
+
+        $shops = Shops::orderBy('name')->get(['id', 'name']);
+        $suppliers = Supplier::orderBy('name')->get(['id', 'name']);
+
+        return view('pages.purchases.receiving', compact('orders', 'shops', 'suppliers', 'shopId', 'supplierId'));
     }
 
     /**
@@ -144,66 +224,120 @@ class PurchasesController extends Controller
     }
 
     /**
-     * Create a new product and place a purchase order for it
+     * New Item Purchase: create each new product in the chosen shop, assign it
+     * to the supplier (Supplier Products, at the buying price), and place one
+     * purchase order for all of them. Stock comes in when the order is received.
      */
-    public function storeNewProduct(Request $request, PlacePurchaseOrder $placeOrder)
+    public function storeNewProduct(Request $request, PlacePurchaseOrder $placeOrder, EmailInvoiceToSupplier $emailInvoice)
     {
         $request->validate([
             'shop_id' => 'required|exists:shops,id',
             'supplier_id' => 'required|exists:suppliers,id',
             'payment_type' => 'required|in:cash,credit',
-            'name' => 'required|string|max:255',
-            'unit_id' => 'required|exists:units,id',
-            'quantity' => 'required|numeric|min:1',
-            'purchase_price' => 'required|numeric|min:0',
-            'selling_price' => 'nullable|numeric|min:0',
-            'wholesale_price' => 'nullable|numeric|min:0',
-            'category_id' => 'nullable|exists:product_categories,id',
             'amount_paid' => 'nullable|numeric|min:0',
-            'image' => 'nullable|image|max:2048',
+            'invoice_number' => 'nullable|string|max:100',
+            'items' => 'required|array|min:1|max:100',
+            'items.*.name' => 'required|string|max:255',
+            'items.*.category_id' => 'nullable|exists:product_categories,id',
+            'items.*.unit_id' => 'required|exists:units,id',
+            'items.*.quantity' => 'required|integer|min:1',
+            'items.*.purchase_price' => 'required|numeric|min:0',
+            'items.*.selling_price' => 'nullable|numeric|min:0',
+            'items.*.wholesale_price' => 'nullable|numeric|min:0',
+            'items.*.barcode' => 'nullable|string|max:100',
+            'items.*.image' => 'nullable|image|max:2048',
+        ], [
+            'items.required' => 'Add at least one item.',
+            'items.*.name.required' => 'Item :position: enter the product name.',
+            'items.*.unit_id.required' => 'Item :position: choose a unit.',
+            'items.*.quantity.required' => 'Item :position: enter the quantity.',
+            'items.*.quantity.min' => 'Item :position: the quantity must be at least 1.',
+            'items.*.purchase_price.required' => 'Item :position: enter the buying price.',
+            'items.*.image.max' => 'Item :position: the photo must be 2 MB or smaller.',
         ]);
 
-        [$invoice, $product] = DB::transaction(function () use ($request, $recordPurchase) {
-            // The new product belongs to the shop it is bought into (it was being created without a shop).
-            $product = Products::create([
-                'name' => $request->name,
-                'shop_id' => $request->shop_id,
-                'category_id' => $request->category_id,
-                'unit_id' => $request->unit_id,
-                'purchase_price' => $request->purchase_price,
-                'selling_price' => $request->selling_price ?? 0,
-                'wholesale_price' => $request->wholesale_price ?? 0,
-                'quantity' => 0,
-                'image' => $request->file('image')
-                    ? $request->file('image')->store('products', 'public')
-                    : null,
-                'admin_id' => auth()->id(),
-            ]);
+        // Keep the form's own keys (rows can be removed, leaving gaps like 0, 2, 5):
+        // each row's photo is found under the same key.
+        $items = $request->input('items');
 
-            // Same as an ordinary purchase: a pending order, stocked when received.
-            $invoice = $placeOrder->execute(PurchaseData::fromArray([
+        // The same name twice on one order, or a product this shop already has, is a mistake.
+        $names = array_map(fn ($item) => mb_strtolower(trim($item['name'])), $items);
+        if (count($names) !== count(array_unique($names))) {
+            return back()->withInput()->with('error', 'The same product name is on the order twice. Combine them into one row.');
+        }
+        $existing = Products::where('shop_id', $request->shop_id)
+            ->whereIn(DB::raw('LOWER(TRIM(name))'), $names)
+            ->pluck('name');
+        if ($existing->isNotEmpty()) {
+            return back()->withInput()->with('error', 'Already in this shop: ' . $existing->implode(', ')
+                . '. Order existing products from New Purchase Order instead.');
+        }
+
+        // A barcode belongs to one product per shop: not twice on this order, not already in the shop.
+        $barcodes = array_filter(array_map(fn ($item) => trim((string) ($item['barcode'] ?? '')), $items));
+        if (count($barcodes) !== count(array_unique($barcodes))) {
+            $repeated = array_unique(array_diff_assoc($barcodes, array_unique($barcodes)));
+            return back()->withInput()->with('error', 'Barcode ' . implode(', ', $repeated) . ' is on more than one item. Each product needs its own barcode.');
+        }
+        foreach ($barcodes as $key => $barcode) {
+            if ($owner = Products::barcodeOwner($request->shop_id, $barcode)) {
+                return back()->withInput()->with('error', "Barcode {$barcode} (\"{$items[$key]['name']}\") is already used by \"{$owner->name}\" in this shop. Each product needs its own barcode.");
+            }
+        }
+
+        $invoice = DB::transaction(function () use ($request, $items, $placeOrder) {
+            $lines = [];
+
+            foreach ($items as $key => $item) {
+                $image = $request->file("items.{$key}.image");
+                $product = Products::create([
+                    'name' => trim($item['name']),
+                    'shop_id' => $request->shop_id,
+                    'category_id' => $item['category_id'] ?? null,
+                    'unit_id' => $item['unit_id'],
+                    'barcode' => ($item['barcode'] ?? null) ?: null,
+                    'purchase_price' => $item['purchase_price'],
+                    'selling_price' => $item['selling_price'] ?? 0,
+                    'wholesale_price' => $item['wholesale_price'] ?? 0,
+                    'quantity' => 0,
+                    'image' => $image ? $image->store('products', 'public') : null,
+                    'admin_id' => auth()->id(),
+                ]);
+
+                // Bought from this supplier → it is one of the supplier's products.
+                SupplierProduct::updateOrCreate(
+                    ['supplier_id' => $request->supplier_id, 'product_id' => $product->id],
+                    ['supplier_price' => $item['purchase_price'], 'assigned_by' => auth()->id()]
+                );
+
+                $lines[] = [
+                    'product_id' => $product->id,
+                    'quantity' => $item['quantity'],
+                    'price' => $item['purchase_price'],
+                    'selling_price' => $item['selling_price'] ?? null,
+                    'wholesale_price' => $item['wholesale_price'] ?? null,
+                ];
+            }
+
+            // Same as an ordinary purchase: one pending order, stocked when received.
+            return $placeOrder->execute(PurchaseData::fromArray([
                 'shop_id' => $request->shop_id,
                 'supplier_id' => $request->supplier_id,
                 'payment_type' => $request->payment_type,
                 'amount_paid' => $request->amount_paid,
-                'items' => [[
-                    'product_id' => $product->id,
-                    'quantity' => $request->quantity,
-                    'price' => $request->purchase_price,
-                    'selling_price' => $request->selling_price,
-                    'wholesale_price' => $request->wholesale_price,
-                ]],
+                'invoice_number' => $request->invoice_number,
+                'items' => $lines,
             ]));
-
-            return [$invoice, $product->fresh()];
         });
 
-        return response()->json([
-            'success' => 'New product created and purchase order placed. Receive it when the goods arrive.',
-            'invoice_id' => $invoice->id,
-            'product_id' => $product->id,
-            'product_name' => $product->name,
-        ]);
+        [$emailed, $emailNote] = $emailInvoice->execute($invoice);
+        $count = count($items);
+
+        return redirect()->route('purchases.new_product')
+            ->with('success', "{$count} new product(s) created, assigned to the supplier, and ordered. Receive the order when the goods arrive. {$emailNote}")
+            ->with('purchase_invoice_id', $invoice->id)
+            ->with('purchase_invoice_emailed', $emailed)
+            ->with('purchase_invoice_email_note', $emailNote);
     }
 
     /**
@@ -278,6 +412,12 @@ class PurchasesController extends Controller
             'lines.*.purchase_price' => 'required|numeric|min:0',
             'lines.*.selling_price' => 'nullable|numeric|min:0',
             'lines.*.wholesale_price' => 'nullable|numeric|min:0',
+            'lines.*.min_quantity' => 'nullable|integer|min:0',
+            'lines.*.expire_date' => 'nullable|date|after_or_equal:today',
+        ], [
+            'lines.*.min_quantity.min' => 'Min stock can\'t be negative.',
+            'lines.*.expire_date.after_or_equal' => 'An expiry date is already past. Goods that have expired can\'t be received into stock.',
+            'lines.*.expire_date.date' => 'Enter a valid expiry date.',
         ]);
 
         try {

@@ -156,5 +156,6 @@
     @include('components.dashboard_scripts')
 
     @include('pages._dashboard_scripts')
+    @include('components.searchable_selects')
 </body>
 </html>
