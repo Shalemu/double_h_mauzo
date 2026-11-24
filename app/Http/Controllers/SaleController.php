@@ -146,6 +146,14 @@ public function detail($shopId, $date)
         $staff = $this->staff;
         $admin = null;
 
+        // A distributor out on a trip sells only what they carry (the trip checkout), not shop stock.
+        if ($staff && ($trip = \App\Models\Distribution::openFor($staff->id))) {
+            return response()->json([
+                'success' => false,
+                'message' => "You are out on trip #{$trip->id}: sell from your trip on the POS. Shop stock opens again once the trip is settled.",
+            ], 422);
+        }
+
         if (!$staff) {
             // No staff session — this must be an admin-tier account
             // selling directly from the admin POS.

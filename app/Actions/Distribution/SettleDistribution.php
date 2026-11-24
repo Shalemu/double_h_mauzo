@@ -14,8 +14,13 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 /**
- * The distributor is back: returned units go back into the store, the rest
- * is recorded as a sale from the store, and unpaid cash stays as their balance.
+ * The distributor is back (confirmed by a supervisor):
+ *  - units sold on the POS during the trip are already sales;
+ *  - returned units go back into the store;
+ *  - units neither sold on the POS nor returned are recorded as one sale now;
+ *  - cash: the distributor should hand in what they collected on POS sales
+ *    plus the value of the unrecorded units; what they don't hand in stays as
+ *    their balance. (Credit given on POS sales is the customer's debt, not theirs.)
  */
 class SettleDistribution
 {
@@ -33,10 +38,12 @@ class SettleDistribution
             foreach ($distribution->items as $item) {
                 $returned = $data->lines[$item->id]['returned'] ?? 0;
                 $price = $data->lines[$item->id]['price'] ?? (float) $item->price;
+                $carried = $item->quantity_taken - $item->quantity_recorded; // POS sales can't come back
 
-                if ($returned > $item->quantity_taken) {
+                if ($returned > $carried) {
                     throw ValidationException::withMessages([
-                        'items' => "\"{$item->product_name}\": returned ({$returned}) is more than taken ({$item->quantity_taken}).",
+                        'items' => "\"{$item->product_name}\": returned ({$returned}) is more than the distributor still had ({$carried}"
+                            . ($item->quantity_recorded ? ", after {$item->quantity_recorded} sold on the POS" : '') . ').',
                     ]);
                 }
 
@@ -52,28 +59,35 @@ class SettleDistribution
                 }
                 $item->update(['quantity_returned' => $returned, 'price' => $price]);
 
-                $sold = $item->quantity_taken - $returned;
-                if ($sold > 0) {
-                    $saleLines[] = ['product_id' => $product->id, 'quantity' => $sold, 'price' => $price];
-                    $total += $sold * $price;
+                // Gone without a POS sale: recorded as sold now.
+                $unrecorded = $carried - $returned;
+                if ($unrecorded > 0) {
+                    $saleLines[] = ['product_id' => $product->id, 'quantity' => $unrecorded, 'price' => $price];
+                    $total += $unrecorded * $price;
                 }
             }
 
-            $received = min($data->amountReceived, $total);
-            $balance = $total - $received;
+            $posTotal = (float) $distribution->posSales()->sum('total');
+            $posCash = $distribution->posCashCollected();
+            $expected = $posCash + $total;                    // cash the distributor should hand in
+            $received = min($data->amountReceived, $expected);
+            $balance = $expected - $received;
             $sale = null;
 
             if ($saleLines) {
+                // The hand-in first covers the POS cash; what's left pays this sale.
+                $paidHere = min($total, max(0, $received - $posCash));
                 $sale = Sale::create([
                     'shop_id' => $distribution->store_id,
+                    'distribution_id' => $distribution->id,
                     'staff_id' => $distribution->staff_id,
                     'admin_id' => $settledBy,
                     'bill_discount' => 0,
                     'shipping' => 0,
                     'total' => $total,
                     'payment_method' => PaymentMethod::Distribution->value,
-                    'received_amount' => $received,
-                    'remaining_amount' => $balance,
+                    'received_amount' => $paidHere,
+                    'remaining_amount' => $total - $paidHere,
                     'change_amount' => 0,
                 ]);
 
@@ -87,7 +101,7 @@ class SettleDistribution
                 'settled_at' => now(),
                 'settled_by' => $settledBy,
                 'sale_id' => $sale?->id,
-                'total_value' => $total,
+                'total_value' => $posTotal + $total, // everything sold on the trip
                 'amount_received' => $received,
                 'balance' => $balance,
             ]);

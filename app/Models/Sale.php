@@ -11,6 +11,7 @@ class Sale extends Model
 
 protected $fillable = [
     'shop_id',
+    'distribution_id',
     'staff_id',
     'admin_id',
     'customer_id',
@@ -27,7 +28,21 @@ protected $fillable = [
 
 public function staff()
 {
+<<<<<<< Updated upstream
     return $this->belongsTo(Staff::class);
+=======
+    return $this->belongsTo(Staff::class)->withTrashed(); // keep history of removed staff
+}
+
+public function distribution()
+{
+    return $this->belongsTo(Distribution::class);
+}
+
+public function paymentMethodSetting()
+{
+    return $this->belongsTo(PaymentMethod::class, 'payment_method_id');
+>>>>>>> Stashed changes
 }
 
 public function admin()

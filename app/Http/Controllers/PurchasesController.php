@@ -74,8 +74,70 @@ class PurchasesController extends Controller
         $categories = ProductCategory::all();
         $units = Units::all();
 
+<<<<<<< Updated upstream:app/Http/Controllers/PurchasesController.php
         return view('pages.purchases.new_product', compact(
             'units', 'categories', 'shops', 'suppliers'
+=======
+        $product = Products::with('unit:id,name,short_name')
+            ->where('shop_id', $request->shop)
+            ->where('barcode', trim($request->code))
+            ->first();
+
+        if (!$product) {
+            return response()->json([
+                'message' => 'No product with barcode ' . trim($request->code) . ' in this shop. If it is new, use New Item Purchase.',
+            ], 404);
+        }
+
+        $assignment = $request->supplier
+            ? SupplierProduct::where('supplier_id', $request->supplier)->where('product_id', $product->id)->first()
+            : null;
+
+        // When it was last received, and at what price.
+        $last = \App\Models\PurchaseItem::where('product_id', $product->id)
+            ->where('quantity', '>', 0)
+            ->latest('id')
+            ->first(['purchase_price', 'created_at']);
+
+        return response()->json([
+            'id'              => $product->id,
+            'name'            => $product->name,
+            'barcode'         => $product->barcode,
+            'brand'           => $product->brand,
+            'size'            => $product->size,
+            'category_id'     => $product->category_id,
+            'unit_id'         => $product->unit_id,
+            // Y-m-d; pre-fills the expiry on New Item Purchase (can be changed for this delivery).
+            'expire_date'     => $product->expire_date ? \Carbon\Carbon::parse($product->expire_date)->toDateString() : null,
+            'unit'            => $product->unit->short_name ?? $product->unit->name ?? null,
+            'quantity'        => (int) $product->quantity,
+            'min_quantity'    => (int) $product->min_quantity,
+            'purchase_price'  => (float) $product->purchase_price,
+            'selling_price'   => (float) $product->selling_price,
+            'wholesale_price' => (float) $product->wholesale_price,
+            'supplier_price'  => $assignment ? (float) $assignment->supplier_price : null,
+            'assigned'        => (bool) $assignment,
+            'last_price'      => $last ? (float) $last->purchase_price : null,
+            'last_date'       => $last ? $last->created_at->format('d M Y') : null,
+        ]);
+    }
+
+    /**
+     * Purchases › New Item Purchase: products that aren't in the system yet,
+     * bought from one supplier. "Add item" repeats a row per product.
+     */
+    public function newProduct(Request $request)
+    {
+        $suppliers = Supplier::orderBy('name')->get();
+        $shops = Shops::orderBy('name')->get();
+        $categories = ProductCategory::whereNull('parent_id')->orderBy('name')->get();
+        $units = Units::orderBy('name')->get();
+        $brands = \App\Models\Brand::orderBy('name')->pluck('name');
+        $activeShopId = $request->query('shop') ?: session('active_shop_id');
+
+        return view('pages.purchases.new_items', compact(
+            'units', 'categories', 'brands', 'shops', 'suppliers', 'activeShopId'
+>>>>>>> Stashed changes:app/Http/Controllers/Web/PurchasesController.php
         ));
     }
 
@@ -158,7 +220,38 @@ class PurchasesController extends Controller
             'wholesale_price' => 'nullable|numeric|min:0',
             'category_id' => 'nullable|exists:product_categories,id',
             'amount_paid' => 'nullable|numeric|min:0',
+<<<<<<< Updated upstream:app/Http/Controllers/PurchasesController.php
             'image' => 'nullable|image|max:2048',
+=======
+            'invoice_number' => 'nullable|string|max:100',
+            'items' => 'required|array|min:1|max:100',
+            // Set when the barcode matched a product the shop already has: that product is
+            // ordered (stock added on receive) instead of a new one being created.
+            'items.*.product_id' => 'nullable|integer',
+            'items.*.name' => 'required|string|max:255',
+            'items.*.category_id' => 'nullable|exists:product_categories,id',
+            'items.*.unit_id' => 'required|exists:units,id',
+            'items.*.quantity' => 'required|integer|min:1',
+            'items.*.purchase_price' => 'required|numeric|min:0',
+            'items.*.selling_price' => 'nullable|numeric|min:0',
+            'items.*.wholesale_price' => 'nullable|numeric|min:0',
+            'items.*.barcode' => 'nullable|string|max:100',
+            'items.*.brand' => 'nullable|string|max:255',
+            'items.*.size' => 'nullable|string|max:100',
+            'items.*.min_quantity' => 'nullable|integer|min:0',
+            'items.*.expire_date' => 'nullable|date|after_or_equal:today',
+            'items.*.image' => 'nullable|image|max:2048',
+        ], [
+            'items.*.min_quantity.integer' => 'Item :position: min stock must be a whole number.',
+            'items.*.expire_date.after_or_equal' => 'Item :position: the expiry date is already past.',
+            'items.required' => 'Add at least one item.',
+            'items.*.name.required' => 'Item :position: enter the product name.',
+            'items.*.unit_id.required' => 'Item :position: choose a unit.',
+            'items.*.quantity.required' => 'Item :position: enter the quantity.',
+            'items.*.quantity.min' => 'Item :position: the quantity must be at least 1.',
+            'items.*.purchase_price.required' => 'Item :position: enter the buying price.',
+            'items.*.image.max' => 'Item :position: the photo must be 2 MB or smaller.',
+>>>>>>> Stashed changes:app/Http/Controllers/Web/PurchasesController.php
         ]);
 
         [$invoice, $product] = DB::transaction(function () use ($request, $recordPurchase) {
@@ -178,8 +271,123 @@ class PurchasesController extends Controller
                 'admin_id' => auth()->id(),
             ]);
 
+<<<<<<< Updated upstream:app/Http/Controllers/PurchasesController.php
             // Same as an ordinary purchase: a pending order, stocked when received.
             $invoice = $placeOrder->execute(PurchaseData::fromArray([
+=======
+        // Rows for products the shop already has (found by barcode) vs. brand-new ones.
+        $existingRows = array_filter($items, fn ($item) => !empty($item['product_id']));
+        $newRows = array_diff_key($items, $existingRows);
+
+        $existingIds = array_map(fn ($item) => (int) $item['product_id'], $existingRows);
+        if (count($existingIds) !== count(array_unique($existingIds))) {
+            return back()->withInput()->with('error', 'The same existing product is on the order twice. Combine them into one row.');
+        }
+        $existingProducts = Products::where('shop_id', $request->shop_id)->whereIn('id', $existingIds)->get()->keyBy('id');
+        foreach ($existingRows as $item) {
+            if (!$existingProducts->has((int) $item['product_id'])) {
+                return back()->withInput()->with('error', "\"{$item['name']}\" is not a product of this shop (was the shop changed after scanning?). Remove it and scan it again.");
+            }
+        }
+
+        // The same new product (name + brand + size) twice on one order, or already in this shop, is a mistake.
+        // "Lotion 200ml" and "Lotion 400ml" are different products.
+        $norm = fn ($value) => mb_strtolower(trim((string) $value));
+        $identities = array_map(fn ($item) => $norm($item['name']) . '|' . $norm($item['brand'] ?? '') . '|' . $norm($item['size'] ?? ''), $newRows);
+        if (count($identities) !== count(array_unique($identities))) {
+            return back()->withInput()->with('error', 'The same product (name, brand and size) is on the order twice. Combine them into one row.');
+        }
+        $existing = [];
+        foreach ($newRows as $item) {
+            $found = Products::where('shop_id', $request->shop_id)
+                ->whereRaw('LOWER(TRIM(name)) = ?', [$norm($item['name'])])
+                ->whereRaw("LOWER(TRIM(COALESCE(brand, ''))) = ?", [$norm($item['brand'] ?? '')])
+                ->whereRaw("LOWER(TRIM(COALESCE(size, ''))) = ?", [$norm($item['size'] ?? '')])
+                ->value('name');
+            if ($found) {
+                $existing[] = $found . (!empty($item['size']) ? ' ' . $item['size'] : '');
+            }
+        }
+        if ($existing) {
+            return back()->withInput()->with('error', 'Already in this shop: ' . implode(', ', $existing)
+                . '. Scan its barcode to order the existing product, or use New Purchase Order.');
+        }
+
+        // A new product's barcode: not twice on this order, not already used in the shop.
+        $barcodes = array_filter(array_map(fn ($item) => trim((string) ($item['barcode'] ?? '')), $newRows));
+        if (count($barcodes) !== count(array_unique($barcodes))) {
+            $repeated = array_unique(array_diff_assoc($barcodes, array_unique($barcodes)));
+            return back()->withInput()->with('error', 'Barcode ' . implode(', ', $repeated) . ' is on more than one item. Each product needs its own barcode.');
+        }
+        foreach ($barcodes as $key => $barcode) {
+            if ($owner = Products::barcodeOwner($request->shop_id, $barcode)) {
+                return back()->withInput()->with('error', "Barcode {$barcode} (\"{$items[$key]['name']}\") is already used by \"{$owner->name}\" in this shop. Each product needs its own barcode.");
+            }
+        }
+
+        $invoice = DB::transaction(function () use ($request, $items, $existingProducts, $placeOrder) {
+            $lines = [];
+
+            foreach ($items as $key => $item) {
+                if (!empty($item['product_id'])) {
+                    // Existing product: nothing new is created; it is ordered like any other line
+                    // and receiving adds to its stock. A new min stock level applies now.
+                    $product = $existingProducts[(int) $item['product_id']];
+                    if (isset($item['min_quantity']) && $item['min_quantity'] !== '' && $item['min_quantity'] !== null) {
+                        $product->update(['min_quantity' => (int) $item['min_quantity']]);
+                    }
+                    SupplierProduct::updateOrCreate(
+                        ['supplier_id' => $request->supplier_id, 'product_id' => $product->id],
+                        ['supplier_price' => $item['purchase_price'], 'assigned_by' => auth()->id()]
+                    );
+                    $lines[] = [
+                        'product_id' => $product->id,
+                        'quantity' => $item['quantity'],
+                        'price' => $item['purchase_price'],
+                        'selling_price' => $item['selling_price'] ?? null,
+                        'wholesale_price' => $item['wholesale_price'] ?? null,
+                        'expire_date' => $item['expire_date'] ?? null,
+                    ];
+                    continue;
+                }
+
+                $image = $request->file("items.{$key}.image");
+                $product = Products::create([
+                    'name' => trim($item['name']),
+                    'shop_id' => $request->shop_id,
+                    'category_id' => $item['category_id'] ?? null,
+                    'unit_id' => $item['unit_id'],
+                    'barcode' => ($item['barcode'] ?? null) ?: null,
+                    'brand' => ($item['brand'] ?? null) ?: null,
+                    'size' => ($item['size'] ?? null) ?: null,
+                    'purchase_price' => $item['purchase_price'],
+                    'selling_price' => $item['selling_price'] ?? 0,
+                    'wholesale_price' => $item['wholesale_price'] ?? 0,
+                    'min_quantity' => isset($item['min_quantity']) && $item['min_quantity'] !== '' ? (int) $item['min_quantity'] : 0,
+                    'quantity' => 0,
+                    'image' => $image ? $image->store('products', 'public') : null,
+                    'admin_id' => auth()->id(),
+                ]);
+
+                // Bought from this supplier → it is one of the supplier's products.
+                SupplierProduct::updateOrCreate(
+                    ['supplier_id' => $request->supplier_id, 'product_id' => $product->id],
+                    ['supplier_price' => $item['purchase_price'], 'assigned_by' => auth()->id()]
+                );
+
+                $lines[] = [
+                    'product_id' => $product->id,
+                    'quantity' => $item['quantity'],
+                    'price' => $item['purchase_price'],
+                    'selling_price' => $item['selling_price'] ?? null,
+                    'wholesale_price' => $item['wholesale_price'] ?? null,
+                    'expire_date' => $item['expire_date'] ?? null, // pre-filled on the Receive page
+                ];
+            }
+
+            // Same as an ordinary purchase: one pending order, stocked when received.
+            return $placeOrder->execute(PurchaseData::fromArray([
+>>>>>>> Stashed changes:app/Http/Controllers/Web/PurchasesController.php
                 'shop_id' => $request->shop_id,
                 'supplier_id' => $request->supplier_id,
                 'payment_type' => $request->payment_type,
@@ -196,12 +404,26 @@ class PurchasesController extends Controller
             return [$invoice, $product->fresh()];
         });
 
+<<<<<<< Updated upstream:app/Http/Controllers/PurchasesController.php
         return response()->json([
             'success' => 'New product created and purchase order placed. Receive it when the goods arrive.',
             'invoice_id' => $invoice->id,
             'product_id' => $product->id,
             'product_name' => $product->name,
         ]);
+=======
+        [$emailed, $emailNote] = $emailInvoice->execute($invoice);
+        $parts = array_filter([
+            count($newRows) ? count($newRows) . ' new product(s) created' : null,
+            count($existingRows) ? count($existingRows) . ' existing product(s) added' : null,
+        ]);
+
+        return redirect()->route('purchases.new_product')
+            ->with('success', implode(' and ', $parts) . ' on one order, assigned to the supplier. Receive the order when the goods arrive to add the stock. ' . $emailNote)
+            ->with('purchase_invoice_id', $invoice->id)
+            ->with('purchase_invoice_emailed', $emailed)
+            ->with('purchase_invoice_email_note', $emailNote);
+>>>>>>> Stashed changes:app/Http/Controllers/Web/PurchasesController.php
     }
 
     /**

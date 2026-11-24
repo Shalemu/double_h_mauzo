@@ -23,6 +23,8 @@
 |   permission  Staff: permission(s) required, any one is enough (default: none).
 |               Admin: defaults to the route's entry in config/panel_routes.php.
 |   super_user  true = only super users see it.
+|   distributor true = only staff who have been issued a distributor trip see it.
+|   hide_on_trip true = hidden from a distributor while their trip is out (shop stock).
 |   children    Sub-links; the group is hidden when none are visible and opens
 |               when one of them is active.
 |
@@ -112,7 +114,9 @@ return [
             'title' => 'Sales & Revenue',
             'items' => [
                 ['title' => 'POS', 'route' => 'staff.dashboard', 'icon' => 'bi-cash-coin'],
-                ['title' => 'My Sales', 'route' => 'staff.sales.index', 'icon' => 'bi-receipt', 'patterns' => 'staff.sales.*', 'params' => ['shop_id'], 'permission' => 'sales.view'],
+                // Only for staff who have been issued distributor trips.
+                ['title' => 'Trip', 'route' => 'staff.trip', 'icon' => 'bi-truck-flatbed', 'permission' => 'pos.sell', 'distributor' => true],
+                ['title' => 'Sales', 'route' => 'staff.sales.index', 'icon' => 'bi-receipt', 'patterns' => 'staff.sales.*', 'params' => ['shop_id'], 'permission' => 'sales.view'],
                 ['title' => 'Customers & Credit', 'route' => 'staff.customers.manage', 'icon' => 'bi-people', 'patterns' => 'staff.customers.*', 'permission' => 'customers.manage'],
                 ['title' => 'Expenses', 'route' => 'staff.expenses.index', 'icon' => 'bi-wallet2', 'patterns' => 'staff.expenses.*', 'params' => ['shop_id'], 'permission' => 'expenses.manage'],
             ],
@@ -121,8 +125,14 @@ return [
         [
             'title' => 'Procurement',
             'items' => [
+<<<<<<< Updated upstream
                 ['title' => 'Request Stock', 'route' => 'staff.orders.create', 'icon' => 'bi-cart-plus', 'permission' => 'orders.create'],
                 ['title' => 'My Order Requests', 'route' => 'staff.orders.index', 'icon' => 'bi-bag-check', 'patterns' => ['staff.orders.index', 'staff.orders.show'], 'permission' => 'orders.view'],
+=======
+                ['title' => 'Shop Items', 'route' => 'staff.products.index', 'icon' => 'bi-box-seam', 'patterns' => 'staff.products.*', 'permission' => 'products.view', 'hide_on_trip' => true],
+                ['title' => 'Request Stock', 'route' => 'staff.orders.create', 'icon' => 'bi-cart-plus', 'permission' => 'orders.create', 'hide_on_trip' => true],
+                ['title' => 'Order Requests', 'route' => 'staff.orders.index', 'icon' => 'bi-bag-check', 'patterns' => ['staff.orders.index', 'staff.orders.show'], 'permission' => 'orders.view'],
+>>>>>>> Stashed changes
             ],
         ],
 

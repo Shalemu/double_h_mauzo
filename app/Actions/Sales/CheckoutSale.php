@@ -4,6 +4,8 @@ namespace App\Actions\Sales;
 
 use App\DTO\Sales\SaleData;
 use App\Enums\PaymentMethod;
+use App\Models\Distribution;
+use App\Models\DistributionItem;
 use App\Models\Products;
 use App\Models\Sale;
 use App\Models\SaleItem;
@@ -22,7 +24,8 @@ class CheckoutSale
         if (empty($data->items)) {
             throw new \DomainException('Cart is empty.');
         }
-        if (Shops::whereKey($data->shopId)->stores()->exists()) {
+        // A store doesn't sell over the counter — except through a distributor out on a trip.
+        if (!$data->distributionId && Shops::whereKey($data->shopId)->stores()->exists()) {
             throw new \DomainException('This is a store — it holds stock only and cannot sell. Transfer the stock to a shop first.');
         }
 
@@ -46,8 +49,27 @@ class CheckoutSale
         }
 
         return DB::transaction(function () use ($data, $grandTotal, $received, $remaining, $change) {
+<<<<<<< Updated upstream
+=======
+            $itemsTotal = 0;
+            $itemsCost = 0;
+
+            // Distributor trip: must still be out, from this store, with this distributor.
+            $trip = null;
+            if ($data->distributionId) {
+                $trip = Distribution::lockForUpdate()->find($data->distributionId);
+                if (!$trip || !$trip->isOut()) {
+                    throw new \DomainException('This trip has been settled. Ask your supervisor for a new one.');
+                }
+                if ((int) $trip->store_id !== $data->shopId || ($data->staffId && (int) $trip->staff_id !== $data->staffId)) {
+                    throw new \DomainException('This trip is not yours.');
+                }
+            }
+
+>>>>>>> Stashed changes
             $sale = Sale::create([
                 'shop_id' => $data->shopId,
+                'distribution_id' => $trip?->id,
                 'staff_id' => $data->staffId,
                 'admin_id' => $data->adminId,
                 'customer_id' => $data->customerId,
@@ -71,11 +93,43 @@ class CheckoutSale
                 if ((int) $product->shop_id !== $data->shopId) {
                     throw new \DomainException("{$product->name} does not belong to this shop.");
                 }
-                if ($item->quantity > $product->quantity) {
+                // On a trip the stock is what the distributor carries (it already left the
+                // store when the trip was issued); otherwise it's the shop's own stock.
+                $tripLine = null;
+                if ($trip) {
+                    $tripLine = DistributionItem::where('distribution_id', $trip->id)->where('product_id', $product->id)->lockForUpdate()->first();
+                    if (!$tripLine) {
+                        throw new \DomainException("{$product->name} is not on your trip.");
+                    }
+                    if ($item->quantity > $tripLine->quantity_left) {
+                        throw new \DomainException("You only have {$tripLine->quantity_left} of {$product->name} left on your trip.");
+                    }
+                } elseif ($item->quantity > $product->quantity) {
                     throw new \DomainException("Not enough stock for {$product->name}");
                 }
 
+<<<<<<< Updated upstream
                 $product->decrement('quantity', $item->quantity);
+=======
+                // Never sell below the buying price: a discount may only eat
+                // into the profit. (Products with no purchase price recorded
+                // can't be checked, so they are let through.)
+                $lineTotal = $item->quantity * $item->price - $item->discount;
+                $lineCost = $item->quantity * (float) $product->purchase_price;
+                // The message never states the limit: it would reveal the
+                // buying price to staff.
+                if ($lineCost > 0 && $lineTotal < $lineCost) {
+                    throw new \DomainException("Discount too high on {$product->name}. This would sell at a loss.");
+                }
+                $itemsTotal += $lineTotal;
+                $itemsCost += $lineCost;
+
+                if ($tripLine) {
+                    $tripLine->increment('quantity_recorded', $item->quantity);
+                } else {
+                    $product->decrement('quantity', $item->quantity);
+                }
+>>>>>>> Stashed changes
 
                 SaleItem::create([
                     'sale_id' => $sale->id,

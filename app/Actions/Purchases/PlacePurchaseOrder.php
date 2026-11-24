@@ -40,6 +40,7 @@ class PlacePurchaseOrder
                     'purchase_price' => $item->price,
                     'selling_price' => $item->sellingPrice,
                     'wholesale_price' => $item->wholesalePrice,
+                    'expire_date' => $item->expireDate,
                     'total' => $item->total(),
                 ]);
             }

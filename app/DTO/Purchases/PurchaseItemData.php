@@ -16,10 +16,12 @@ class PurchaseItemData extends DataTransferObject
         public readonly float $price,
         public readonly ?float $sellingPrice = null,
         public readonly ?float $wholesalePrice = null,
+        // Expected expiry (Y-m-d), pre-filled on the Receive page; confirmed there.
+        public readonly ?string $expireDate = null,
     ) {
     }
 
-    /** From the purchase form's items JSON: {product_id, quantity, price, selling_price?, wholesale_price?}. */
+    /** From the purchase form's items JSON: {product_id, quantity, price, selling_price?, wholesale_price?, expire_date?}. */
     public static function fromArray(array $item): self
     {
         $optional = fn ($key) => isset($item[$key]) && $item[$key] !== '' && $item[$key] !== null ? (float) $item[$key] : null;
@@ -30,6 +32,7 @@ class PurchaseItemData extends DataTransferObject
             price: (float) $item['price'],
             sellingPrice: $optional('selling_price'),
             wholesalePrice: $optional('wholesale_price'),
+            expireDate: !empty($item['expire_date']) ? (string) $item['expire_date'] : null,
         );
     }
 

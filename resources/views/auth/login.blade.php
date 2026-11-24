@@ -399,10 +399,10 @@
             </div>
         </form>
 
-        <div class="login-links">
+        <!-- <div class="login-links">
             <p><a href="{{ url('/password/lost') }}">I forgot my password</a></p>
             <p><a href="{{ route('register') }}">Register a new membership</a></p>
-        </div>
+        </div> -->
 
         </div>
         </div>

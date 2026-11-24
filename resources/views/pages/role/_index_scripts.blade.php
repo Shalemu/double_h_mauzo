@@ -88,9 +88,10 @@ document.addEventListener('DOMContentLoaded', function () {
     // Don't lose ticks by switching role mid-edit.
     document.querySelectorAll('.rp-role-link').forEach(function (link) {
         link.addEventListener('click', function (event) {
-            if (changes() > 0 && !confirm('Discard unsaved changes? Switching roles now will lose what you just changed.')) {
-                event.preventDefault();
-            }
+            if (changes() === 0) return;
+            event.preventDefault();
+            confirmDialog('Discard unsaved changes? Switching roles now will lose what you just changed.')
+                .then(ok => { if (ok) window.location.href = link.href; });
         });
     });
     form.addEventListener('submit', function () {

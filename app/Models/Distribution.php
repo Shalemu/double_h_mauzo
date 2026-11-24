@@ -58,4 +58,24 @@ class Distribution extends Model
     {
         return $this->hasMany(DistributionPayment::class);
     }
+
+    /** Sales the distributor recorded on the POS during this trip. */
+    public function posSales()
+    {
+        return $this->hasMany(Sale::class)->where(fn ($q) => $q->whereNull('payment_method')->orWhere('payment_method', '!=', \App\Enums\PaymentMethod::Distribution->value));
+    }
+
+    /** The open trip a distributor is selling from, if any (one at a time). */
+    public static function openFor(?int $staffId): ?self
+    {
+        return $staffId
+            ? static::where('staff_id', $staffId)->where('status', \App\Enums\DistributionStatus::Out->value)->latest('id')->first()
+            : null;
+    }
+
+    /** Cash the distributor collected on POS sales (received minus change given back). */
+    public function posCashCollected(): float
+    {
+        return (float) $this->posSales()->sum(\Illuminate\Support\Facades\DB::raw('received_amount - change_amount'));
+    }
 }

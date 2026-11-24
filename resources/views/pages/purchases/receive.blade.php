@@ -77,7 +77,29 @@
                                     <td>
                                         <input type="number" name="lines[{{ $item->id }}][wholesale_price]" class="form-control form-control-sm text-end"
                                                min="0" step="any" value="{{ $field('wholesale_price', $item->wholesale_price ?? $product->wholesale_price ?? '') }}" aria-label="Wholesale price">
+<<<<<<< Updated upstream
                                         <div class="text-muted small">now {{ $money($product->wholesale_price ?? 0) }}</div>
+=======
+                                        <!-- <div class="text-muted small">now {{ $money($product->wholesale_price ?? 0) }}</div> -->
+                                    </td>
+                                    <td>
+                                        <input type="number" name="lines[{{ $item->id }}][min_quantity]" class="form-control form-control-sm text-end"
+                                               min="0" step="1" value="{{ $field('min_quantity', $product->min_quantity ?? '') }}"
+                                               aria-label="Min stock for {{ $product->name ?? 'product' }}">
+                                        <!-- <div class="text-muted small">alert level</div> -->
+                                    </td>
+                                    <td>
+                                        <input type="date" name="lines[{{ $item->id }}][expire_date]" class="form-control form-control-sm js-expiry"
+                                               min="{{ now()->toDateString() }}" value="{{ $field('expire_date', optional($item->expire_date)->toDateString() ?? '') }}"
+                                               aria-label="Expiry date for {{ $product->name ?? 'product' }}">
+                                        <div class="text-muted small">
+                                            @if(!empty($product->expire_date) && ($product->quantity ?? 0) > 0)
+                                                stock now: {{ \Carbon\Carbon::parse($product->expire_date)->format('d M Y') }}
+                                            @else
+                                                <!-- optional -->
+                                            @endif
+                                        </div>
+>>>>>>> Stashed changes
                                     </td>
                                     <td class="text-end js-line-total">{{ $money($item->ordered_quantity * $item->purchase_price) }}</td>
                                 </tr>

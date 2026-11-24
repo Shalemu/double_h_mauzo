@@ -44,18 +44,18 @@ document.addEventListener('change', function(e) {
 
 const assignSelectedBtn = document.getElementById('assignSelectedBtn');
 if (assignSelectedBtn) {
-    assignSelectedBtn.addEventListener('click', function() {
+    assignSelectedBtn.addEventListener('click', async function() {
         const selectedIds = Array.from(document.querySelectorAll('.product-checkbox:checked')).map(cb => cb.value);
 
         if (!bulkShopSelect.value) {
-            alert('Please select a shop first.');
+            notify('warning', 'Choose a shop', 'Please select a shop first.');
             return;
         }
         if (selectedIds.length === 0) {
-            alert('Please select at least one product.');
+            notify('warning', 'Nothing selected', 'Please select at least one product.');
             return;
         }
-        if (!confirm(`Assign ${selectedIds.length} selected product(s) to this shop?`)) {
+        if (!(await confirmDialog(`Assign ${selectedIds.length} selected product(s) to this shop?`))) {
             return;
         }
 
@@ -76,12 +76,12 @@ if (assignSelectedBtn) {
 
 const assignAllUnassignedBtn = document.getElementById('assignAllUnassignedBtn');
 if (assignAllUnassignedBtn) {
-    assignAllUnassignedBtn.addEventListener('click', function() {
+    assignAllUnassignedBtn.addEventListener('click', async function() {
         if (!bulkShopSelect.value) {
-            alert('Please select a shop first.');
+            notify('warning', 'Choose a shop', 'Please select a shop first.');
             return;
         }
-        if (!confirm('This will assign EVERY unassigned product (across the whole system) to this shop. Continue?')) {
+        if (!(await confirmDialog('This will assign EVERY unassigned product (across the whole system) to this shop. Continue?'))) {
             return;
         }
 

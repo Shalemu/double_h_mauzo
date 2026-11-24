@@ -328,6 +328,13 @@
 @stack('scripts')
 
 @include('components.dashboard_scripts')
+<<<<<<< Updated upstream
+=======
+{{-- Every dropdown becomes searchable. --}}
+@include('components.searchable_selects')
+{{-- App-styled "Are you sure?" instead of the browser's confirm box. --}}
+@include('components.confirm_dialogs')
+>>>>>>> Stashed changes
 
 </body>
 </html>

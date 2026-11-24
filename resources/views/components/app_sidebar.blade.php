@@ -103,8 +103,12 @@
                 $user = $staffUser ?? $adminUser;
                 $badges = ['pending_orders' => $pendingOrders, 'open_issues' => $openIssues];
 
-                $allowed = function (array $item) use ($isStaff, $can, $adminUser) {
+                $isDistributor = $staffUser && \App\Models\Distribution::where('staff_id', $staffUser->id)->exists();
+                $onTrip = $isDistributor && \App\Models\Distribution::openFor($staffUser->id);
+                $allowed = function (array $item) use ($isStaff, $can, $adminUser, $isDistributor, $onTrip) {
                     if (!empty($item['super_user']) && !($adminUser && $adminUser->super_user)) return false;
+                    if (!empty($item['distributor']) && !$isDistributor) return false;
+                    if (!empty($item['hide_on_trip']) && $onTrip) return false;
                     if ($isStaff) {
                         $permission = $item['permission'] ?? null;
                         return $permission === null || collect((array) $permission)->contains($can);
