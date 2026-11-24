@@ -22,11 +22,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 throw new Error(data.message || (data.errors && Object.values(data.errors)[0][0]) || 'Failed to save supplier');
             }
 
-            Swal.fire({
-                icon: 'success',
-                title: 'Success',
-                text: 'Supplier added successfully'
+            // Add the new supplier to the Supplier list(s) on the page and pick it.
+            document.querySelectorAll('select[name="supplier_id"]').forEach(function (select) {
+                select.add(new Option(data.name, data.id, true, true));
+                select.dispatchEvent(new Event('change'));
             });
+
+            notify('success', 'Supplier added', data.name + ' is selected.');
 
             this.reset();
 

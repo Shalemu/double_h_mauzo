@@ -1,6 +1,6 @@
 @php
-    $isStaff = Auth::guard('staff')->check();
-    $staffUser = $isStaff ? Auth::guard('staff')->user() : null;
+    $isStaff = \App\Models\Staff::current();
+    $staffUser = $isStaff ? \App\Models\Staff::current() : null;
     $adminUser = $isStaff ? null : Auth::user();
     $activeShop = (!$isStaff && $adminUser)
         ? (session('active_shop_id') ? \App\Models\Shops::find(session('active_shop_id')) : null)
@@ -15,6 +15,12 @@
             ->when($activeShop, fn ($q) => $q->where('shop_id', $activeShop->id))
             ->count()
         : 0;
+    // Purchase orders waiting to be received (Purchases › Receive Orders).
+    $pendingPurchases = (!$isStaff && $adminUser && $adminUser->hasPermission('purchases.receive'))
+        ? \App\Models\PurchaseInvoice::pending()
+            ->when($activeShop, fn ($q) => $q->where('shop_id', $activeShop->id))
+            ->count()
+        : 0;
     $can =fn ($permission) => $staffUser && $staffUser->hasPermission($permission);
 @endphp
 
@@ -23,6 +29,10 @@
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
 
 <style>
+/* A little wider than AdminLTE's 250px so labels like "Product Management"
+   fit on one line. AdminLTE uses this variable for the page offset too. */
+:root, [data-bs-theme=light] { --lte-sidebar-width: 270px; }
+
 /* Dark slate sidebar: bold Outfit labels, roomy rows, soft highlight with a logo-red
    icon on the current page. The logo stays pinned; the menu scrolls
    and its scrollbar only shows while the mouse is over the sidebar. */
@@ -55,6 +65,9 @@
 .premium-sidebar .brand-image-wrap { width:64px; height:64px; border-radius:14px; background:#fff; display:flex; align-items:center; justify-content:center; padding:8px; box-shadow:0 4px 14px rgba(0,0,0,.25); }
 .premium-sidebar .brand-image { width:100%; height:100%; object-fit:contain; }
 .premium-sidebar .brand-text { color:#fff !important; font-weight:700; font-size:17px; letter-spacing:.01em; text-align:center; }
+.premium-sidebar .fy-chip { display:inline-flex; align-items:center; gap:6px; font-size:12px; font-weight:600; color:#cbd5e1;
+    background:rgba(255,255,255,.08); border-radius:999px; padding:3px 10px; }
+.premium-sidebar .fy-chip-warn { color:#fde68a; background:rgba(245,158,11,.18); }
 
 /* Menu */
 .premium-sidebar .sidebar-wrapper { flex:0 0 auto; height:auto !important; overflow:visible !important; padding:14px 14px 24px !important; }
@@ -69,6 +82,11 @@
 .premium-sidebar .nav-link.active { background:var(--sidebar-active) !important; }
 .premium-sidebar .nav-link[aria-expanded="true"] { background:var(--sidebar-hover) !important; }
 .premium-sidebar .nav-icon { font-size:20px; width:24px; margin:0 !important; text-align:center; color:#fff; flex-shrink:0; }
+/* Every label on one line (e.g. "Product Management", "Manage Business"); a
+   label too long for the sidebar ends in "…" instead of wrapping. */
+.premium-sidebar .nav-link { gap:12px; }
+.premium-sidebar .nav-link > span:not(.nav-badge) { flex:1 1 auto; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.premium-sidebar .nav-badge { flex-shrink:0; }
 .premium-sidebar .nav-link.active .nav-icon,
 .premium-sidebar .nav-link[aria-expanded="true"] .nav-icon { color:var(--sidebar-accent); }
 .premium-sidebar .nav-link .bi-chevron-down { font-size:14px; margin-left:auto; transition:transform .2s; }
@@ -90,9 +108,16 @@
 <aside class="app-sidebar premium-sidebar shadow" data-bs-theme="dark">
     <div class="sidebar-brand">
         <div class="brand-image-wrap">
-            <img src="{{ asset('assets/img/logo.png') }}" alt="Logo" class="brand-image">
+            <img src="{{ \App\Models\Setting::logoUrl() }}" alt="Logo" class="brand-image">
         </div>
-        <span class="brand-text">Double H Cosmetics</span>
+        <span class="brand-text">{{ \App\Models\Setting::businessName() }}</span>
+        @php $currentFy = \App\Models\FinancialYear::current(); @endphp
+        @if($currentFy)
+            <span class="fy-chip {{ $currentFy->contains(now()) ? '' : 'fy-chip-warn' }}"
+                  title="{{ $currentFy->contains(now()) ? 'Current financial year: ' . $currentFy->period() : 'Today is outside the current financial year (' . $currentFy->period() . ')' }}">
+                <i class="bi bi-calendar-range"></i> {{ $currentFy->name }}
+            </span>
+        @endif
     </div>
 
 
@@ -101,7 +126,7 @@
             @php
                 // Menu definition lives in config/sidebar.php.
                 $user = $staffUser ?? $adminUser;
-                $badges = ['pending_orders' => $pendingOrders, 'open_issues' => $openIssues];
+                $badges = ['pending_orders' => $pendingOrders, 'open_issues' => $openIssues, 'pending_purchases' => $pendingPurchases];
 
                 $isDistributor = $staffUser && \App\Models\Distribution::where('staff_id', $staffUser->id)->exists();
                 $onTrip = $isDistributor && \App\Models\Distribution::openFor($staffUser->id);
@@ -153,18 +178,27 @@
                             @php
                                 $groupId = \Illuminate\Support\Str::camel($item['title']) . 'Submenu';
                                 $open = collect($item['children'])->contains($isActive);
+                                // Closed group: show its sub-links' counters on the group itself.
+                                $groupBadge = collect($item['children'])->sum(fn ($c) => isset($c['badge']) ? (int) ($badges[$c['badge']] ?? 0) : 0);
                             @endphp
                             <li class="nav-item mb-1">
                                 <a href="#{{ $groupId }}" class="nav-link d-flex align-items-center px-3 py-2 {{ $open ? 'active' : '' }}"
                                    data-bs-toggle="collapse" role="button" aria-expanded="{{ $open ? 'true' : 'false' }}">
-                                    <i class="nav-icon bi {{ $item['icon'] ?? '' }}"></i><span class="flex-grow-1">{{ $item['title'] }}</span><i class="bi bi-chevron-down"></i>
+                                    <i class="nav-icon bi {{ $item['icon'] ?? '' }}"></i><span class="flex-grow-1">{{ $item['title'] }}</span>
+                                    @if($groupBadge && !$open)<span class="nav-badge me-1" aria-label="{{ $groupBadge }} waiting">{{ $groupBadge }}</span>@endif
+                                    <i class="bi bi-chevron-down"></i>
                                 </a>
                                 <div class="collapse {{ $open ? 'show' : '' }}" id="{{ $groupId }}" data-bs-parent="#sidebarAccordion">
                                     <ul class="nav-submenu">
                                         @foreach($item['children'] as $child)
                                             <li>
-                                                <a href="{{ route($child['route'], $params($child)) }}" class="nav-link d-flex align-items-center py-2 {{ $isActive($child) ? 'active' : '' }}">
+                                                @php $childBadge = isset($child['badge']) ? ($badges[$child['badge']] ?: null) : null; @endphp
+                                                <a href="{{ route($child['route'], $params($child)) }}" class="nav-link d-flex align-items-center py-2 {{ $isActive($child) ? 'active' : '' }}"
+                                                   @if($isActive($child)) aria-current="page" @endif>
                                                     <span>{{ $child['title'] }}</span>
+                                                    @if($childBadge)
+                                                        <span class="nav-badge" aria-label="{{ $childBadge }} waiting">{{ $childBadge }}</span>
+                                                    @endif
                                                 </a>
                                             </li>
                                         @endforeach

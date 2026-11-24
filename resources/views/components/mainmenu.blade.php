@@ -43,16 +43,16 @@
                 <div class="fw-bold">
                     {{
                         Auth::user()->name
-                        ?? (Auth::guard('staff')->check()
-                            ? Auth::guard('staff')->user()->first_name . ' ' . Auth::guard('staff')->user()->last_name
+                        ?? (\App\Models\Staff::current()
+                            ? \App\Models\Staff::current()->first_name . ' ' . \App\Models\Staff::current()->last_name
                             : 'User')
                     }}
                 </div>
         <div class="text-muted small">
             {{
                 Auth::user()?->role?->name
-                ?? (Auth::guard('staff')->check()
-                    ? Auth::guard('staff')->user()?->role?->name
+                ?? (\App\Models\Staff::current()
+                    ? \App\Models\Staff::current()?->role?->name
                     : 'User')
             }}
         </div>

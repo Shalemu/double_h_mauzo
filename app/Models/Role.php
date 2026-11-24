@@ -29,7 +29,7 @@ class Role extends Model
      */
     public function users()
     {
-        return $this->hasMany(Users::class, 'role_id');
+        return $this->hasMany(Users::class, 'role_id')->notStaff();
     }
 
     public function permissions()

@@ -1,0 +1,187 @@
+<?php
+
+namespace App\Http\Controllers\Web;
+
+use App\Http\Controllers\Controller;
+
+use Illuminate\Http\Request;
+use App\Models\Customer;
+use App\Models\Sale;
+use Illuminate\Support\Facades\Auth;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Validator;
+
+
+class CustomerController extends Controller
+{
+    // Return all customers for the dashboard
+    public function index()
+    {
+        $customers = Customer::all();
+        return view('pages.staff.index', compact('customers'));
+    }
+
+    // Admin: view all customers across every shop, with credit/debt tracking
+    public function adminIndex()
+    {
+        $customers = Customer::with('shop')
+            ->when(session('active_shop_id'), fn ($q, $shopId) => $q->where('shop_id', $shopId))
+            ->withSum('sales as total_purchases', 'total')
+            ->withSum('sales as total_paid', 'received_amount')
+            ->withSum('sales as total_debt', 'remaining_amount')
+            ->latest()
+            ->get();
+
+        return view('pages.admin.customers.index', compact('customers'));
+    }
+
+    // Admin: customer detail and purchase/debt history (any shop)
+    public function adminShow(Customer $customer)
+    {
+        $customer->load('shop');
+
+        $sales = Sale::where('customer_id', $customer->id)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        $totalPurchases = $sales->sum('total');
+        $totalPaid      = $sales->sum('received_amount');
+        $totalDebt      = $sales->sum('remaining_amount');
+
+        return view('pages.admin.customers.show', compact(
+            'customer',
+            'sales',
+            'totalPurchases',
+            'totalPaid',
+            'totalDebt'
+        ));
+    }
+
+    public function manage()
+    {
+        $staff = \App\Models\Staff::current();
+
+        $customers = Customer::where('shop_id', $staff->shop_id)
+            ->latest()
+            ->get();
+
+        return view('pages.staff.customers.index', compact('customers'));
+    }
+
+    // Store new customer
+    public function store(Request $request)
+    {
+        $staff = \App\Models\Staff::current();
+
+        $rules = [
+            'name'          => 'required|string|max:255',
+            'phone'         => 'nullable|string|max:20',
+            // Optional — used for automatic birthday SMS wishes.
+            'date_of_birth' => 'nullable|date|before:today|after:1900-01-01',
+            'email'         => 'nullable|email|max:255|unique:customers,email',
+            'address'       => 'nullable|string|max:500',
+        ];
+        if (!$staff) {
+            // Admin POS: the shop isn't implied by a staff session, so it
+            // must be supplied explicitly.
+            $rules['shop_id'] = 'required|exists:shops,id';
+        }
+        $request->validate($rules);
+
+        $customer = Customer::create([
+            'name'          => $request->name,
+            'phone'         => $request->phone,
+            'date_of_birth' => $request->date_of_birth,
+            'email'         => $request->email,
+            'address'       => $request->address,
+            'shop_id'       => $staff ? $staff->shop_id : $request->shop_id,
+        ]);
+
+        // The POS adds customers without reloading, so the cart isn't lost.
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Customer added successfully!',
+                'customer' => $customer->only('id', 'name', 'phone'),
+            ]);
+        }
+
+        return redirect()->back()->with('success', 'Customer added successfully!');
+    }
+
+    // Show customer detail and purchases
+    public function show(Customer $customer)
+    {
+        // Load sales for this customer
+        $sales = Sale::where('customer_id', $customer->id)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        // Calculate totals
+      $totalPurchases = $sales->sum('total');            // total amount of all sales
+        $totalPaid      = $sales->sum('received_amount');  // total paid
+        $totalDebt      = $sales->sum('remaining_amount'); // remaining debt
+
+                return view('pages.staff.customers.detail', compact(
+            'customer',
+            'sales',
+            'totalPurchases',
+            'totalPaid',
+            'totalDebt'
+        ));
+    }
+
+    public function recordPayment(Request $request, Customer $customer)
+{
+    $validator = Validator::make($request->all(), [
+        'amount_paid' => 'required|numeric|min:1'
+    ]);
+
+    if ($validator->fails()) {
+        return response()->json([
+            'success' => false,
+            'message' => $validator->errors()->first()
+        ], 422);
+    }
+
+    try {
+        $totalDebt = $customer->sales()->sum('remaining_amount');
+        $paidAmount = min($request->amount_paid, $totalDebt);
+
+        foreach ($customer->sales()->where('remaining_amount', '>', 0)->orderBy('created_at')->get() as $sale) {
+            if ($paidAmount <= 0) break;
+
+            $apply = min($sale->remaining_amount, $paidAmount);
+            $sale->received_amount += $apply; // make sure using the correct column
+            $sale->remaining_amount -= $apply;
+
+            // Optional: calculate fine
+            $dueDate = Carbon::parse($sale->due_date ?? $sale->created_at);
+            $today = Carbon::now();
+            if ($today->greaterThan($dueDate) && $sale->remaining_amount > 0) {
+                $daysLate = $today->diffInDays($dueDate);
+                $fine = $daysLate * 100; // 100 per day
+                $sale->fine_amount = $fine;
+            }
+
+            $sale->save();
+            $paidAmount -= $apply;
+        }
+
+        $totalPaid = $customer->sales()->sum('received_amount');
+        $remainingDebt = $customer->sales()->sum('remaining_amount');
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Payment recorded successfully!',
+            'total_paid' => $totalPaid,
+            'remaining_debt' => $remainingDebt
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error processing payment: ' . $e->getMessage()
+        ], 500);
+    }
+}
+}

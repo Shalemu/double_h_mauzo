@@ -45,6 +45,7 @@ return [
     'admin.sales.index'             => 'sales.list',
     'admin.sales.items'             => 'sales.list',
     'admin.sales.show'              => 'sales.list',
+    'admin.sales.export.*'          => 'sales.list',
     'admin.sales.detail'            => 'sales.list',
     'sales.index'                   => 'sales.list',
     'sales.show'                    => 'sales.list',
@@ -124,10 +125,12 @@ return [
     'purchases.create'              => 'purchases.create',
     'purchases.store'               => 'purchases.create',
     'purchases.supplier_products'   => 'purchases.create',
+    'purchases.product_by_barcode'  => 'purchases.create',
     'purchases.invoice_email'       => 'purchases.create',
     'purchases.new_product'         => 'purchases.create',
     'purchases.store_new_product'   => 'purchases.create',
     'purchases.receive'             => 'purchases.receive',
+    'purchases.receiving'           => 'purchases.receive',
     'purchases.confirm_receive'     => 'purchases.receive',
     'purchases.cancel'              => 'purchases.create',
     'purchases.*'                   => 'purchases.view',
@@ -150,4 +153,9 @@ return [
     'distributions.settle'          => 'distributions.settle',
     'distributions.pay'             => 'distributions.settle',
     'distributions.*'               => 'distributions.create',
+
+    // Settings (settings.index just forwards to the first tab you may open)
+    'settings.business*'            => 'settings.business',
+    'settings.payment-methods.*'    => 'settings.payment-methods',
+    'settings.financial-years.*'    => 'settings.financial-years',
 ];

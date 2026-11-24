@@ -61,6 +61,12 @@ document.addEventListener('DOMContentLoaded', function () {
             if (priceInput.value.trim() === '' || Number(priceInput.value) < 0) {
                 return warn('Buying price needed', 'Enter the buying price for "' + name + '".', priceInput);
             }
+            // Date inputs give YYYY-MM-DD, so text comparison works. Today = local date.
+            const expiryInput = row.querySelector('.js-expiry');
+            const d = new Date(), today = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+            if (expiryInput && expiryInput.value && expiryInput.value < today && Number(qty) > 0) {
+                return warn('Already expired', 'The expiry date for "' + name + '" is in the past. Expired goods can\'t be received into stock.', expiryInput);
+            }
         }
         if (![...rows].some(r => Number(r.querySelector('.js-qty').value) > 0)) {
             return warn('Nothing received', 'Enter the quantities that arrived, or cancel the order instead.');
@@ -76,6 +82,8 @@ document.addEventListener('DOMContentLoaded', function () {
             const notes = [];
             if (qty !== ordered) notes.push(qty < ordered ? (ordered - qty) + ' short' : (qty - ordered) + ' extra');
             if (price !== orderPrice) notes.push('price ' + fmt(orderPrice) + ' → ' + fmt(price));
+            const expiry = row.querySelector('.js-expiry')?.value;
+            if (expiry && qty > 0) notes.push('expires ' + expiry);
             lines += '<tr><td class="text-start">' + esc(row.dataset.name) + '</td><td class="text-end">' + qty + ' / ' + ordered + '</td>'
                 + '<td class="text-end">' + fmt(qty * price) + '</td><td class="text-start small text-danger">' + esc(notes.join(', ')) + '</td></tr>';
         });

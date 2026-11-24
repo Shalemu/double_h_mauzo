@@ -77,7 +77,7 @@
             <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
                 <div>
                     <h5 class="mb-0"><i class="bi bi-chat-dots me-2"></i>SMS</h5>
-                    <small class="text-muted">Send messages to your customers and staff. Sender ID: <strong>{{ $sender ?: '—' }}</strong></small>
+                    <small class="text-muted">Send messages to your customers and staff. Sender ID: <strong></strong></small>
                 </div>
             </div>
             <ul class="nav nav-tabs card-header-tabs">

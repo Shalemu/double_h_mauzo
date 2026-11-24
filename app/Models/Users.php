@@ -6,10 +6,20 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\Role; 
+use Laravel\Sanctum\HasApiTokens;
 
+/**
+ * Everyone who can log in: admins and shop staff (user_type = 'staff').
+ *
+ * Rows with user_type 'staff' are hydrated as App\Models\Staff (single-table
+ * inheritance), so auth()->user() for a staff member is a Staff instance with
+ * the staff rules (its own shop, POS-only permissions).
+ */
 class Users extends Authenticatable
 {
-    use Notifiable, SoftDeletes;
+    use HasApiTokens, Notifiable, SoftDeletes;
+
+    public const TYPE_STAFF = 'staff';
 
     protected $table = 'users';
 
@@ -26,6 +36,8 @@ class Users extends Authenticatable
         'verified',
         'verified_at',
         'role_id',
+        'shop_id',
+        'wages',
         'super_user',
         'user_type',
         'login_trials',
@@ -46,6 +58,55 @@ class Users extends Authenticatable
         'expires_at' => 'datetime',
         'deleted_at' => 'datetime',
     ];
+
+    protected static function booted(): void
+    {
+        // A removed person must not keep using the mobile app: revoke all
+        // their API tokens (Staff calls parent::booted() so this applies to staff too).
+        static::deleted(fn (Users $user) => $user->tokens()->delete());
+    }
+
+    /**
+     * Hydrate staff rows as Staff so every query on users (auth included)
+     * hands back the right class.
+     */
+    public function newFromBuilder($attributes = [], $connection = null)
+    {
+        $attributes = (array) $attributes;
+
+        if (static::class === self::class && ($attributes['user_type'] ?? null) === self::TYPE_STAFF) {
+            $model = (new Staff)->newInstance([], true);
+            $model->setRawAttributes($attributes, true);
+            $model->setConnection($connection ?: $this->getConnectionName());
+            $model->fireModelEvent('retrieved', false);
+
+            return $model;
+        }
+
+        return parent::newFromBuilder($attributes, $connection);
+    }
+
+    public function isStaff(): bool
+    {
+        return $this->user_type === self::TYPE_STAFF;
+    }
+
+    /** Admin-panel accounts only (everyone except shop staff). */
+    public function scopeNotStaff($query)
+    {
+        return $query->where($this->qualifyColumn('user_type'), '!=', self::TYPE_STAFF);
+    }
+
+    /**
+     * {user} in admin user-management routes must never resolve to a staff
+     * member — staff are managed on the Staff page.
+     */
+    public function resolveRouteBindingQuery($query, $value, $field = null)
+    {
+        $query = parent::resolveRouteBindingQuery($query, $value, $field);
+
+        return static::class === self::class ? $query->notStaff() : $query;
+    }
 
     public function getFullNameAttribute()
     {

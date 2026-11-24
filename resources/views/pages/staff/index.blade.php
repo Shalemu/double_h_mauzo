@@ -5,15 +5,10 @@
 @section('content')
 
 @php
-<<<<<<< Updated upstream
-    $staffUser = auth('staff')->user();
-    $shop = $shop ?? $staffUser->shop;
-=======
     $staffUser = \App\Models\Staff::current();
     $trip = $trip ?? null;           // set when a distributor sells from their trip (trip products only)
     // On a trip the sale is from the trip's store (where the stock came from).
     $shop = $trip ? $trip->store : ($shop ?? $staffUser->shop);
->>>>>>> Stashed changes
     $products = $products ?? collect();
     $customers = $customers ?? collect();
     $productsTotal = $productsTotal ?? $products->count();

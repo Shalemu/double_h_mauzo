@@ -1,8 +1,5 @@
 <?php
 
-<<<<<<< Updated upstream
-use Illuminate\Http\Request;
-=======
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CustomerController;
 use App\Http\Controllers\Api\ExpenseController;
@@ -12,23 +9,22 @@ use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\SaleController;
 use App\Http\Controllers\Api\ShopController;
 use Illuminate\Support\Facades\Route;
->>>>>>> Stashed changes
 
 /*
 |--------------------------------------------------------------------------
-| API Routes
+| Mobile app API  (every URL here starts with /api)
 |--------------------------------------------------------------------------
 |
-| Here is where you can register API routes for your application. These
-| routes are loaded by the RouteServiceProvider within a group which
-| is assigned the "api" middleware group. Enjoy building your API!
+| Sign in with POST /api/login to get a token, then send it on every other
+| request as the header:   Authorization: Bearer <token>
+|
+| A token carries one ability, 'staff' or 'admin'. Most routes are shared:
+| one URL and one controller for both, and the controller decides what each
+| person gets (staff: own shop only; admin: any shop). Responses are always
+| JSON (ForceJsonResponse).
 |
 */
 
-<<<<<<< Updated upstream
-Route::middleware('auth:api')->get('/user', function (Request $request) {
-    return $request->user();
-=======
 // Open: no token yet. 5 tries a minute per account+IP stops password
 // guessing (limiter 'api-login' in AppServiceProvider).
 Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:api-login');
@@ -92,5 +88,4 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::middleware('abilities:admin')->prefix('admin')->group(function () {
         //
     });
->>>>>>> Stashed changes
 });

@@ -156,10 +156,7 @@
     @include('components.dashboard_scripts')
 
     @include('pages._dashboard_scripts')
-<<<<<<< Updated upstream
-=======
     @include('components.searchable_selects')
     @include('components.confirm_dialogs')
->>>>>>> Stashed changes
 </body>
 </html>

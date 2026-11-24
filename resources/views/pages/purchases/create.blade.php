@@ -1,204 +1,193 @@
-<div class="mb-3 d-flex gap-2">
-<button type="button" id="btnNewItem" class="btn btn-info"> <i class="bi bi-plus-circle"></i> New Item </button>
+{{-- New Purchase Order (inside pages.purchases.create_page). Same look as Add Product.
+     The element ids are used by initPurchaseForm() in components.dashboard_scripts. --}}
+@include('pages.products._create_styles')
 
-    <button type="button" class="btn btn-light" data-bs-toggle="modal" data-bs-target="#addSupplierModal">
-        <i class="bi bi-person-plus"></i> Add Supplier
-    </button>
-
-    <button type="button" id="cancel-add-purchase" class="btn btn-danger">
-        Cancel
-    </button>
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+    <p class="text-muted mb-0">
+        Order products you already have from a supplier. Stock is added when the order is <strong>received</strong>.
+    </p>
+    <div class="d-flex flex-wrap gap-2">
+        <a href="{{ route('purchases.index') }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i> Purchases</a>
+        <button type="button" class="btn btn-sm btn-light" data-bs-toggle="modal" data-bs-target="#addSupplierModal">
+            <i class="bi bi-person-plus"></i> Add Supplier
+        </button>
+        <a href="{{ route('purchases.new_product', array_filter(['shop' => $activeShopIdForView ?? null])) }}" class="btn btn-sm btn-primary">
+            <i class="bi bi-plus-circle"></i> New Item Purchase
+        </a>
+    </div>
 </div>
 
-<section class="card mb-5 shadow-sm">
-    <div class="card-header bg-white">
-        <h5 class="mb-0">New Purchase Order</h5>
-        <small class="text-muted">Stock is added when the order is received and confirmed.</small>
-    </div>
+<form method="POST" action="{{ route('purchases.store') }}">
+    @csrf
 
-    <div class="card-body">
-
-        <form method="POST" action="{{ route('purchases.store') }}">
-            @csrf
-
-            <!-- Shop & Supplier -->
+    <!-- Order details -->
+    <div class="card product-form-section accent-primary mb-4">
+        <div class="product-form-section-header">
+            <div class="product-form-section-icon icon-primary"><i class="bi bi-truck"></i></div>
+            <div>
+                <p class="product-form-section-title">Order Details</p>
+                <p class="product-form-section-subtitle">Which shop it's for, who supplies it, and their invoice number</p>
+            </div>
+        </div>
+        <div class="product-form-section-body">
             <div class="row g-3">
-                <div class="col-md-6">
-                    <label>Shop</label>
+                <div class="col-md-4">
+                    <label for="purchaseShop" class="form-label">Shop / Store <span class="text-danger">*</span></label>
                     <select name="shop_id" id="purchaseShop" class="form-select" required>
-                        <option value="">Select Shop</option>
+                        <option value="">-- select shop or store --</option>
                         @foreach($shops as $shop)
-                        <option value="{{ $shop->id }}" {{ (isset($activeShopIdForView) && (int) $activeShopIdForView === $shop->id) ? 'selected' : '' }}>{{ $shop->name }}</option>
+                            <option value="{{ $shop->id }}" {{ (isset($activeShopIdForView) && (int) $activeShopIdForView === $shop->id) ? 'selected' : '' }}>{{ $shop->name }}</option>
                         @endforeach
                     </select>
                 </div>
-
-                <div class="col-md-6">
-                    <label>Supplier</label>
+                <div class="col-md-4">
+                    <label for="purchaseSupplier" class="form-label">Supplier <span class="text-danger">*</span></label>
                     <select name="supplier_id" id="purchaseSupplier" class="form-select" required
                             data-products-url="{{ url('purchases/supplier/__ID__/products') }}">
-                        <option value="">Select Supplier</option>
+                        <option value="">-- select supplier --</option>
                         @foreach($suppliers as $supplier)
-                        <option value="{{ $supplier->id }}">{{ $supplier->name }}</option>
+                            <option value="{{ $supplier->id }}">{{ $supplier->name }}</option>
                         @endforeach
                     </select>
                 </div>
-                <div class="col-md-6 mt-2">
-        <label>Invoice Number</label>
-        <input type="text" name="invoice_number" class="form-control" placeholder="Enter Invoice Number">
-    </div>
+                <div class="col-md-4">
+                    <label for="purchaseInvoice" class="form-label">Invoice Number <span class="text-muted">(optional)</span></label>
+                    <input type="text" name="invoice_number" id="purchaseInvoice" class="form-control" placeholder="Supplier's invoice number">
+                </div>
             </div>
-
-            <hr>
-            <h6>Add Items</h6>
-
-            <!-- Item Input -->
-            <div class="row g-2 align-items-end">
-    <div class="col-md-2">
-        <label class="form-label small mb-1" for="product">Product</label>
-        <select id="product" class="form-select">
-                        <option value="">Select Product</option>
-                        @foreach($products as $product)
-                        <option
-                            value="{{ $product->id }}"
-                            data-buy="{{ $product->purchase_price }}"
-                            data-retail="{{ $product->selling_price }}"
-                            data-wholesale="{{ $product->wholesale_price }}"
-                        >
-                            {{ $product->name }}
-                        </option>
-                        @endforeach
-                    </select>
-    </div>
-    <div class="col-md-2">
-        <label class="form-label small mb-1" for="quantity">Quantity</label>
-        <input type="number" id="quantity" class="form-control" placeholder="Qty" min="1">
-    </div>
-        <div class="col-md-2">
-            <label class="form-label small mb-1" for="purchase_price">Buying Price (Tsh)</label>
-            <input type="number" id="purchase_price" class="form-control" placeholder="Buy Price">
-        </div>
-        <div class="col-md-2">
-            <label class="form-label small mb-1" for="selling_price">Retail Price (Tsh)</label>
-            <input type="number" id="selling_price" class="form-control" placeholder="Retail Price">
-        </div>
-        <div class="col-md-2">
-            <label class="form-label small mb-1" for="wholesale_price">Wholesale Price (Tsh)</label>
-            <input type="number" id="wholesale_price" class="form-control" placeholder="Wholesale Price">
-        </div>
-        <div class="col-md-2">
-            <button type="button" id="addItemBtn" class="btn btn-primary w-100">Add</button>
         </div>
     </div>
 
-            {{-- Filled by the purchase script: which supplier's products the list shows. --}}
-            <div class="small mt-2" id="supplierProductsHint" aria-live="polite"></div>
-
-            <!-- Items Table -->
-            <div class="mt-4">
-                <table class="table table-bordered" id="itemsTable">
-                    <thead>
-                        <tr>
-                            <th>Product</th>
-                            <th>Qty</th>
-                            <th>Buy</th>
-                            <th>Retail</th>
-                            <th>Wholesale</th>
-                            <th>Total</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
-            </div>
-
-            <h5 class="text-end">Total: Tsh <span id="grandTotal">0</span></h5>
-
-          
-            <!-- PAYMENT -->
-        <div class="row mt-3">
-            <div class="col-md-6">
-                <label>Payment Type</label>
-                <select name="payment_type" id="paymentType" class="form-select" required>
-                    <option value="">Select Payment Type</option>
-                    <option value="cash">Cash</option>
-                    <option value="credit">Credit</option>
-                </select>
-            </div>
-
-            <div class="col-md-6" id="amountPaidBox" style="display:none;">
-                <label>Initial Deposit</label>
-                <input type="number" name="amount_paid" id="amountPaid" class="form-control" placeholder="Initial Deposit">
-                <small id="remainingCredit" class="text-danger mt-1 d-block">Remaining Credit: 0</small>
+    <!-- Item entry -->
+    <div class="card product-form-section accent-success mb-4">
+        <div class="product-form-section-header">
+            <div class="product-form-section-icon icon-success"><i class="bi bi-upc-scan"></i></div>
+            <div>
+                <p class="product-form-section-title">Add Items</p>
+                <p class="product-form-section-subtitle">Scan a barcode or pick the product, enter quantity and prices, then Add</p>
             </div>
         </div>
-
-            <!-- Hidden -->
-            <input type="hidden" name="items" id="itemsInput">
-
-            <div class="text-end mt-4">
-                <button class="btn btn-success">Place order</button>
-            </div>
-
-        </form>
-
-    </div>
-</section>
-
-<!-- Add Supplier Modal -->
-<div class="modal fade" id="addSupplierModal" tabindex="-1" aria-labelledby="addSupplierModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg rounded-3">
-
-            <div class="modal-header bg-light">
-                <h5 class="modal-title" id="addSupplierModalLabel">
-                    <i class="bi bi-person-plus me-2"></i> Add New Supplier
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-
-           <form id="supplierForm" method="POST" action="{{ route('suppliers.store') }}">
-                @csrf
-
-                <div class="modal-body">
-                    <div class="row g-3">
-
-                        <div class="col-md-6">
-                            <label class="form-label">Supplier Name</label>
-                            <input type="text" name="name" class="form-control" placeholder="Enter supplier name" required>
-                        </div>
-
-                        <div class="col-md-6">
-                            <label class="form-label">Email</label>
-                            <input type="email" name="email" class="form-control" placeholder="example@email.com">
-                        </div>
-
-                        <div class="col-md-6">
-                            <label class="form-label">Phone</label>
-                            <input type="text" name="phone" class="form-control" placeholder="Phone number">
-                        </div>
-
-                        <div class="col-md-6">
-                            <label class="form-label">Address</label>
-                            <input type="text" name="address" class="form-control" placeholder="Supplier address">
-                        </div>
-
+        <div class="product-form-section-body">
+            <div class="row g-3">
+                {{-- Scan or type a barcode + Enter: finds the product in the chosen shop and fills the row. --}}
+                <div class="col-md-5">
+                    <label for="purchaseBarcode" class="form-label">Barcode</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-upc"></i></span>
+                        <input type="text" id="purchaseBarcode" class="form-control" placeholder="Scan or type barcode, then Enter"
+                               autocomplete="off" data-lookup-url="{{ route('purchases.product_by_barcode') }}">
+                        <button type="button" class="btn btn-outline-secondary" id="purchaseBarcodeFind" aria-label="Find product by barcode">
+                            <i class="bi bi-search"></i>
+                        </button>
                     </div>
                 </div>
-
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
-                        Close
-                    </button>
-
-                    <button type="submit" class="btn btn-primary">
-                        <i class="bi bi-save me-1"></i> Save Supplier
-                    </button>
+                <div class="col-md-7">
+                    <label for="product" class="form-label">Product <span class="text-danger">*</span></label>
+                    <select id="product" class="form-select">
+                        <option value="">-- select product --</option>
+                        @foreach($products as $product)
+                            <option value="{{ $product->id }}"
+                                    data-buy="{{ $product->purchase_price }}"
+                                    data-retail="{{ $product->selling_price }}"
+                                    data-wholesale="{{ $product->wholesale_price }}">{{ $product->name }}</option>
+                        @endforeach
+                    </select>
                 </div>
-            </form>
+                <div class="col-12 mt-1">
+                    {{-- Filled by the purchase script: the scanned product's details, and which supplier's products the list shows. --}}
+                    <div class="small" id="purchaseBarcodeInfo" aria-live="polite"></div>
+                    <div class="small" id="supplierProductsHint" aria-live="polite"></div>
+                </div>
 
+                <div class="col-md-3 col-6">
+                    <label for="quantity" class="form-label">Quantity <span class="text-danger">*</span></label>
+                    <input type="number" id="quantity" class="form-control" min="1" step="1" placeholder="0">
+                </div>
+                <div class="col-md-3 col-6">
+                    <label for="purchase_price" class="form-label">Buying Price <span class="text-danger">*</span></label>
+                    <input type="number" id="purchase_price" class="form-control" min="0" step="any" placeholder="Tsh">
+                </div>
+                <div class="col-md-3 col-6">
+                    <label for="selling_price" class="form-label">Retail Price</label>
+                    <input type="number" id="selling_price" class="form-control" min="0" step="any" placeholder="Tsh">
+                </div>
+                <div class="col-md-3 col-6">
+                    <label for="wholesale_price" class="form-label">Wholesale Price</label>
+                    <input type="number" id="wholesale_price" class="form-control" min="0" step="any" placeholder="Tsh">
+                </div>
+            </div>
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mt-3">
+                <div class="text-muted">Line total: <strong class="text-body">Tsh <span id="entryLineTotal">0</span></strong></div>
+                <button type="button" id="addItemBtn" class="btn btn-primary px-4"><i class="bi bi-plus-lg me-1"></i> Add to order</button>
+            </div>
         </div>
     </div>
-</div>
 
-@include('pages.purchases._create_scripts')
+    <!-- Items on the order -->
+    <div class="card shadow-sm mb-4" style="border-radius:1rem; overflow:hidden;">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <h6 class="mb-0"><i class="bi bi-list-check me-2"></i>Items on this order <span class="badge bg-secondary" id="itemCount">0</span></h6>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-bordered table-sm align-middle mb-0" id="itemsTable">
+                <thead class="table-light text-center">
+                    <tr>
+                        <th style="width:40px">#</th>
+                        <th class="text-start">Product</th>
+                        <th>Qty</th>
+                        <th class="text-end">Buy</th>
+                        <th class="text-end">Retail</th>
+                        <th class="text-end">Wholesale</th>
+                        <th class="text-end">Line total</th>
+                        <th style="width:70px">Action</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+                <tfoot>
+                    <tr class="table-light">
+                        <th colspan="6" class="text-end">Order total</th>
+                        <th class="text-end">Tsh <span id="grandTotal">0.00</span></th>
+                        <th></th>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+
+    <!-- Payment -->
+    <div class="card product-form-section accent-warning mb-4">
+        <div class="product-form-section-header">
+            <div class="product-form-section-icon icon-warning"><i class="bi bi-cash-coin"></i></div>
+            <div>
+                <p class="product-form-section-title">Payment</p>
+                <p class="product-form-section-subtitle">Cash is paid in full; credit records a deposit and what's still owed</p>
+            </div>
+        </div>
+        <div class="product-form-section-body">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label for="paymentType" class="form-label">Payment Type <span class="text-danger">*</span></label>
+                    <select name="payment_type" id="paymentType" class="form-select" required>
+                        <option value="">-- select payment type --</option>
+                        <option value="cash">Cash</option>
+                        <option value="credit">Credit</option>
+                    </select>
+                </div>
+                <div class="col-md-4" id="amountPaidBox" style="display:none;">
+                    <label for="amountPaid" class="form-label">Initial Deposit</label>
+                    <input type="number" name="amount_paid" id="amountPaid" class="form-control" min="0" step="any" placeholder="0">
+                    <small id="remainingCredit" class="text-danger mt-1 d-block">Remaining Credit: 0</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <input type="hidden" name="items" id="itemsInput">
+
+    <div class="d-flex justify-content-end flex-wrap gap-2 mb-5">
+        <a href="{{ route('purchases.index') }}" class="btn btn-outline-secondary px-4">Cancel</a>
+        <button class="btn btn-success px-4"><i class="bi bi-check-circle me-1"></i> Place order</button>
+    </div>
+</form>
+
+@include('pages.purchases._add_supplier_modal')

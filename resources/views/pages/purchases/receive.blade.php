@@ -10,7 +10,7 @@
 
 <div class="container-fluid py-4">
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-        <a href="{{ route('purchases.index') }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i> Back</a>
+        <a href="{{ route('purchases.receiving') }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i> Receive Orders</a>
         <a href="{{ route('purchases.history', $invoice->id) }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-file-earmark-text"></i> View order</a>
     </div>
 
@@ -44,6 +44,8 @@
                                 <th style="min-width:130px">Buying price (Tsh)</th>
                                 <th style="min-width:130px">Retail price (Tsh)</th>
                                 <th style="min-width:130px">Wholesale price (Tsh)</th>
+                                <th style="min-width:100px" title="Low-stock alert level for this product">Min stock</th>
+                                <th style="min-width:150px">Expiry date</th>
                                 <th>Line total (Tsh)</th>
                             </tr>
                         </thead>
@@ -72,14 +74,11 @@
                                     <td>
                                         <input type="number" name="lines[{{ $item->id }}][selling_price]" class="form-control form-control-sm text-end"
                                                min="0" step="any" value="{{ $field('selling_price', $item->selling_price ?? $product->selling_price ?? '') }}" aria-label="Retail price">
-                                        <div class="text-muted small">now {{ $money($product->selling_price ?? 0) }}</div>
+                                        <!-- <div class="text-muted small">now {{ $money($product->selling_price ?? 0) }}</div> -->
                                     </td>
                                     <td>
                                         <input type="number" name="lines[{{ $item->id }}][wholesale_price]" class="form-control form-control-sm text-end"
                                                min="0" step="any" value="{{ $field('wholesale_price', $item->wholesale_price ?? $product->wholesale_price ?? '') }}" aria-label="Wholesale price">
-<<<<<<< Updated upstream
-                                        <div class="text-muted small">now {{ $money($product->wholesale_price ?? 0) }}</div>
-=======
                                         <!-- <div class="text-muted small">now {{ $money($product->wholesale_price ?? 0) }}</div> -->
                                     </td>
                                     <td>
@@ -99,7 +98,6 @@
                                                 <!-- optional -->
                                             @endif
                                         </div>
->>>>>>> Stashed changes
                                     </td>
                                     <td class="text-end js-line-total">{{ $money($item->ordered_quantity * $item->purchase_price) }}</td>
                                 </tr>
@@ -107,11 +105,11 @@
                         </tbody>
                         <tfoot>
                             <tr class="table-light">
-                                <th class="text-start" colspan="6">Order value (as ordered)</th>
+                                <th class="text-start" colspan="8">Order value (as ordered)</th>
                                 <th class="text-end">{{ $money($orderValue) }}</th>
                             </tr>
                             <tr class="table-success">
-                                <th class="text-start" colspan="6">Received value</th>
+                                <th class="text-start" colspan="8">Received value</th>
                                 <th class="text-end" id="receivedTotal">{{ $money($orderValue) }}</th>
                             </tr>
                         </tfoot>

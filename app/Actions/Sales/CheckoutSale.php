@@ -49,8 +49,6 @@ class CheckoutSale
         }
 
         return DB::transaction(function () use ($data, $grandTotal, $received, $remaining, $change) {
-<<<<<<< Updated upstream
-=======
             $itemsTotal = 0;
             $itemsCost = 0;
 
@@ -66,8 +64,8 @@ class CheckoutSale
                 }
             }
 
->>>>>>> Stashed changes
             $sale = Sale::create([
+                'client_reference' => $data->clientReference,
                 'shop_id' => $data->shopId,
                 'distribution_id' => $trip?->id,
                 'staff_id' => $data->staffId,
@@ -78,6 +76,7 @@ class CheckoutSale
                 'total' => $grandTotal,
                 'payment_method' => $data->paymentMethod->value,
                 'payment_type' => $data->paymentType,
+                'payment_method_id' => $data->paymentMethodId,
                 'received_amount' => $received,
                 'remaining_amount' => $remaining,
                 'change_amount' => $change,
@@ -108,9 +107,6 @@ class CheckoutSale
                     throw new \DomainException("Not enough stock for {$product->name}");
                 }
 
-<<<<<<< Updated upstream
-                $product->decrement('quantity', $item->quantity);
-=======
                 // Never sell below the buying price: a discount may only eat
                 // into the profit. (Products with no purchase price recorded
                 // can't be checked, so they are let through.)
@@ -129,7 +125,6 @@ class CheckoutSale
                 } else {
                     $product->decrement('quantity', $item->quantity);
                 }
->>>>>>> Stashed changes
 
                 SaleItem::create([
                     'sale_id' => $sale->id,
@@ -139,6 +134,12 @@ class CheckoutSale
                     'discount' => $item->discount,
                     'sale_type' => $item->saleType->value,
                 ]);
+            }
+
+            // The bill discount comes off the whole sale, so it must not push
+            // the items below their combined buying price either.
+            if ($data->billDiscount > 0 && $itemsTotal - $data->billDiscount < $itemsCost) {
+                throw new \DomainException('Bill discount too high. This would sell at a loss.');
             }
 
             return $sale;
