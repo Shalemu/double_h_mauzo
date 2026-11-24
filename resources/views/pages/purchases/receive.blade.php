@@ -89,7 +89,7 @@
                                     </td>
                                     <td>
                                         <input type="date" name="lines[{{ $item->id }}][expire_date]" class="form-control form-control-sm js-expiry"
-                                               min="{{ now()->toDateString() }}" value="{{ $field('expire_date', '') }}"
+                                               min="{{ now()->toDateString() }}" value="{{ $field('expire_date', optional($item->expire_date)->toDateString() ?? '') }}"
                                                aria-label="Expiry date for {{ $product->name ?? 'product' }}">
                                         <div class="text-muted small">
                                             @if(!empty($product->expire_date) && ($product->quantity ?? 0) > 0)

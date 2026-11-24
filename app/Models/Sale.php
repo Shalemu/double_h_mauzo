@@ -12,6 +12,7 @@ class Sale extends Model
 protected $fillable = [
     'client_reference',
     'shop_id',
+    'distribution_id',
     'staff_id',
     'admin_id',
     'customer_id',
@@ -30,6 +31,11 @@ protected $fillable = [
 public function staff()
 {
     return $this->belongsTo(Staff::class)->withTrashed(); // keep history of removed staff
+}
+
+public function distribution()
+{
+    return $this->belongsTo(Distribution::class);
 }
 
 public function paymentMethodSetting()

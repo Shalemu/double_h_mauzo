@@ -3,10 +3,6 @@
 @section('title', 'Distribution')
 
 @section('content')
-<style>
-.dist-results { position:absolute; top:calc(100% + 4px); left:0; right:0; z-index:1060; max-height:260px; overflow:auto; display:none; }
-.dist-results.is-open { display:block; }
-</style>
 
 <div class="container-fluid py-4">
     @if(session('success'))<div class="alert alert-success">{{ session('success') }}</div>@endif
@@ -18,9 +14,9 @@
                 <h5 class="mb-0"><i class="bi bi-truck-flatbed me-2"></i>Distribution</h5>
                 <small class="text-muted">A distributor takes stock out of a store. When they come back, returned units go back into the store and the rest is recorded as a sale.</small>
             </div>
-            <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#issueModal" {{ $stores->isEmpty() ? 'disabled' : '' }}>
+            <a href="{{ route('distributions.create', array_filter(['store' => $storeId])) }}" class="btn btn-sm btn-primary {{ $stores->isEmpty() ? 'disabled' : '' }}">
                 <i class="bi bi-box-arrow-right"></i> Issue stock
-            </button>
+            </a>
         </div>
         <div class="card-body">
             @if($stores->isEmpty())
@@ -104,66 +100,4 @@
     </div>
 </div>
 
-<div class="modal fade" id="issueModal" tabindex="-1" aria-labelledby="issueTitle" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
-        <form class="modal-content" method="POST" action="{{ route('distributions.store') }}">
-            @csrf
-            <div class="modal-header">
-                <h5 class="modal-title" id="issueTitle">Issue stock to a distributor</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div class="row g-2 mb-3">
-                    <div class="col-md-6">
-                        <label class="form-label" for="distStore">From store</label>
-                        <select name="store_id" id="distStore" class="form-select" required>
-                            <option value="">Choose...</option>
-                            @foreach($stores as $s)
-                                <option value="{{ $s->id }}" {{ (string) $storeId === (string) $s->id ? 'selected' : '' }}>{{ $s->name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label" for="distStaff">Distributor</label>
-                        <select name="staff_id" id="distStaff" class="form-select" required>
-                            <option value="">Choose...</option>
-                            @foreach($staff as $person)
-                                <option value="{{ $person->id }}">{{ $person->full_name }}{{ $person->shop ? ' — ' . $person->shop->name : '' }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                </div>
-
-                <div class="row g-2 mb-2">
-                    <div class="col-md-8 position-relative">
-                        <input type="search" id="distSearch" class="form-control" autocomplete="off"
-                               placeholder="Search product in the store..." aria-label="Search product" disabled>
-                        <div class="list-group shadow dist-results" id="distResults"></div>
-                    </div>
-                    <div class="col-md-2">
-                        <input type="number" id="distQty" class="form-control" min="1" placeholder="Qty" aria-label="Quantity" disabled>
-                    </div>
-                    <div class="col-md-2">
-                        <button type="button" class="btn btn-outline-primary w-100" id="distAdd" disabled>Add</button>
-                    </div>
-                </div>
-
-                <table class="table table-sm table-bordered align-middle">
-                    <thead class="table-light"><tr><th>Product</th><th class="text-center">In store</th><th class="text-center">Taking</th><th></th></tr></thead>
-                    <tbody id="distLines"><tr><td colspan="4" class="text-muted text-center small">No products added yet.</td></tr></tbody>
-                </table>
-
-                <label class="form-label" for="distNote">Note (optional)</label>
-                <textarea name="note" id="distNote" class="form-control" rows="2" maxlength="1000" placeholder="e.g. route, vehicle, area"></textarea>
-                <input type="hidden" name="items" id="distItems">
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button class="btn btn-primary" id="distSubmit" disabled>Issue stock</button>
-            </div>
-        </form>
-    </div>
-</div>
-
-@include('pages.distributions._index_scripts')
 @endsection

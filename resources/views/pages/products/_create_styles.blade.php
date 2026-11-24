@@ -3,7 +3,10 @@
         border: 0;
         border-radius: 1rem;
         box-shadow: 0 .25rem .75rem rgba(31, 41, 55, .06);
-        overflow: hidden;
+        /* Not overflow:hidden: search results and dropdown lists opened inside a
+           section must be able to hang out below it. The coloured edge rounds
+           its own corners instead. */
+        overflow: visible;
         position: relative;
         background: #fff;
     }
@@ -12,6 +15,7 @@
         position: absolute;
         top: 0; left: 0; bottom: 0;
         width: 4px;
+        border-radius: 1rem 0 0 1rem;
     }
     .product-form-section.accent-primary::before { background: #4f46e5; }
     .product-form-section.accent-success::before { background: #16a34a; }

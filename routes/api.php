@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CustomerController;
 use App\Http\Controllers\Api\ExpenseController;
 use App\Http\Controllers\Api\PaymentMethodController;
+use App\Http\Controllers\Api\TripController;
 use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\SaleController;
 use App\Http\Controllers\Api\ShopController;
@@ -60,6 +61,9 @@ Route::middleware('auth:sanctum')->group(function () {
             ->middleware('permission:expenses.manage,expenses.view,expenses.create');
         Route::post('/expenses', [ExpenseController::class, 'store'])
             ->middleware('permission:expenses.manage,expenses.create');
+
+        // Distributor out with stock: their trip, products they carry and sales so far.
+        Route::get('/trip', [TripController::class, 'show'])->middleware('permission:pos.sell');
 
         // Payment methods to offer at checkout (Settings › Payment Methods).
         Route::get('/payment-methods', [PaymentMethodController::class, 'index'])

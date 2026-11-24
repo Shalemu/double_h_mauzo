@@ -73,16 +73,33 @@
              These fields have no name: only the list below is submitted. --}}
         <div class="card shadow-sm mb-4 border" id="itemEntry">
             <div class="card-header bg-white d-flex justify-content-between align-items-center">
-                <h6 class="mb-0" id="entryTitle"><i class="bi bi-box-seam me-2"></i>Item details</h6>
+                <div class="d-flex align-items-center flex-wrap gap-2">
+                    <h6 class="mb-0" id="entryTitle"><i class="bi bi-box-seam me-2"></i>Item details</h6>
+                    <span class="badge text-bg-success" id="eExisting" hidden><i class="bi bi-check-circle me-1"></i>Existing product: quantity will be added to its stock</span>
+                    <span class="small" id="eLookupNote" aria-live="polite"></span>
+                </div>
                 <small class="text-muted" id="supplierNote"></small>
             </div>
             <div class="card-body">
                 <div class="row g-2">
                     <div class="col-lg-4 col-md-6">
                         <label for="eName" class="form-label small mb-1">Product Name <span class="text-danger">*</span></label>
-                        <input type="text" id="eName" class="form-control" maxlength="255" placeholder="e.g. Nivea Body Lotion 400ml">
+                        <input type="text" id="eName" class="form-control" maxlength="255" placeholder="e.g. Nivea Body Lotion">
                     </div>
                     <div class="col-lg-2 col-md-6">
+                        <label for="eBrand" class="form-label small mb-1">Brand</label>
+                        <select id="eBrand" class="form-select">
+                            <option value="">—</option>
+                            @foreach($brands as $brandName)
+                                <option value="{{ $brandName }}">{{ $brandName }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-lg-2 col-md-4">
+                        <label for="eSize" class="form-label small mb-1">Size / Volume</label>
+                        <input type="text" id="eSize" class="form-control" maxlength="100" placeholder="e.g. 400ml, 1kg">
+                    </div>
+                    <div class="col-lg-2 col-md-4">
                         <label for="eCategory" class="form-label small mb-1">Category</label>
                         <select id="eCategory" class="form-select">
                             <option value="">—</option>
@@ -100,32 +117,47 @@
                             @endforeach
                         </select>
                     </div>
-                    <div class="col-lg-2 col-md-4">
+                    {{-- Row 2: barcode, then the stock figures side by side --}}
+                    <div class="col-lg-3 col-md-6">
                         <label for="eBarcode" class="form-label small mb-1">Barcode</label>
-                        <input type="text" id="eBarcode" class="form-control" maxlength="100" placeholder="Scan">
+                        <input type="text" id="eBarcode" class="form-control" maxlength="100" placeholder="Scan or type, then Enter"
+                               autocomplete="off" data-lookup-url="{{ route('purchases.product_by_barcode') }}">
+                        {{-- Set when the barcode belongs to a product the shop already has. --}}
+                        <input type="hidden" id="eProductId" value="">
                     </div>
-                    <div class="col-lg-2 col-md-4" id="ePhotoBox">
-                        <label for="ePhoto" class="form-label small mb-1">Photo</label>
-                        <input type="file" id="ePhoto" class="form-control" accept="image/*">
-                    </div>
-
-                    <div class="col-lg-2 col-md-3 col-6">
+                    <div class="col-lg-3 col-md-6 col-6">
                         <label for="eQty" class="form-label small mb-1">Quantity <span class="text-danger">*</span></label>
                         <input type="number" id="eQty" class="form-control" min="1" step="1" value="1">
                     </div>
-                    <div class="col-lg-2 col-md-3 col-6">
+                    <div class="col-lg-3 col-md-6 col-6">
+                        <label for="eMin" class="form-label small mb-1">Min Stock <span class="text-muted">(alert level)</span></label>
+                        <input type="number" id="eMin" class="form-control" min="0" step="1" placeholder="optional">
+                    </div>
+                    <div class="col-lg-3 col-md-6">
+                        <label for="eExpiry" class="form-label small mb-1">Expiry Date <span class="text-muted">(optional)</span></label>
+                        <input type="date" id="eExpiry" class="form-control" min="{{ now()->toDateString() }}">
+                    </div>
+
+                    {{-- Row 3: prices, then the photo last --}}
+                    <div class="col-lg-3 col-md-4 col-6">
                         <label for="eBuy" class="form-label small mb-1">Buying Price <span class="text-danger">*</span></label>
                         <input type="number" id="eBuy" class="form-control" min="0" step="any">
                     </div>
-                    <div class="col-lg-2 col-md-3 col-6">
+                    <div class="col-lg-3 col-md-4 col-6">
                         <label for="eRetail" class="form-label small mb-1">Retail Price</label>
                         <input type="number" id="eRetail" class="form-control" min="0" step="any">
                     </div>
-                    <div class="col-lg-2 col-md-3 col-6">
+                    <div class="col-lg-3 col-md-4 col-6">
                         <label for="eWholesale" class="form-label small mb-1">Wholesale Price</label>
                         <input type="number" id="eWholesale" class="form-control" min="0" step="any">
                     </div>
-                    <div class="col-lg-4 col-md-12 d-flex align-items-end gap-2">
+                    <div class="col-lg-3 col-md-12" id="ePhotoBox">
+                        <label for="ePhoto" class="form-label small mb-1">Photo <span class="text-muted">(optional)</span></label>
+                        <input type="file" id="ePhoto" class="form-control" accept="image/*">
+                    </div>
+
+                    {{-- Row 4: line total and the buttons --}}
+                    <div class="col-12 d-flex align-items-end gap-2 mt-3">
                         <div class="me-auto">
                             <div class="small text-muted">Line total</div>
                             <div class="fw-bold">Tsh <span id="eTotal">0.00</span></div>
@@ -155,6 +187,8 @@
                             <th class="text-end">Buy</th>
                             <th class="text-end">Retail</th>
                             <th class="text-end">Wholesale</th>
+                            <th>Min</th>
+                            <th>Expiry</th>
                             <th class="text-end">Line total</th>
                             <th style="width:110px">Action</th>
                         </tr>
@@ -162,7 +196,7 @@
                     <tbody id="itemsBody"></tbody>
                     <tfoot>
                         <tr id="emptyRow">
-                            <td colspan="10" class="text-center text-muted py-4">No items yet. Fill in the item details above and click <strong>Add</strong>.</td>
+                            <td colspan="12" class="text-center text-muted py-4">No items yet. Fill in the item details above and click <strong>Add</strong>.</td>
                         </tr>
                     </tfoot>
                 </table>
@@ -216,9 +250,15 @@ document.addEventListener('DOMContentLoaded', function () {
     const depositBox = document.getElementById('niDepositBox');
     const $ = id => document.getElementById(id);
 
-    const FIELDS = ['name', 'category_id', 'unit_id', 'barcode', 'quantity', 'purchase_price', 'selling_price', 'wholesale_price'];
-    const ENTRY = { name: 'eName', category_id: 'eCategory', unit_id: 'eUnit', barcode: 'eBarcode', quantity: 'eQty',
-                    purchase_price: 'eBuy', selling_price: 'eRetail', wholesale_price: 'eWholesale' };
+    const FIELDS = ['product_id', 'name', 'brand', 'size', 'category_id', 'unit_id', 'barcode', 'quantity', 'purchase_price', 'selling_price',
+                    'wholesale_price', 'min_quantity', 'expire_date'];
+    const ENTRY = { product_id: 'eProductId', name: 'eName', brand: 'eBrand', size: 'eSize', category_id: 'eCategory', unit_id: 'eUnit',
+                    barcode: 'eBarcode', quantity: 'eQty', purchase_price: 'eBuy', selling_price: 'eRetail', wholesale_price: 'eWholesale',
+                    min_quantity: 'eMin', expire_date: 'eExpiry' };
+    // An existing product's own details can't be changed here: they belong to that product.
+    const LOCKED_WHEN_EXISTING = ['eName', 'eBrand', 'eSize', 'eCategory', 'eUnit'];
+    // Same product = same name + brand + size ("Lotion 200ml" and "Lotion 400ml" are different).
+    const identity = item => ['name', 'brand', 'size'].map(f => String(item[f] || '').trim().toLowerCase()).join('|');
 
     let nextIndex = 0;
     let editingRow = null; // the list row being edited, while its values are in the form
@@ -236,6 +276,111 @@ document.addEventListener('DOMContentLoaded', function () {
         return item;
     }
 
+    // ---- Barcode lookup: a product this shop already has is ordered, not created again ----
+    let loadedBarcode = '';   // the barcode the existing product was loaded for
+    let lastLookedUp = '';
+    let lookupTimer = null;
+
+    function setNote(html, tone) {
+        $('eLookupNote').className = 'small ' + (tone || '');
+        $('eLookupNote').innerHTML = html;
+    }
+
+    function setExistingMode(on) {
+        $('eExisting').hidden = !on;
+        LOCKED_WHEN_EXISTING.forEach(id => { $(id).disabled = on; });
+        // A photo belongs to a new product only.
+        const photo = $('ePhoto'); if (photo) photo.disabled = on;
+        if (!on) { $('eProductId').value = ''; loadedBarcode = ''; }
+    }
+
+    // Leaving an existing product (barcode changed or cleared): its details mustn't stay
+    // in the form, or they'd be saved as a brand-new product with the same name.
+    function leaveExistingMode() {
+        if (!$('eProductId').value) return;
+        setExistingMode(false);
+        ['eName', 'eSize', 'eBuy', 'eRetail', 'eWholesale', 'eMin'].forEach(id => { $(id).value = ''; });
+        ['eBrand', 'eCategory', 'eUnit'].forEach(id => { $(id).value = ''; });
+        refresh();
+    }
+
+    function lookupBarcode(force) {
+        clearTimeout(lookupTimer);
+        const code = $('eBarcode').value.trim();
+        if (!code) return Promise.resolve();
+        if (!force && code === lastLookedUp) return Promise.resolve();
+        if (!$('niShop').value) {
+            lastLookedUp = '';
+            setNote('<i class="bi bi-exclamation-triangle"></i> Choose the shop first, then scan.', 'text-warning-emphasis');
+            return Promise.resolve();
+        }
+        lastLookedUp = code;
+        setNote('<span class="spinner-border spinner-border-sm"></span> Checking ' + escapeHtml(code) + '…', 'text-muted');
+
+        const params = new URLSearchParams({ code: code, shop: $('niShop').value });
+        if (supplier.value) params.set('supplier', supplier.value);
+        return fetch($('eBarcode').dataset.lookupUrl + '?' + params, { headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' } })
+            .then(r => r.json().then(data => ({ ok: r.ok, status: r.status, data })))
+            .then(({ ok, status, data }) => {
+                if ($('eBarcode').value.trim() !== code) return; // changed while we waited
+                if (!ok) {
+                    leaveExistingMode();
+                    setNote(status === 404 ? '<i class="bi bi-plus-circle"></i> New barcode: this item will be created as a new product.'
+                        : '<i class="bi bi-x-circle"></i> ' + escapeHtml(data.message || 'Could not check the barcode.'), status === 404 ? 'text-muted' : 'text-danger');
+                    return;
+                }
+                const p = data;
+                // Already on the list? Edit that row instead of adding it twice.
+                const onList = Array.from(body.querySelectorAll('tr')).find(r => r !== editingRow && r.dataset.productId === String(p.id));
+                if (onList) {
+                    setNote('<i class="bi bi-info-circle"></i> "' + escapeHtml(p.name) + '" is already on the list. Edit that row to change its quantity.', 'text-primary');
+                    return;
+                }
+                $('eProductId').value = p.id;
+                loadedBarcode = code;
+                $('eName').value = p.name || '';
+                $('eSize').value = p.size || '';
+                $('eBrand').value = p.brand || '';
+                $('eCategory').value = p.category_id ?? '';
+                $('eUnit').value = p.unit_id ?? '';
+                $('eBuy').value = p.supplier_price ?? p.purchase_price ?? '';
+                $('eRetail').value = p.selling_price || '';
+                $('eWholesale').value = p.wholesale_price || '';
+                $('eMin').value = p.min_quantity || '';
+                // The product's current expiry as a starting point (change it if this delivery
+                // expires on another date). A date already past isn't used: expired goods can't be received.
+                const d = new Date(), today = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+                $('eExpiry').value = p.expire_date && p.expire_date >= today ? p.expire_date : '';
+                setExistingMode(true);
+                setNote('', '');
+                refresh();
+                $('eQty').focus();
+                $('eQty').select();
+            })
+            .catch(() => setNote('<i class="bi bi-wifi-off"></i> Could not check the barcode. Check your connection and try again.', 'text-danger'));
+    }
+
+    $('eBarcode').addEventListener('input', () => {
+        clearTimeout(lookupTimer);
+        const code = $('eBarcode').value.trim();
+        if (loadedBarcode && code !== loadedBarcode) leaveExistingMode();
+        if (code === '') { lastLookedUp = ''; setNote('', ''); return; }
+        if (code.length >= 3) lookupTimer = setTimeout(() => lookupBarcode(false), 600);
+    });
+    $('eBarcode').addEventListener('change', () => lookupBarcode(false));
+
+    // Existing products are per shop: changing the shop makes them the wrong ones.
+    $('niShop').addEventListener('change', () => {
+        lastLookedUp = '';
+        leaveExistingMode();
+        if ($('eBarcode').value.trim()) lookupBarcode(true);
+        const stale = Array.from(body.querySelectorAll('tr')).filter(r => r.dataset.productId).map(r => r.dataset.name);
+        if (stale.length) {
+            notify('warning', 'Shop changed', 'These existing products belong to the previous shop: ' + stale.join(', ')
+                + '. Remove them and scan them again for this shop.');
+        }
+    });
+
     function showError(message, focusId) {
         errorBox.textContent = message;
         errorBox.hidden = false;
@@ -247,9 +392,12 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!item.unit_id) return showError('Choose a unit.', 'eUnit'), false;
         if (!(parseInt(item.quantity, 10) >= 1)) return showError('The quantity must be at least 1.', 'eQty'), false;
         if (item.purchase_price === '' || Number(item.purchase_price) < 0) return showError('Enter the buying price.', 'eBuy'), false;
-        const duplicate = Array.from(body.querySelectorAll('tr')).some(row =>
-            row !== editingRow && row.dataset.name.toLowerCase() === item.name.toLowerCase());
-        if (duplicate) return showError('"' + item.name + '" is already on the list. Edit that row instead.', 'eName'), false;
+        if (item.min_quantity !== '' && !/^\d+$/.test(item.min_quantity)) return showError('Min stock must be a whole number.', 'eMin'), false;
+        const d = new Date(), today = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+        if (item.expire_date && item.expire_date < today) return showError('The expiry date is already past.', 'eExpiry'), false;
+        const duplicate = Array.from(body.querySelectorAll('tr')).some(row => row !== editingRow
+            && (item.product_id ? row.dataset.productId === item.product_id : row.dataset.identity === identity(item)));
+        if (duplicate) return showError('"' + item.name + (item.size ? ' ' + item.size : '') + '" is already on the list. Edit that row instead.', 'eName'), false;
         // One barcode = one product: the same code can't be on two items.
         const sameBarcode = item.barcode && Array.from(body.querySelectorAll('tr')).find(row =>
             row !== editingRow && row.dataset.barcode === item.barcode);
@@ -264,15 +412,22 @@ document.addEventListener('DOMContentLoaded', function () {
         const row = document.createElement('tr');
         row.dataset.name = item.name;
         row.dataset.barcode = item.barcode || '';
+        row.dataset.identity = identity(item);
+        row.dataset.productId = item.product_id || '';
         row.dataset.index = index;
         const total = (parseInt(item.quantity, 10) || 0) * (Number(item.purchase_price) || 0);
+        const details = [item.brand, item.size].filter(Boolean).map(escapeHtml).join(' · ');
+        const tag = item.product_id
+            ? '<span class="badge text-bg-success ms-1" title="Already in the shop: receiving adds to its stock">Existing</span>'
+            : '<span class="badge text-bg-primary ms-1" title="Created as a new product when the order is placed">New</span>';
 
         row.innerHTML = `
             <td class="text-center" data-number></td>
             <td>
-                <div class="fw-semibold">${escapeHtml(item.name)}</div>
+                <div class="fw-semibold">${escapeHtml(item.name)} ${tag}</div>
                 <div class="small text-muted">
-                    ${item.barcode ? '<i class="bi bi-upc"></i> ' + escapeHtml(item.barcode) : ''}
+                    ${details}
+                    ${item.barcode ? '<span class="ms-1"><i class="bi bi-upc"></i> ' + escapeHtml(item.barcode) + '</span>' : ''}
                     ${photoInput && photoInput.files.length ? '<span class="ms-1"><i class="bi bi-image"></i> photo</span>' : ''}
                 </div>
             </td>
@@ -282,6 +437,8 @@ document.addEventListener('DOMContentLoaded', function () {
             <td class="text-end">${money(item.purchase_price)}</td>
             <td class="text-end">${item.selling_price !== '' ? money(item.selling_price) : '—'}</td>
             <td class="text-end">${item.wholesale_price !== '' ? money(item.wholesale_price) : '—'}</td>
+            <td class="text-center">${item.min_quantity !== '' ? escapeHtml(item.min_quantity) : '—'}</td>
+            <td class="text-center text-nowrap">${item.expire_date ? escapeHtml(item.expire_date) : '—'}</td>
             <td class="text-end fw-semibold" data-total="${total}">${money(total)}</td>
             <td class="text-center text-nowrap">
                 <button type="button" class="btn btn-sm btn-outline-primary" data-edit aria-label="Edit ${escapeHtml(item.name)}"><i class="bi bi-pencil"></i></button>
@@ -321,12 +478,16 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function resetEntry(keepUnitAndCategory) {
-        const unit = $('eUnit').value, category = $('eCategory').value;
-        ['eName', 'eBarcode', 'eBuy', 'eRetail', 'eWholesale'].forEach(id => { $(id).value = ''; });
+        const unit = $('eUnit').value, category = $('eCategory').value, brand = $('eBrand').value;
+        ['eName', 'eSize', 'eBarcode', 'eBuy', 'eRetail', 'eWholesale', 'eMin', 'eExpiry'].forEach(id => { $(id).value = ''; });
         $('eQty').value = 1;
-        // Next item is usually the same kind: keep unit and category.
+        // Next item is usually the same kind: keep unit, category and brand.
         $('eUnit').value = keepUnitAndCategory ? unit : '';
         $('eCategory').value = keepUnitAndCategory ? category : '';
+        $('eBrand').value = keepUnitAndCategory ? brand : '';
+        setExistingMode(false);
+        lastLookedUp = '';
+        setNote('', '');
         editingRow = null;
         entry.classList.remove('editing');
         $('entryTitle').innerHTML = '<i class="bi bi-box-seam me-2"></i>Item details';
@@ -363,7 +524,16 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function editRow(row) {
         if (editingRow) resetEntry(false);
+        errorBox.hidden = true; // an old "can't add" message doesn't belong to this item
         row.querySelectorAll('input[data-field]').forEach(input => { $(ENTRY[input.dataset.field]).value = input.value; });
+        if (row.dataset.productId) {
+            setExistingMode(true);
+            $('eProductId').value = row.dataset.productId;
+            loadedBarcode = lastLookedUp = $('eBarcode').value.trim();
+        } else {
+            setExistingMode(false); // a new item: everything can be edited
+        }
+        setNote('', '');
         editingRow = row;
         entry.classList.add('editing');
         $('entryTitle').innerHTML = '<i class="bi bi-pencil me-2"></i>Editing: ' + escapeHtml(row.dataset.name)
@@ -402,7 +572,12 @@ document.addEventListener('DOMContentLoaded', function () {
     entry.addEventListener('keydown', function (e) {
         if (e.key !== 'Enter' || e.target.tagName === 'BUTTON') return;
         e.preventDefault();
-        if (e.target.id === 'eBarcode') { $('eQty').focus(); return; } // scanner sends Enter after the code
+        if (e.target.id === 'eBarcode') { // scanners send Enter after the code: check it now
+            lookupBarcode(true).then(() => {
+                if (!$('eProductId').value) ($('eName').value.trim() ? $('eQty') : $('eName')).focus();
+            });
+            return;
+        }
         addItem();
     });
     entry.addEventListener('input', refresh);

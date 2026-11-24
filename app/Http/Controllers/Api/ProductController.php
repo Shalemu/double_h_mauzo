@@ -122,10 +122,41 @@ class ProductController extends Controller
      */
     private function visibleProducts(Request $request)
     {
+        $user = $request->user();
+
+        // A distributor out on a trip sees only the trip's products, and their
+        // stock is what they still carry (never the shop's or store's stock).
+        if ($user->isStaff() && ($trip = \App\Models\Distribution::openFor($user->id))) {
+            return $this->tripProducts($trip)->with(['unit']);
+        }
+
         $shopId = $this->shopIdFor($request);
 
         return Products::query()
             ->with($request->user()->isStaff() ? ['unit'] : ['unit', 'shop:id,name'])
             ->when($shopId, fn ($q) => $q->where('shop_id', $shopId));
+    }
+
+    /**
+     * The trip's products as an ordinary products query, with `quantity`
+     * replaced by what the distributor still carries. Built as a sub-table
+     * named "products", so search, stock filters and sorting work unchanged.
+     */
+    private function tripProducts(\App\Models\Distribution $trip)
+    {
+        $columns = collect(\Illuminate\Support\Facades\Schema::getColumnListing('products'))
+            ->reject(fn ($c) => $c === 'quantity')
+            ->map(fn ($c) => 'products.' . $c)
+            ->all();
+
+        $carried = \Illuminate\Support\Facades\DB::table('products')
+            ->join('distribution_items', 'distribution_items.product_id', '=', 'products.id')
+            ->where('distribution_items.distribution_id', $trip->id)
+            ->select($columns)
+            // Signed maths: unsigned columns would error instead of going below zero.
+            ->selectRaw('GREATEST(CAST(distribution_items.quantity_taken AS SIGNED) - CAST(distribution_items.quantity_recorded AS SIGNED)'
+                . ' - CAST(distribution_items.quantity_returned AS SIGNED), 0) AS quantity');
+
+        return Products::query()->fromSub($carried, 'products');
     }
 }

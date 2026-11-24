@@ -20,6 +20,12 @@ class IssueDistribution
         if (!Shops::find($data->storeId)?->isStore()) {
             throw ValidationException::withMessages(['store_id' => 'Distributors can only take stock from a store.']);
         }
+        // The distributor's POS sells from their open trip, so one trip at a time.
+        if ($open = Distribution::openFor($data->staffId)) {
+            throw ValidationException::withMessages([
+                'staff_id' => "This distributor is still out on trip #{$open->id}. Settle it first, then issue a new one.",
+            ]);
+        }
 
         return DB::transaction(function () use ($data, $issuedBy) {
             $distribution = Distribution::create([

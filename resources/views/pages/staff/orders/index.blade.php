@@ -8,7 +8,7 @@
 
     <div class="card shadow-sm">
         <div class="card-header bg-white d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">My Order Requests</h5>
+            <h5 class="mb-0">Order Requests</h5>
 
             <a href="{{ route('staff.orders.create') }}" class="btn btn-primary">
                 <i class="bi bi-plus-circle"></i> New Order

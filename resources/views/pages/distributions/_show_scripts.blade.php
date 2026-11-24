@@ -14,15 +14,15 @@ document.addEventListener('DOMContentLoaded', function () {
         lines.replaceChildren();
 
         form.querySelectorAll('tbody tr[data-taken]').forEach(function (row) {
-            const taken = parseInt(row.dataset.taken, 10);
+            const taken = parseInt(row.dataset.taken, 10); // still carried after POS sales
             const back = Math.min(Math.max(parseInt(row.querySelector('.js-returned').value, 10) || 0, 0), taken);
             const price = parseFloat(row.querySelector('.js-price').value) || 0;
             const out = taken - back;
             returned += back; sold += out; total += out * price;
 
             const tr = document.createElement('tr');
-            [[row.cells[0].textContent.trim(), ''], [taken, 'text-center'], [back, 'text-center text-success'],
-             [out, 'text-center fw-semibold'], [fmt(out * price), 'text-end']].forEach(function ([text, cls]) {
+            [[row.cells[0].textContent.trim(), ''], [row.dataset.takenTotal, 'text-center'], [row.dataset.recorded, 'text-center text-primary'],
+             [back, 'text-center text-success'], [out, 'text-center fw-semibold'], [fmt(out * price), 'text-end']].forEach(function ([text, cls]) {
                 const td = document.createElement('td');
                 td.textContent = text;
                 td.className = cls;
@@ -32,18 +32,19 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         const received = parseFloat(document.getElementById('amountReceived').value) || 0;
-        const balance = Math.max(total - received, 0);
+        const expected = (parseFloat(document.getElementById('settleCash').dataset.posCash) || 0) + total;
+        const balance = Math.max(expected - received, 0);
         document.getElementById('cfReturned').textContent = returned;
         document.getElementById('cfSold').textContent = sold;
         document.getElementById('cfTotal').textContent = fmt(total);
-        document.getElementById('cfReceived').textContent = fmt(Math.min(received, total));
+        document.getElementById('cfReceived').textContent = fmt(Math.min(received, expected));
 
         const balanceLine = document.getElementById('cfBalanceLine');
         balanceLine.className = 'small fw-semibold ' + (balance > 0 ? 'text-danger' : 'text-success');
         balanceLine.textContent = balance > 0
             ? 'Still owes TZS ' + fmt(balance)
             : 'Fully paid';
-        document.getElementById('cfOverpaid').classList.toggle('d-none', received <= total);
+        document.getElementById('cfOverpaid').classList.toggle('d-none', received <= expected);
 
         modal.show();
     });
@@ -83,7 +84,9 @@ document.addEventListener('DOMContentLoaded', function () {
             total += sold * price;
         });
         document.getElementById('settleTotal').textContent = fmt(total);
-        const balance = Math.max(total - (parseFloat(received.value) || 0), 0);
+        const expected = (parseFloat(document.getElementById('settleCash').dataset.posCash) || 0) + total;
+        document.getElementById('settleExpected').textContent = fmt(expected);
+        const balance = Math.max(expected - (parseFloat(received.value) || 0), 0);
         const el = document.getElementById('settleBalance');
         el.textContent = fmt(balance);
         el.classList.toggle('text-danger', balance > 0);

@@ -231,6 +231,27 @@ class DashboardController extends Controller
             abort(403, 'Unauthorized');
         }
 
+        // A distributor out on a trip sees and sells only what they carry: no shop
+        // stock until the trip is settled.
+        $trip = \App\Models\Distribution::openFor($staff->id);
+        if ($trip) {
+            $trip->load('store', 'items');
+            $left = $trip->items->mapWithKeys(fn ($item) => [$item->product_id => $item->quantity_left]);
+            // POS cards show "stock" = what the distributor still has (not saved: display only).
+            $products = \App\Models\Products::whereIn('id', $left->keys())->get()
+                ->each(fn ($p) => $p->setAttribute('quantity', $left[$p->id] ?? 0))
+                ->sortByDesc('quantity')->values();
+            $customers = Customer::whereIn('shop_id', array_filter([$trip->store_id, $staff->shop_id]))->orderBy('name')->get();
+
+            return view('pages.staff.index', [
+                'products' => $products,
+                'customers' => $customers,
+                'productsTotal' => $products->count(),
+                'productsDisplayLimit' => null,
+                'trip' => $trip,
+            ]);
+        }
+
         // A shop can hold tens of thousands of products — rendering every
         // one as a POS card crashed this page. Cap the list (most-stocked
         // first, out-of-stock pushed to the end) and let the cashier's
@@ -307,6 +328,11 @@ class DashboardController extends Controller
     {
         $staff = \App\Models\Staff::current();
         abort_unless($staff, 403);
+
+        // Out on a trip: only the trip's products (all already on the POS page), no shop stock.
+        if (\App\Models\Distribution::openFor($staff->id)) {
+            return response('');
+        }
 
         return $this->posSearchResults($staff->shop_id, $request->query('q'));
     }

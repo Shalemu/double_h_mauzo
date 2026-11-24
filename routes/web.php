@@ -126,6 +126,11 @@ Route::prefix('dashboard/staff')
         Route::post('sales/checkout/{shop}', [SaleController::class, 'checkout'])
             ->middleware('permission:pos.sell')->name('sales.checkout');
 
+        // Distributor out on a trip: sell from what they carry, see their trip and sales.
+        Route::get('trip', [\App\Http\Controllers\Web\DistributorController::class, 'mine'])->name('trip');
+        Route::post('trip/{distribution}/checkout', [\App\Http\Controllers\Web\DistributorController::class, 'checkout'])
+            ->middleware('permission:pos.sell')->name('trip.checkout');
+
         Route::prefix('sales')->middleware('permission:sales.view')->group(function () {
         Route::get('/{shop}', [SaleController::class, 'index'])->name('sales.index');
         Route::get('/{shop}/{date}', [SaleController::class, 'detail'])->name('sales.detail');
@@ -543,6 +548,7 @@ Route::prefix('purchases')->name('purchases.')->group(function () {
         // Distributors taking stock out of a store and settling when they come back
         Route::get('/distributions', [DistributionController::class, 'index'])->name('distributions.index');
         Route::post('/distributions', [DistributionController::class, 'store'])->name('distributions.store');
+        Route::get('/distributions/create', [DistributionController::class, 'create'])->name('distributions.create');
         Route::get('/distributions/product-search', [DistributionController::class, 'productSearch'])->name('distributions.productSearch');
         Route::get('/distributions/{distribution}', [DistributionController::class, 'show'])->name('distributions.show');
         Route::post('/distributions/{distribution}/settle', [DistributionController::class, 'settle'])->name('distributions.settle');

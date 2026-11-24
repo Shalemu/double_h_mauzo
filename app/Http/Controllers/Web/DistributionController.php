@@ -46,11 +46,49 @@ class DistributionController extends Controller
     {
         $distribution->load('store', 'staff', 'issuedBy', 'settledBy', 'items', 'payments.receivedBy');
 
-        return view('pages.distributions.show', compact('distribution'));
+        // Sales the distributor recorded on the POS during the trip.
+        $posSales = $distribution->posSales()->with('customer', 'items')->latest()->get();
+        $posTotal = (float) $posSales->sum('total');
+        $posCash = (float) $posSales->sum(fn ($s) => $s->received_amount - $s->change_amount);
+        $posCredit = (float) $posSales->sum('remaining_amount');
+
+        return view('pages.distributions.show', compact('distribution', 'posSales', 'posTotal', 'posCash', 'posCredit'));
+    }
+
+    /**
+     * Issue Stock page: store, distributor, and the products they take
+     * (search by name or scan a barcode).
+     */
+    public function create(Request $request)
+    {
+        $stores = Shops::stores()->orderBy('name')->get(['id', 'name']);
+        $staff = Staff::with('shop:id,name')->orderBy('first_name')->get(['id', 'first_name', 'last_name', 'shop_id']);
+        // Distributors already out can't take a second trip until it's settled.
+        $outTrips = Distribution::where('status', DistributionStatus::Out->value)->pluck('id', 'staff_id');
+        $storeId = $request->query('store', $stores->count() === 1 ? $stores->first()->id : null);
+
+        return view('pages.distributions.create', compact('stores', 'staff', 'outTrips', 'storeId'));
     }
 
     public function productSearch(Request $request)
     {
+        // Exact barcode (scanned): also report a product that is out of stock, so the page can say so.
+        if ($request->filled('barcode') && $request->query('store')) {
+            return Products::where('shop_id', $request->query('store'))
+                ->where('barcode', trim((string) $request->query('barcode')))
+                ->limit(5)
+                ->get(['id', 'name', 'barcode', 'quantity', 'selling_price']);
+        }
+
+        // Opening the product box without typing: the store's products in stock, A–Z.
+        if ($request->boolean('browse') && $request->query('store')) {
+            return Products::where('shop_id', $request->query('store'))
+                ->where('quantity', '>', 0)
+                ->orderBy('name')
+                ->limit(100)
+                ->get(['id', 'name', 'barcode', 'quantity', 'selling_price']);
+        }
+
         $term = trim((string) $request->query('q'));
         if (mb_strlen($term) < 2 || !$request->query('store')) {
             return response()->json([]);

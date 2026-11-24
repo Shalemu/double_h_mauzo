@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\Concerns\ResolvesShop;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Api\SaleResource;
 use App\Models\Customer;
+use App\Models\Distribution;
 use App\Models\Products;
 use App\Models\Sale;
 use Illuminate\Database\QueryException;
@@ -41,6 +42,7 @@ class SaleController extends Controller
      *
      * {
      *   "client_reference": "8f14e45f-...",     unique per sale, made by the app
+     *   "distribution_id": 7,                   distributor selling from their trip (GET /api/trip)
      *   "shop_id": 3,                           admin only
      *   "customer_id": 12,                      required for credit
      *   "payment_method_id": 4,                 from GET /api/payment-methods (preferred)
@@ -54,10 +56,28 @@ class SaleController extends Controller
      */
     public function store(Request $request, CheckoutSale $checkout): JsonResponse
     {
-        $shopId = $this->requiredShopIdFor($request);
         $user = $request->user();
 
+        // A distributor selling from their trip (GET /api/trip): the sale is from the
+        // trip's store, and stock is what they carry.
+        $trip = null;
+        if ($request->filled('distribution_id')) {
+            $trip = Distribution::find($request->integer('distribution_id'));
+            if (!$trip || !$user->isStaff() || (int) $trip->staff_id !== (int) $user->id) {
+                throw ValidationException::withMessages(['distribution_id' => 'This trip is not yours.']);
+            }
+            if (!$trip->isOut()) {
+                throw ValidationException::withMessages(['distribution_id' => 'This trip has been settled. Ask your supervisor for a new one.']);
+            }
+        } elseif ($user->isStaff()) {
+            // Out on a trip but the app didn't say so (e.g. an older app version):
+            // they can only sell what they carry, so it's a trip sale.
+            $trip = Distribution::openFor($user->id);
+        }
+        $shopId = $trip ? (int) $trip->store_id : $this->requiredShopIdFor($request);
+
         $data = $request->validate([
+            'distribution_id'    => 'nullable|integer',
             'client_reference'   => 'nullable|string|max:64',
             'customer_id'        => 'nullable|integer',
             'payment_method_id'  => 'nullable|integer',
@@ -92,8 +112,10 @@ class SaleController extends Controller
             return $this->alreadyRecorded($existing, $request);
         }
 
+        // On a trip the customer may be the store's or the distributor's own shop's.
+        $customerShops = $trip ? array_filter([$shopId, $user->shop_id]) : [$shopId];
         if (!empty($data['customer_id'])
-            && !Customer::whereKey($data['customer_id'])->where('shop_id', $shopId)->exists()) {
+            && !Customer::whereKey($data['customer_id'])->whereIn('shop_id', $customerShops)->exists()) {
             throw ValidationException::withMessages(['customer_id' => 'This customer does not belong to this shop.']);
         }
 
@@ -113,6 +135,9 @@ class SaleController extends Controller
             clientReference: $reference,
             paymentMethodId: $paymentMethodId,
         );
+        if ($trip) {
+            $sale = $sale->onDistribution($trip->id);
+        }
 
         try {
             $recorded = $checkout->execute($sale);
@@ -227,11 +252,27 @@ class SaleController extends Controller
     private function visibleSales(Request $request)
     {
         $user = $request->user();
+        $request->validate(['distribution_id' => 'nullable|integer']);
+
+        if ($user->isStaff()) {
+            // Their own sales: in their shop, plus the ones made on their distributor trips
+            // (those are from the trip's store). ?distribution_id= narrows to one trip.
+            return Sale::query()
+                ->where('staff_id', $user->id)
+                ->where(function ($q) use ($user) {
+                    // A distributor may have no shop of their own: then only trip sales.
+                    $user->shop_id
+                        ? $q->where('shop_id', $user->shop_id)->orWhereNotNull('distribution_id')
+                        : $q->whereNotNull('distribution_id');
+                })
+                ->when($request->filled('distribution_id'), fn ($q) => $q->where('distribution_id', $request->integer('distribution_id')));
+        }
+
         $shopId = $this->shopIdFor($request);
 
         return Sale::query()
             ->when($shopId, fn ($q) => $q->where('shop_id', $shopId))
-            ->when($user->isStaff(), fn ($q) => $q->where('staff_id', $user->id));
+            ->when($request->filled('distribution_id'), fn ($q) => $q->where('distribution_id', $request->integer('distribution_id')));
     }
 
     /** A retried sale: answer with the original, if it is this person's to see. */

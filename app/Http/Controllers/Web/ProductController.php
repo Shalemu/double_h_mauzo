@@ -39,6 +39,11 @@ public function index()
     if (\App\Models\Staff::current()) {
         $staff = \App\Models\Staff::current();
 
+        // A distributor out on a trip sees only what they carry: the Trip page, not shop stock.
+        if ($trip = \App\Models\Distribution::openFor($staff->id)) {
+            return redirect()->route('staff.trip')->with('info', "You are out on trip #{$trip->id}: these are the products you carry.");
+        }
+
         // A shop can hold tens of thousands of products — loading every
         // row (and filtering it in PHP) crashed this page. Cap each list
         // and do the filtering in SQL instead.

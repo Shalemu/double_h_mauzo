@@ -35,6 +35,7 @@ class SaleResource extends JsonResource
             'payment_method' => $this->payment_method,
             'payment_type'   => $this->payment_type,
             'payment_method_id' => $this->payment_method_id,
+            'distribution_id' => $this->distribution_id, // made on a distributor trip
             'items'          => $this->whenLoaded('items', fn () => $this->items->map(fn ($item) => [
                 'product_id' => $item->product_id,
                 'name'       => $item->product?->name ?? 'Deleted product',
