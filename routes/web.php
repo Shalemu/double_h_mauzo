@@ -241,6 +241,7 @@ Route::middleware(['web', 'auth', 'panel.permission'])->group(function () {
             Route::post('/', [StaffController::class, 'store'])->name('store');
             Route::get('/{id}/edit', [StaffController::class, 'edit'])->name('edit');
             Route::put('/{id}', [StaffController::class, 'update'])->name('update');
+            Route::post('/{id}/remove-distributor', [StaffController::class, 'removeDistributor'])->name('remove-distributor');
             Route::delete('/{id}', [StaffController::class, 'destroy'])->name('destroy');
         });
 

@@ -997,6 +997,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
         const receivedAmount = parseFloat(receivedInput?.value) || 0;
+        const saleDate = document.getElementById('sale-date');
         const grandTotal = parseFloat(grandTotalEl?.textContent) || 0;
         const itemsTotal = parseFloat(subTotalEl?.textContent) || 0;
 
@@ -1027,6 +1028,7 @@ document.addEventListener('DOMContentLoaded', () => {
             received_amount: receivedAmount,
             bill_discount: parseFloat(billDiscountEl?.value) || 0,
             shipping: parseFloat(shippingEl?.value) || 0,
+            sale_date: saleDate?.value || null,
             receipt: false
         };
 

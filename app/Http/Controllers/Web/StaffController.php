@@ -123,4 +123,22 @@ public function destroy($id)
     return redirect()->route('staff.manage.index')->with('success', 'Staff deleted successfully.');
 }
 
+/** Remove distributor duties by moving the staff member to another role. */
+public function removeDistributor(Request $request, $id)
+{
+    $staff = Staff::findOrFail($id);
+    $data = $request->validate([
+        'role_id' => ['required', 'exists:roles,id', function ($attribute, $value, $fail) {
+            if (mb_strtolower((string) Role::find($value)?->name) === 'distributor') {
+                $fail('Choose a non-distributor role to remove distributor assignment.');
+            }
+        }],
+    ]);
+
+    $staff->role_id = $data['role_id'];
+    $staff->save();
+
+    return redirect()->route('staff.manage.index')->with('success', 'Distributor assignment removed.');
+}
+
 }

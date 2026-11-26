@@ -184,6 +184,7 @@ public function detail($shopId, $date)
             'received_amount' => 'nullable|numeric|min:0',
             'bill_discount' => 'nullable|numeric|min:0',
             'shipping' => 'nullable|numeric|min:0',
+            'sale_date' => 'nullable|date_format:Y-m-d|before_or_equal:today',
         ]);
 
         // Outside the try: an unknown/turned-off payment method is a 422, not a crash.

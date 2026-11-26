@@ -32,6 +32,8 @@ class SaleData extends DataTransferObject
         public readonly ?int $paymentMethodId = null,
         // A distributor selling on their trip: stock comes from what they carry.
         public readonly ?int $distributionId = null,
+        // Backdate the accounting date selected in the web POS; API callers default to now.
+        public readonly ?string $saleDate = null,
     ) {
     }
 
@@ -43,7 +45,7 @@ class SaleData extends DataTransferObject
             received: $this->received, billDiscount: $this->billDiscount, shipping: $this->shipping,
             customerId: $this->customerId, paymentType: $this->paymentType, staffId: $this->staffId,
             adminId: $this->adminId, clientReference: $this->clientReference,
-            paymentMethodId: $this->paymentMethodId, distributionId: $distributionId,
+            paymentMethodId: $this->paymentMethodId, distributionId: $distributionId, saleDate: $this->saleDate,
         );
     }
 
@@ -63,6 +65,7 @@ class SaleData extends DataTransferObject
             staffId: $staffId,
             adminId: $adminId,
             paymentMethodId: $methodId,
+            saleDate: !empty($data['sale_date']) ? $data['sale_date'] : null,
         );
     }
 

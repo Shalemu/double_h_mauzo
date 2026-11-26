@@ -24,7 +24,8 @@ protected $fillable = [
     'payment_method_id',
     'received_amount',
     'remaining_amount',
-    'change_amount'
+    'change_amount',
+    'created_at',
 ];
 
 

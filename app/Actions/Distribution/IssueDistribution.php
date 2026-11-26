@@ -20,6 +20,10 @@ class IssueDistribution
         if (!Shops::find($data->storeId)?->isStore()) {
             throw ValidationException::withMessages(['store_id' => 'Distributors can only take stock from a store.']);
         }
+        $distributor = \App\Models\Staff::with('role')->find($data->staffId);
+        if (!$distributor || mb_strtolower((string) $distributor->role?->name) !== 'distributor') {
+            throw ValidationException::withMessages(['staff_id' => 'Only staff with the Distributor role can take stock on a distribution trip.']);
+        }
         // The distributor's POS sells from their open trip, so one trip at a time.
         if ($open = Distribution::openFor($data->staffId)) {
             throw ValidationException::withMessages([
