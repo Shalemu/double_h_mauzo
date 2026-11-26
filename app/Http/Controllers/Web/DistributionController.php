@@ -32,7 +32,7 @@ class DistributionController extends Controller
         return view('pages.distributions.index', [
             'distributions' => $table->paginate(),
             'stores' => Shops::stores()->orderBy('name')->get(['id', 'name']),
-            'staff' => Staff::with('shop:id,name')->orderBy('first_name')->get(['id', 'first_name', 'last_name', 'shop_id']),
+            'staff' => Staff::with(['shop:id,name', 'role:id,name'])->whereHas('role', fn ($q) => $q->whereRaw('LOWER(name) = ?', ['distributor']))->orderBy('first_name')->get(['id', 'first_name', 'last_name', 'shop_id', 'role_id']),
             'storeId' => $table->storeId(),
             'status' => $table->status(),
             'totals' => [
@@ -62,7 +62,7 @@ class DistributionController extends Controller
     public function create(Request $request)
     {
         $stores = Shops::stores()->orderBy('name')->get(['id', 'name']);
-        $staff = Staff::with('shop:id,name')->orderBy('first_name')->get(['id', 'first_name', 'last_name', 'shop_id']);
+        $staff = Staff::with(['shop:id,name', 'role:id,name'])->whereHas('role', fn ($q) => $q->whereRaw('LOWER(name) = ?', ['distributor']))->orderBy('first_name')->get(['id', 'first_name', 'last_name', 'shop_id', 'role_id']);
         // Distributors already out can't take a second trip until it's settled.
         $outTrips = Distribution::where('status', DistributionStatus::Out->value)->pluck('id', 'staff_id');
         $storeId = $request->query('store', $stores->count() === 1 ? $stores->first()->id : null);
@@ -121,6 +121,12 @@ class DistributionController extends Controller
         ], [
             'items.required' => 'Add at least one product for the distributor to take.',
         ]);
+
+        if (!Staff::whereKey($validated['staff_id'])->whereHas('role', fn ($q) => $q->whereRaw('LOWER(name) = ?', ['distributor']))->exists()) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'staff_id' => 'Select a staff member with the Distributor role. Assign this role in Staff management first.',
+            ]);
+        }
 
         $distribution = $issue->execute(DistributionData::fromArray($validated), Auth::id());
 

@@ -54,6 +54,7 @@ $shops = $shops ?? collect();
                                     <th>Name</th>
                                     <th>Phone</th>
                                     <th>Shop</th>
+                                    <th>Role</th>
                                     <th>Wages</th>
                                     <th>Created</th>
                                     <th class="no-export">Action</th>
@@ -69,6 +70,21 @@ $shops = $shops ?? collect();
         <td>{{ $s->first_name }} {{ $s->last_name }}</td>
         <td>{{ $s->phone }}</td>
         <td>{{ $s->shop->name ?? '-' }}</td>
+        <td>
+            {{ $s->role->name ?? '-' }}
+            @if(mb_strtolower((string) $s->role?->name) === 'distributor')
+                <form action="{{ route('staff.manage.remove-distributor', $s->id) }}" method="POST" class="d-flex gap-1 mt-2 justify-content-center">
+                    @csrf
+                    <select name="role_id" class="form-select form-select-sm" aria-label="New role for {{ $s->full_name }}" required>
+                        <option value="">Choose replacement role</option>
+                        @foreach($roles->reject(fn ($role) => mb_strtolower($role->name) === 'distributor') as $role)
+                            <option value="{{ $role->id }}">{{ $role->name }}</option>
+                        @endforeach
+                    </select>
+                    <button type="submit" class="btn btn-sm btn-outline-danger text-nowrap">Remove</button>
+                </form>
+            @endif
+        </td>
         <td>{{ number_format($s->wages, 2) }}</td>
         <td>{{ $s->created_at->format('Y-m-d') }}</td>
         <td class="no-export">
@@ -90,7 +106,7 @@ $shops = $shops ?? collect();
 @endforeach
 
 <tr class="table-success">
-    <td colspan="3"><strong>Total Wages</strong></td>
+    <td colspan="4"><strong>Total Wages</strong></td>
     <td><strong>{{ number_format($totalWages, 2) }}</strong></td>
     <td></td>
     <td class="no-export"></td>

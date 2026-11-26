@@ -80,6 +80,9 @@ class CheckoutSale
                 'received_amount' => $received,
                 'remaining_amount' => $remaining,
                 'change_amount' => $change,
+                'created_at' => $data->saleDate
+                    ? \Illuminate\Support\Carbon::parse($data->saleDate)->setTimeFrom(now())
+                    : now(),
             ]);
 
             foreach ($data->items as $item) {
