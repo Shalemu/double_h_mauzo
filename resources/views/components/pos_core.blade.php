@@ -248,7 +248,7 @@
             <!-- ACTION BUTTONS -->
             <div class="d-flex justify-content-between align-items-center mt-4">
                 <button class="btn btn-outline-danger" id="clear-cart"><i class="fa fa-trash me-1"></i> Clear Cart</button>
-                <button class="btn btn-success px-4" id="checkout-btn"><i class="fa fa-check me-1"></i> Complete Sale</button>
+                <button class="btn btn-success px-4" id="checkout-btn" disabled><i class="fa fa-check me-1"></i> Complete Sale</button>
             </div>
 
         </div>
@@ -536,6 +536,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const customerSelect = document.getElementById('customer-id');
     const receivedInput = document.getElementById('received-amount');
     const checkoutBtn = document.getElementById('checkout-btn');
+    let checkoutInProgress = false;
+    let pendingCheckoutReference = null;
     const changeAmountEl = document.getElementById('change-amount');
     const remainingAmountEl = document.getElementById('remaining-amount');
     const receivedRow = document.getElementById('received-row');
@@ -634,6 +636,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         updateTotals();
+        if (checkoutBtn) {
+            checkoutBtn.disabled = checkoutInProgress || cartIds.length === 0;
+        }
     }
 
     // Recalculate every total from the cart (rows are left as they are).
@@ -985,6 +990,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- CHECKOUT ---
     checkoutBtn?.addEventListener('click', async () => {
+        if (checkoutInProgress) return;
         if (Object.keys(cart).length === 0) {
             Swal.fire({ icon: 'warning', title: 'Cart is empty', text: 'Please add items to the cart before checkout', confirmButtonColor: '#3085d6' });
             return;
@@ -1015,6 +1021,14 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        checkoutInProgress = true;
+        checkoutBtn.disabled = true;
+        checkoutBtn.dataset.originalHtml ??= checkoutBtn.innerHTML;
+        checkoutBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Saving sale...';
+        pendingCheckoutReference ??= (window.crypto?.randomUUID
+            ? window.crypto.randomUUID()
+            : 'pos-' + Date.now() + '-' + Math.random().toString(36).slice(2));
+
         const payload = {
             cart: Object.entries(cart).map(([productId, item]) => ({
                 product_id: parseInt(productId),
@@ -1029,6 +1043,7 @@ document.addEventListener('DOMContentLoaded', () => {
             bill_discount: parseFloat(billDiscountEl?.value) || 0,
             shipping: parseFloat(shippingEl?.value) || 0,
             sale_date: saleDate?.value || null,
+            client_reference: pendingCheckoutReference,
             receipt: false
         };
 
@@ -1048,6 +1063,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 Swal.fire({ icon: 'error', title: 'Checkout Failed', text: data.message || 'Server error during checkout', confirmButtonColor: '#d33' });
                 return;
             }
+
+            pendingCheckoutReference = null;
 
             const sale = data.data || data;
 
@@ -1072,6 +1089,10 @@ document.addEventListener('DOMContentLoaded', () => {
             updateCartDisplay();
         } catch (err) {
             Swal.fire({ icon: 'error', title: 'Checkout Error', text: 'Checkout failed: ' + err.message, confirmButtonColor: '#d33' });
+        } finally {
+            checkoutInProgress = false;
+            checkoutBtn.disabled = Object.keys(cart).length === 0;
+            checkoutBtn.innerHTML = checkoutBtn.dataset.originalHtml || 'Complete Sale';
         }
     });
 
