@@ -185,7 +185,13 @@ public function detail($shopId, $date)
             'bill_discount' => 'nullable|numeric|min:0',
             'shipping' => 'nullable|numeric|min:0',
             'sale_date' => 'nullable|date_format:Y-m-d|before_or_equal:today',
+            'client_reference' => 'required|string|max:64',
         ]);
+
+        $existing = $this->findCheckoutRetry($validated['client_reference'], (int) $shopId, $staff?->id, $admin?->id);
+        if ($existing) {
+            return $this->checkoutResponse($request, $existing, 'Sale was already completed.');
+        }
 
         // Outside the try: an unknown/turned-off payment method is a 422, not a crash.
         $saleData = SaleData::fromArray((int) $shopId, $validated, $staff?->id, $admin?->id);
@@ -193,6 +199,12 @@ public function detail($shopId, $date)
         try {
             $sale = $checkoutSale->execute($saleData);
         } catch (\Throwable $e) {
+            // If two identical requests arrive together, the unique reference
+            // allows only one insert. Return that committed sale to the retry.
+            $existing = $this->findCheckoutRetry($validated['client_reference'], (int) $shopId, $staff?->id, $admin?->id);
+            if ($existing) {
+                return $this->checkoutResponse($request, $existing, 'Sale was already completed.');
+            }
             // Rule problems (not enough cash/stock, no customer for credit…) come back
             // in the shape the POS already shows: "Checkout failed: …".
             if (!$e instanceof \DomainException) {
@@ -202,6 +214,19 @@ public function detail($shopId, $date)
             return response()->json(['success' => false, 'message' => 'Checkout failed: ' . $e->getMessage()], 500);
         }
 
+        return $this->checkoutResponse($request, $sale, 'Sale completed successfully!');
+    }
+
+    private function findCheckoutRetry(string $reference, int $shopId, ?int $staffId, ?int $adminId): ?Sale
+    {
+        return Sale::where('client_reference', $reference)->where('shop_id', $shopId)
+            ->when($staffId, fn ($q) => $q->where('staff_id', $staffId))
+            ->when($adminId, fn ($q) => $q->where('admin_id', $adminId))
+            ->first();
+    }
+
+    private function checkoutResponse(Request $request, Sale $sale, string $message)
+    {
         // Same receipt data the mobile app gets, so the POS can print it.
         $sale->load([
             'items.product' => fn ($q) => $q->withTrashed(),
@@ -211,7 +236,7 @@ public function detail($shopId, $date)
         return response()->json([
             'success' => true,
             'sale_id' => $sale->id,
-            'message' => 'Sale completed successfully!',
+            'message' => $message,
             'data' => (new \App\Http\Resources\Api\SaleResource($sale))->resolve($request),
         ]);
     }

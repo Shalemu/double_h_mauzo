@@ -65,6 +65,7 @@ class SaleData extends DataTransferObject
             staffId: $staffId,
             adminId: $adminId,
             paymentMethodId: $methodId,
+            clientReference: $data['client_reference'] ?? null,
             saleDate: !empty($data['sale_date']) ? $data['sale_date'] : null,
         );
     }
